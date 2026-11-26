@@ -100,3 +100,7 @@ node tools/harvest.mjs && ~/.venvs/edge-tts/bin/python tools/gen_audio.py
 ```
 
 `tools/harvest.mjs` collects every string the app can speak into `tools/speech-strings.json` (capped at about 60 MB of audio, lowest-priority strings dropped first; change with `--max-mb`). `tools/gen_audio.py` only generates clips that are missing, so re-runs are incremental (`--prune` deletes clips whose text is gone).
+
+## Offline
+
+After the first visit everything works offline: lessons, drills, stories, the 352 practice sets, the shop and your progress. Voice clips are cached as you hear them; **Minä → Settings → Offline → Download all audio** saves all 11,385 clips (~110 MB) so every pronunciation works without internet. Embedded videos and outside links still need a connection.

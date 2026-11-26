@@ -309,7 +309,9 @@ section('store');
   // freezes
   store.resetAll(); [-3, -2].forEach(o => meet(day(o))); S().spent['freeze:1'] = 10;
   eq(store.applyFreezes(), 1, 'freeze: one missed day saved');
-  eq(store.streak(), 3, 'freeze: streak continues');
+  eq(store.streak(), 2, 'freeze: streak survives the frozen day but does not grow');
+  meet(day(0)); eq(store.streak(), 3, 'freeze: next real day adds to the saved streak');
+  eq(store.bestStreak(), 3, 'freeze: best streak skips the frozen day');
   eq(store.applyFreezes(), 0, 'freeze: idempotent');
   eq(store.freezesOwned(), 0, 'freeze: used up');
   store.resetAll(); [-4, -3].forEach(o => meet(day(o))); S().spent['freeze:1'] = 10;

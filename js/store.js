@@ -84,7 +84,9 @@ export const RANKS = ['Aloittelija', 'Turisti', 'Kielikurssilainen', 'Kahvinjuoj
 export const rank = (l = level()) => RANKS[Math.min(RANKS.length - 1, Math.floor((l - 1) / 3))];
 
 // ------------------------------------------------------------ streak
-const goalMet = k => !!S.days[k]?.met || (S.days[k]?.xp || 0) >= S.profile.goal || !!S.frozen[k];
+// realMet = you actually hit your goal; goalMet also includes frozen days (they keep a streak alive but don't add to it)
+const realMet = k => !!S.days[k]?.met || (S.days[k]?.xp || 0) >= S.profile.goal;
+const goalMet = k => realMet(k) || !!S.frozen[k];
 export const goalMetOn = k => goalMet(k);
 export const freezesOwned = () => Object.keys(S.spent).filter(k => k.startsWith('freeze:')).length - Object.keys(S.frozen).length;
 /** Use streak freezes for missed days (called on app start). */
@@ -103,7 +105,7 @@ export function applyFreezes() {
 export function streak() {
   const t = today();
   let n = 0, k = goalMet(t) ? t : dayOffset(t, -1);
-  while (goalMet(k)) { n++; k = dayOffset(k, -1); }
+  while (goalMet(k)) { if (realMet(k)) n++; k = dayOffset(k, -1); }
   return n;
 }
 export function bestStreak() {
@@ -111,7 +113,8 @@ export function bestStreak() {
   let best = 0, run = 0, prev = null;
   for (const k of keys) {
     if (!goalMet(k)) { run = 0; prev = k; continue; }
-    run = prev && dayOffset(prev, 1) === k && goalMet(prev) ? run + 1 : 1;
+    const cont = prev && dayOffset(prev, 1) === k && goalMet(prev);
+    run = (cont ? run : 0) + (realMet(k) ? 1 : 0);
     best = Math.max(best, run); prev = k;
   }
   return best;

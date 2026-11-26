@@ -7,6 +7,7 @@ import { ANIMALS, ACCESSORIES, animalOf } from '../mascots.js';
 import { SKILL_NAMES, SKILL_ICON } from '../exercises.js';
 import { rerender, go } from '../app.js';
 import { renderCalendar } from '../calendar.js';
+import { offlineSupported, totalClips, cachedClips, downloadAllAudio, clearAudio } from '../offline.js';
 
 export function renderMe(el) {
   const S = store.state(), xp = store.totalXp(), lv = store.level(xp), lo = store.levelXp(lv), hi = store.levelXp(lv + 1);
@@ -132,6 +133,13 @@ export function renderSettings(el) {
       <label class="tog"><span>Strict ä/ö (a missing dot counts as wrong)</span><input type="checkbox" data-p="strictDots" ${p.strictDots ? 'checked' : ''}></label>
       <p class="muted small">Off: <i>paiva</i> for <i>päivä</i> is accepted with a warning. Doubled letters are always strict: <i>kisa</i> ≠ <i>kissa</i>.</p>
     </section>
+    <section class="card set" id="offline">
+      <h3>${icon('download')} Offline</h3>
+      <p class="small">The app, all lessons, drills, stories and practice sets work offline once SuomiT has been opened. Voice clips are saved as you hear them; download them all to have every pronunciation offline (about 110 MB). Videos and outside links always need internet.</p>
+      <div class="off-stat small muted">Checking…</div>
+      <div class="off-bar mini-bar" hidden><div style="width:0"></div></div>
+      <div class="row-btns"><button class="btn sm" id="off-dl">${icon('download')} Download all audio</button><button class="btn sm ghost" id="off-rm">Remove downloaded audio</button></div>
+    </section>
     <section class="card set">
       <h3>${icon('phone')} Sync phone ⇄ Mac</h3>
       <p class="small">No account needed. Copy your sync code on one device and paste it on the other. Progress is <b>merged</b>: nothing gets lost.</p>
@@ -145,6 +153,21 @@ export function renderSettings(el) {
   el.querySelector('#voice').onchange = e => store.setProfile({ voice: e.target.value });
   el.querySelector('#rate').oninput = e => { el.querySelector('#rv').textContent = e.target.value; store.setProfile({ rate: +e.target.value }); };
   el.querySelector('#test').onclick = () => speak('Hyvää huomenta, mitä kuuluu?');
+  (async () => {
+    const box = el.querySelector('#offline'); if (!box) return;
+    const stat = box.querySelector('.off-stat'), bar = box.querySelector('.off-bar'), fill = bar.firstElementChild, dl = box.querySelector('#off-dl');
+    if (!offlineSupported()) { stat.textContent = 'This browser does not support offline storage.'; dl.disabled = true; return; }
+    const show = async () => { const n = await cachedClips(), t = totalClips(); stat.textContent = `Audio available offline: ${n.toLocaleString()} / ${t.toLocaleString()} clips${n >= t ? ' · complete' : ''}`; dl.disabled = n >= t; };
+    await show();
+    dl.onclick = async () => {
+      dl.disabled = true; bar.hidden = false;
+      try { navigator.storage?.persist?.(); } catch { }
+      const r = await downloadAllAudio((d, t) => { fill.style.width = (d / t * 100) + '%'; stat.textContent = `Downloading audio… ${d.toLocaleString()} / ${t.toLocaleString()}`; });
+      toast(r.failed ? `Done, ${r.failed} clips failed (try again)` : 'All audio is available offline', r.failed ? 'alert' : 'check', 3000);
+      bar.hidden = true; show();
+    };
+    box.querySelector('#off-rm').onclick = async () => { if (!confirm('Remove all downloaded audio? Clips will download again as you use the app.')) return; await clearAudio(); show(); };
+  })();
   el.querySelector('#exp').onclick = async () => {
     const code = await store.exportCode();
     try { await navigator.clipboard.writeText(code); toast('Sync code copied! Paste it on your other device.', 'copy', 3500); }
