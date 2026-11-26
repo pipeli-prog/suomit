@@ -4,8 +4,8 @@ import { VOCAB, VOCAB_BY_ID, TOPIC_BY_ID } from '../data/vocab.js';
 import { LESSONS, LESSON_BY_ID } from '../data/course.js';
 import { vocabQ, flashQ, skillQs, topicWords, SKILL_NAMES } from './exercises.js';
 import { isLeech, retrievability } from './srs.js';
-import { shuffle } from './ui.js';
 
+const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const tagSkill = qs => qs.map(q => ({ ...q, skillName: SKILL_NAMES[q.skill] || '' }));
 export const lessonWords = l => topicWords(l.topics);
 export const itemWord = id => VOCAB_BY_ID[id] || (store.state().custom[id] && { id, ...store.state().custom[id], pos: 'custom', topics: [] });
@@ -55,7 +55,8 @@ export function dailyMix() {
   return { questions: qs, summary: { reviews: reviews.length, fresh: fresh.length, skills } };
 }
 export function mixSummary() {
-  const due = store.dueIds().length, nNew = due >= 18 ? 0 : Math.min(6, Math.max(0, 12 - due));
+  // cards whose word was removed from the data are not reviewable, so don't count them
+  const due = store.dueIds().filter(itemWord).length, nNew = due >= 18 ? 0 : Math.min(6, Math.max(0, 12 - due));
   return { due, fresh: nNew };
 }
 
@@ -95,8 +96,8 @@ export function sourceWords(src) {
   if (src === 'learned') return Object.keys(S.cards).map(itemWord).filter(Boolean);
   if (src === 'all') return VOCAB;
   if (src.startsWith('list:')) return (S.lists.find(l => l.id === src.slice(5))?.items || []).map(itemWord).filter(Boolean);
-  if (src.startsWith('topic:')) return (TOPIC_BY_ID[src.slice(6)]?.words || []).map(id => VOCAB_BY_ID[id]);
-  if (src.startsWith('lesson:')) return lessonWords(LESSON_BY_ID[src.slice(7)]);
+  if (src.startsWith('topic:')) return (TOPIC_BY_ID[src.slice(6)]?.words || []).map(id => VOCAB_BY_ID[id]).filter(Boolean);
+  if (src.startsWith('lesson:')) { const l = LESSON_BY_ID[src.slice(7)]; return l ? lessonWords(l) : []; }
   return [];
 }
 export function trainerQuestions(words, mode, n = 20) {

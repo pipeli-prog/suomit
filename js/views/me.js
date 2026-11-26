@@ -1,25 +1,23 @@
 import * as store from '../store.js';
 import { icon } from '../icons.js';
-import { esc, modal, toast, mascotSVG, ACCESSORY_SVG, SEAL_COLORS, fmtNum } from '../ui.js';
+import { esc, modal, toast, mascotSVG, fmtNum } from '../ui.js';
 import { finnishVoices, speak, sfx } from '../audio.js';
-import { THEMES, SHOP, ACH, owns, buy, equip, applyTheme } from '../gamify.js';
+import { THEMES, SHOP, ACH, owns, buy, equip, applyTheme, isEquipped, shopItem, cosmeticPreview, themeSwatch, lootBoxSVG, lootPool, openLootBox, LOOT_PRICE, COSMETICS } from '../gamify.js';
+import { ANIMALS, ACCESSORIES, animalOf } from '../mascots.js';
 import { SKILL_NAMES, SKILL_ICON } from '../exercises.js';
 import { rerender, go } from '../app.js';
+import { renderCalendar } from '../calendar.js';
 
 export function renderMe(el) {
   const S = store.state(), xp = store.totalXp(), lv = store.level(xp), lo = store.levelXp(lv), hi = store.levelXp(lv + 1);
   const days = Object.values(S.days), ans = days.reduce((a, d) => a + (d.ans || 0), 0), okN = days.reduce((a, d) => a + (d.ok || 0), 0);
   const fc = store.forecast(7), fmax = Math.max(1, ...fc);
-  // heatmap: last 16 weeks
-  const cells = []; const t = store.today();
-  const start = store.dayOffset(t, -(7 * 16 - 1) - ((new Date().getDay() + 6) % 7 === 6 ? 0 : 0));
-  for (let i = 0; i < 7 * 16; i++) { const k = store.dayOffset(start, i); const x = S.days[k]?.xp || 0; cells.push(`<i title="${k}: ${x} XP" class="h${x === 0 ? (S.frozen[k] ? 'f' : 0) : x < S.profile.goal / 2 ? 1 : x < S.profile.goal ? 2 : x < S.profile.goal * 2 ? 3 : 4}"></i>`); }
   const skills = Object.entries(S.skills).sort((a, b) => (a[1].acc || 0) - (b[1].acc || 0));
   el.innerHTML = `
     <section class="me-h">
-      <a href="#/shop" class="me-m">${mascotSVG(undefined, { size: 120 })}<span class="dress">${icon('shirt')} Dress up</span></a>
+      <a href="#/shop" class="me-m" title="${esc(petLabel())}">${mascotSVG(undefined, { size: 120 })}<span class="dress">${icon('shirt')} Dress up</span></a>
       <div><input class="name-in" placeholder="Your name" value="${esc(S.profile.name)}" maxlength="24">
-        <div class="rank">${esc(store.rank(lv))}</div>
+        <div class="rank">${esc(store.rank(lv))}</div><div class="pet-name">${icon('heart')} ${esc(petLabel())}</div>
         <div class="lvl-bar"><div style="width:${(xp - lo) / (hi - lo) * 100}%"></div><span>Level ${lv} · ${xp - lo}/${hi - lo} XP</span></div></div>
     </section>
     <section class="stats4">
@@ -28,42 +26,89 @@ export function renderMe(el) {
       <div><b>${icon('star')} ${fmtNum(xp)}</b><span>total XP</span></div><div><b>${icon('target')} ${ans ? Math.round(okN / ans * 100) : 0}%</b><span>accuracy</span></div>
       <div><b>${icon('shield')} ${store.freezesOwned()}</b><span>Sisu shields</span></div><div><b>${icon('coin')} ${store.coins()}</b><span>markkaa</span></div>
     </section>
-    <section class="card"><h3>Activity · last 16 weeks</h3><div class="heat">${cells.join('')}</div></section>
+    <section class="card"><h3>${icon('calendar')} Streak calendar</h3><div id="cal"></div></section>
     <section class="card"><h3>Reviews coming up</h3><div class="fc">${fc.map((n, i) => `<div><div class="fcb" style="height:${n / fmax * 100}%"></div><b>${n}</b><span>${i === 0 ? 'now' : i === 1 ? 'tmrw' : '+' + i}</span></div>`).join('')}</div></section>
     ${skills.length ? `<section class="card"><h3>Grammar skills</h3>${skills.map(([k, c]) => `<div class="skrow"><span>${icon(SKILL_ICON[k] || 'puzzle')} ${esc(SKILL_NAMES[k] || k)}</span><div class="mini-bar"><div style="width:${Math.round((c.acc || 0) * 100)}%"></div></div><b>${Math.round((c.acc || 0) * 100)}%</b></div>`).join('')}</section>` : ''}
     <section class="card"><h3>Achievements · ${Object.keys(S.ach).length}/${ACH.length}</h3><div class="achs">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'on' : ''}" title="${esc(a.en)}"><span>${icon(a.icon)}</span><b>${esc(a.name)}</b><small>${esc(a.en)}</small></div>`).join('')}</div></section>
-    <div class="grid2"><a class="tile-btn" href="#/shop"><span>${icon('bag')}</span><b>Kauppa</b><small>themes & skins</small></a><a class="tile-btn" href="#/settings"><span>${icon('gear')}</span><b>Settings</b><small>goal, voice, sync</small></a></div>
+    <div class="grid2"><a class="tile-btn" href="#/shop"><span>${icon('bag')}</span><b>Kauppa</b><small>animals, themes & surprise boxes</small></a><a class="tile-btn" href="#/settings"><span>${icon('gear')}</span><b>Settings</b><small>goal, voice, sync</small></a></div>
     <a class="card story-link" href="#/about"><span>${icon('flask')}</span><div><b>Why SuomiT works</b><div class="muted small">The learning science behind the app</div></div><span class="arrow">›</span></a>`;
+  renderCalendar(el.querySelector('#cal'));
   el.querySelector('.name-in').onchange = e => { store.setProfile({ name: e.target.value.trim() }); toast('Hei ' + (e.target.value.trim() || 'sinä') + '!', 'wave'); };
 }
 
+/** "Pip · sadekonna" for the current mascot. */
+function petLabel() { const a = ANIMALS[animalOf(store.state().mascot)]; return `${a.name} · ${a.fi}`; }
+
+// ------------------------------------------------------------ shop
+const SHOP_TABS = [['animal', 'seal', 'Animals'], ['theme', 'palette', 'Themes'], ['hat', 'hat', 'Hats'], ['face', 'glasses', 'Glasses'], ['neck', 'scarf', 'Neck'], ['color', 'droplet', 'Colours'], ['freeze', 'shield', 'Power-ups']];
+const TAB_KEY = 'suomit.shopTab';
+let shopTab = null, tryOn = null; // tryOn: id of a locked item being previewed
+const lockText = it => it.id === 'neck:mitali' ? 'Earn it with a 30-day streak' : 'Reward item';
+function wornList(m) {
+  return ['hat', 'face', 'neck'].map(k => m[k] && ACCESSORIES[k][m[k]]?.name).filter(Boolean);
+}
 export function renderShop(el, tab) {
-  const S = store.state();
-  const sections = [['theme', icon('palette') + ' Themes'], ['hat', icon('hat') + ' Hats'], ['face', icon('glasses') + ' Glasses'], ['neck', icon('scarf') + ' Neck'], ['color', icon('seal') + ' Seal colour'], ['freeze', icon('shield') + ' Power-ups']];
-  const preview = it => {
-    if (it.kind === 'theme') { const t = THEMES[it.theme]; return `<div class="sw" style="background:linear-gradient(135deg,${t.bg} 0 45%,${t.card} 45% 70%,${t.acc} 70% 85%,${t.acc2} 85%)"></div>`; }
-    if (it.kind === 'freeze') return `<div class="sw ico">${icon('shield')}</div>`;
-    const m = { ...S.mascot }; if (it.kind === 'color') m.color = it.id.split(':')[1]; else m[it.kind] = it.id.split(':')[1];
-    return mascotSVG(m, { size: 78 });
-  };
-  const equipped = it => it.kind === 'theme' ? S.profile.theme === it.theme : it.kind === 'freeze' ? false : S.mascot[it.kind] === it.id.split(':')[1];
-  el.innerHTML = `<a class="back" href="#/me">‹ Minä</a><h1 class="pg">Kauppa <span class="coins-big">${icon('coin')} ${store.coins()}</span></h1>
-    <div class="shop-hero">${mascotSVG(undefined, { size: 130 })}<p class="muted small">Earn markkaa: 1 per 10 XP, plus quests and the daily chest.</p></div>
-    ${sections.map(([k, h]) => {
-    const items = [...(k === 'theme' ? [{ id: 'theme:talviyo', kind: 'theme', name: 'Talviyö', en: 'Winter night (default)', price: 0, theme: 'talviyo' }] : []), ...(k === 'color' ? [{ id: 'color:grey', kind: 'color', name: 'Harmaa', en: 'Classic grey norppa', price: 0 }] : []), ...SHOP.filter(x => x.kind === k)];
-    return `<h3 class="sec">${h}</h3><div class="shop">${items.map(it => {
-      const own = it.kind !== 'freeze' && (owns(it.id) || it.price === 0), eq = equipped(it);
-      return `<button class="item ${own ? 'own' : ''} ${eq ? 'eq' : ''}" data-id="${it.id}">${preview(it)}<b>${esc(it.name)}</b><small>${esc(it.en)}</small>
-          <span class="price">${eq ? '✓ wearing' : own ? (it.kind === 'theme' || it.kind === 'color' ? 'use' : 'wear') : it.price == null ? icon('lock') + ' achievement' : `${icon('coin')} ${it.price}`}</span></button>`;
-    }).join('')}</div>`;
-  }).join('')}`;
-  el.querySelectorAll('.item').forEach(b => b.onclick = () => {
-    let it = SHOP.find(x => x.id === b.dataset.id) || (b.dataset.id === 'theme:talviyo' ? { id: 'theme:talviyo', kind: 'theme', theme: 'talviyo', price: 0 } : { id: 'color:grey', kind: 'color', price: 0 });
-    if (it.kind === 'freeze') { buy(it); return rerender(); }
-    if (!owns(it.id) && it.price) { if (it.price == null) return toast('Unlock it with an achievement', 'lock'); if (!confirm(`Buy ${it.name} for ${it.price} markkaa?`)) return; if (!buy(it)) return; }
-    else if (!owns(it.id) && it.price === null) return toast('Unlock it with a 30-day streak', 'lock');
-    equip(it); sfx('tap'); rerender();
+  const S = store.state(), coins = store.coins();
+  if (!shopTab) { try { shopTab = localStorage.getItem(TAB_KEY); } catch { } }
+  shopTab = SHOP_TABS.some(t => t[0] === (tab || shopTab)) ? (tab || shopTab) : 'animal';
+  const trying = tryOn && !owns(tryOn) ? shopItem(tryOn) : (tryOn = null);
+  // live preview: current outfit, plus whatever is being tried on
+  const m = { ...S.mascot };
+  if (trying && trying.kind !== 'theme') m[trying.kind] = trying.id.split(':')[1];
+  const a = ANIMALS[animalOf(m)];
+  const worn = wornList(m);
+  const pool = lootPool(), total = COSMETICS.length;
+  const lootBtn = !pool.length ? `<button class="btn" disabled>${icon('trophy')} You own everything!</button>`
+    : coins < LOOT_PRICE ? `<button class="btn" disabled>${icon('coin')} ${LOOT_PRICE} · need ${LOOT_PRICE - coins} more</button>`
+      : `<button class="btn" id="loot">${icon('gift')} Open for ${icon('coin')} ${LOOT_PRICE}</button>`;
+  const items = SHOP.filter(x => x.kind === shopTab).sort((x, y) => (x.price ?? 1e9) - (y.price ?? 1e9));
+  const count = k => { const xs = COSMETICS.filter(x => x.kind === k); return `${xs.filter(x => owns(x.id)).length}/${xs.length}`; };
+  el.innerHTML = `<a class="back" href="#/me">‹ Minä</a><h1 class="pg">Kauppa <span class="coins-big">${icon('coin')} ${coins}</span></h1>
+    <section class="sh-hero card ${trying ? 'trying' : ''}">
+      <div class="sh-stage">${trying?.kind === 'theme' ? themeSwatch(THEMES[trying.theme], 120) : ''}${mascotSVG(m, { size: trying?.kind === 'theme' ? 96 : 140 })}</div>
+      <div class="sh-info">
+        ${trying ? `<div class="sh-tag">${icon('sparkle')} Trying on</div><h3>${esc(trying.name)}</h3><p class="muted small">${esc(trying.en)}</p>`
+      : `<div class="sh-tag">${icon('heart')} Your mascot</div><h3>${esc(a.name)} <span class="muted">· ${esc(a.fi)}</span></h3>
+        <p class="muted small">${worn.length ? 'Wearing ' + worn.map(esc).join(', ') + '.' : 'Nothing on yet.'} Tap any item to try it on.</p>`}
+      </div>
+    </section>
+    <section class="loot-card">
+      <div class="loot-art">${lootBoxSVG(96)}</div>
+      <div class="loot-txt"><h3>Yllätyslaatikko</h3>
+        <p class="small">Surprise box: one random item you don't own yet. Every item has the same chance.</p>
+        <p class="muted small">${pool.length ? `${pool.length} of ${total} items still to find` : 'Kokoelma täynnä: your collection is complete.'}</p>
+        ${lootBtn}</div>
+    </section>
+    <nav class="tabs shop-tabs" role="tablist">${SHOP_TABS.map(([k, ic, n]) => `<button role="tab" aria-selected="${k === shopTab}" class="${k === shopTab ? 'on' : ''}" data-tab="${k}">${icon(ic)} ${n}${k === 'freeze' ? '' : ` <small>${count(k)}</small>`}</button>`).join('')}</nav>
+    ${shopTab === 'freeze' ? `<p class="muted small">You have ${store.freezesOwned()} of 3 Sisu shields. A shield is used automatically when you miss a day.</p>` : ''}
+    <div class="shop">${items.map(it => {
+    const own = it.kind !== 'freeze' && owns(it.id), eq = isEquipped(it), sel = trying?.id === it.id;
+    const price = eq ? `${icon('check')} ${it.kind === 'theme' || it.kind === 'color' || it.kind === 'animal' ? 'using' : 'wearing'}`
+      : own ? (it.kind === 'theme' || it.kind === 'color' ? 'use' : it.kind === 'animal' ? 'choose' : 'wear')
+        : it.price == null ? `${icon('lock')} ${lockText(it)}` : `${icon('coin')} ${it.price}`;
+    return `<button class="item ${own ? 'own' : 'locked'} ${eq ? 'eq' : ''} ${sel ? 'sel' : ''}" data-id="${it.id}">${cosmeticPreview(it, 78, S.mascot)}<b>${esc(it.name)}</b><small>${esc(it.en)}</small>
+        <span class="price">${price}</span></button>`;
+  }).join('')}</div>
+    ${trying ? `<div class="try-bar">${trying.kind === 'theme' ? themeSwatch(THEMES[trying.theme], 52) : mascotSVG(m, { size: 56 })}<div><b>${esc(trying.name)}</b><small>${trying.price == null ? esc(lockText(trying)) + ' (or find it in a surprise box)' : coins >= trying.price ? 'Like it?' : `You need ${trying.price - coins} more markkaa`}</small></div>
+      <button class="btn ghost sm" id="untry">Cancel</button>${trying.price == null ? '' : `<button class="btn sm" id="buy" ${coins < trying.price ? 'disabled' : ''}>Buy ${icon('coin')} ${trying.price}</button>`}</div>` : ''}`;
+
+  el.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => {
+    shopTab = b.dataset.tab; tryOn = null; try { localStorage.setItem(TAB_KEY, shopTab); } catch { }
+    sfx('tap'); renderShop(el);
   });
+  el.querySelectorAll('.item').forEach(b => b.onclick = () => {
+    const it = shopItem(b.dataset.id); if (!it) return;
+    if (it.kind === 'freeze') { buy(it); return rerender(); }
+    if (owns(it.id)) { tryOn = null; equip(it); sfx('tap'); return rerender(); }
+    tryOn = tryOn === it.id ? null : it.id; sfx('flip');
+    rerender();
+  });
+  el.querySelector('#untry')?.addEventListener('click', () => { tryOn = null; rerender(); });
+  el.querySelector('#buy')?.addEventListener('click', () => {
+    if (!buy(trying)) return;
+    tryOn = null; equip(trying); rerender();
+  });
+  el.querySelector('#loot')?.addEventListener('click', () => { tryOn = null; openLootBox({ onClose: rerender }); });
 }
 
 export function renderSettings(el) {

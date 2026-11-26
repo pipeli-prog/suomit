@@ -1,13 +1,53 @@
 // SuomiT service worker: offline-first app shell. Bump VERSION on every release.
-const VERSION = 'suomit-v2';
+const VERSION = 'suomit-v3';
 // Speech clips (audio/<xx>/<hash>.mp3) are immutable (content-addressed), so they live in their own cache that
 // survives version bumps and fills up as clips are played. They are never precached.
 const AUDIO_CACHE = 'suomit-audio';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/app.js', 'js/fi.js', 'js/srs.js', 'js/store.js', 'js/audio.js', 'js/ui.js', 'js/lexicon.js', 'js/exercises.js', 'js/plan.js', 'js/session.js', 'js/gamify.js',
-  'js/views/home.js', 'js/views/path.js', 'js/views/words.js', 'js/views/read.js', 'js/views/me.js',
-  'data/vocab.js', 'data/verbs.js', 'data/grammar.js', 'data/course.js', 'data/readings.js', 'data/resources.js', 'data/audio-index.js',
-  'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png', 'icons/favicon-32.png'];
+const SHELL = [
+  './',
+  'index.html',
+  'manifest.webmanifest',
+  'css/app.css',
+  'css/practice.css',
+  'css/shop.css',
+  'js/app.js',
+  'js/audio.js',
+  'js/calendar.js',
+  'js/chest.js',
+  'js/exercises.js',
+  'js/fi.js',
+  'js/gamify.js',
+  'js/icons.js',
+  'js/lexicon.js',
+  'js/mascots.js',
+  'js/plan.js',
+  'js/practice.js',
+  'js/session.js',
+  'js/srs.js',
+  'js/store.js',
+  'js/ui.js',
+  'js/views/home.js',
+  'js/views/me.js',
+  'js/views/path.js',
+  'js/views/read.js',
+  'js/views/words.js',
+  'data/audio-index.js',
+  'data/course.js',
+  'data/grammar.js',
+  'data/readings.js',
+  'data/resources.js',
+  'data/verbs.js',
+  'data/vocab.js',
+  'data/practice/index.js',
+  'data/practice/m1a.js',
+  'data/practice/m1b.js',
+  'data/practice/m2.js',
+  'data/practice/m34.js',
+  'icons/icon.svg',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/icon-180.png',
+  'icons/favicon-32.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== AUDIO_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

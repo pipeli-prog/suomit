@@ -9,6 +9,7 @@ import { SKILL_NAMES } from '../exercises.js';
 import { hasFinnishVoice, hasNeuralAudio } from '../audio.js';
 import { rerender, go } from '../app.js';
 import { startMatch } from './words.js';
+import { openLootBox, lootPool, LOOT_PRICE } from '../gamify.js';
 
 const GREET = () => {
   const h = new Date().getHours();
@@ -58,6 +59,7 @@ export function renderHome(el) {
       <div class="q-bar"><div style="width:${q.prog / q.target * 100}%"></div></div><div class="q-r">${q.prog}/${q.target} · ${icon('coin')}${q.coins}</div></div>`).join('')}
   </section>
 
+  ${lootPool().length ? `<button class="card loot-home" id="loot"><span class="lh-ico">${icon('gift')}</span><div><b>Yllätyslaatikko</b><div class="muted small">Surprise box: a random cosmetic you don't own · ${lootPool().length} left</div></div><span class="lh-p">${icon('coin')} ${LOOT_PRICE}</span></button>` : ''}
   <section class="grid2">
     <button class="tile-btn" data-m="speed"><span>${icon('bolt')}</span><b>Speed round</b><small>60 seconds · best ${S.best.speed || 0}</small></button>
     <button class="tile-btn" data-m="match"><span>${icon('grid')}</span><b>Match pairs</b><small>best ${S.best.match ? S.best.match + ' s' : '–'}</small></button>
@@ -74,6 +76,7 @@ export function renderHome(el) {
     if (!m.questions.length) return go('#/lesson/' + cur.id);
     runSession({ title: 'Daily mix', questions: m.questions, mode: 'review', onClose: rerender, again: () => document.getElementById('mix')?.click() });
   };
+  el.querySelector('#loot')?.addEventListener('click', () => openLootBox({ onClose: rerender }));
   el.querySelectorAll('[data-m]').forEach(b => b.onclick = () => {
     const m = b.dataset.m;
     const learned = sourceWords('learned');

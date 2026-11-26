@@ -27,6 +27,11 @@ Yhdysvallat|the USA|amerikkalainen|englanti|englantia|Yhdysvalloista|English
 Kanada|Canada|kanadalainen|englanti|englantia|Kanadasta|English
 Brasilia|Brazil|brasilialainen|portugali|portugalia|Brasiliasta|Portuguese
 Meksiko|Mexico|meksikolainen|espanja|espanjaa|Meksikosta|Spanish
+Intia|India|intialainen|hindi|hindiä|Intiasta|Hindi
+Thaimaa|Thailand|thaimaalainen|thai|thaita|Thaimaasta|Thai
+Vietnam|Vietnam|vietnamilainen|vietnam|vietnamia|Vietnamista|Vietnamese
+Irak|Iraq|irakilainen|arabia|arabiaa|Irakista|Arabic
+Somalia|Somalia|somalialainen|somali|somalia|Somaliasta|Somali
 `.trim().split('\n').map(l => {
   const [fi, en, nat, lang, langPart, from, langEn] = l.split('|');
   return { fi, en, nat, lang, langPart, from, langEn };
@@ -141,4 +146,6 @@ export const MINIMAL_PAIRS = [
   ['kylä', 'village', 'kyllä', 'yes'], ['tili', 'account', 'tiili', 'brick'], ['sika', 'pig', 'siika', 'whitefish'],
   ['laki', 'law', 'lakki', 'cap'], ['rapu', 'crayfish', 'rappu', 'stairway'], ['tapaan', 'I meet', 'tappaan', 'I kill'],
   ['mutta', 'but', 'muuta', 'other (partitive)'], ['kato', 'look! (spoken)', 'katto', 'roof'],
+  ['pala', 'piece', 'palaa', 'it burns'], ['kansa', 'people, nation', 'kanssa', 'with'], ['kasa', 'pile', 'kassa', 'checkout'],
+  ['tulee', 'comes', 'tuulee', "it's windy"], ['vapa', 'fishing rod', 'vapaa', 'free'], ['valita', 'to choose', 'valittaa', 'to complain'],
 ];

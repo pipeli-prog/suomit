@@ -31,8 +31,31 @@ export const LESSONS = [
 |*kisa* competition|*kissa* cat||
 |*tapaan* I meet|*tappaan* I kill||
 > Double consonants: pause briefly before them, like "bookcase" → boo**k-c**ase.` },
-      { h: 'Spelling out loud', body: `Letter names: *aa, bee, see, dee, ee, äf, gee, hoo, ii, jii, koo, äl, äm, än, oo, pee, kuu, är, äs, tee, uu, vee, yy, ää, öö*.
-*Miten se kirjoitetaan?* = How is it spelled? → *L-I-I-S-A*.` },
+      { h: 'Vowel pairs (diphthongs)', body: `Two different vowels in one syllable glide into each other. Pronounce **both**:
+|ends in -i|*ai, ei, oi, ui, yi, äi, öi*|*laiva, keitto, poika, äiti*|
+|ends in -u/-y|*au, eu, iu, ou, ey, äy, öy*|*sauna, euro, koulu, käydä, pöytä*|
+|opening|*ie, uo, yö*|*tie, ruoka, työ*|
+> *ruoka* is u gliding into o, never "roka". *tie* is i gliding into e.` },
+      { h: 'Letter names vs. letter sounds', body: `Every letter has a **name** (for spelling) and a **sound** (for reading). *K* is called *koo* but sounds like a plain k; *S* is called *äs* but sounds like s.
+Letter names: *aa, bee, see, dee, ee, äf, gee, hoo, ii, jii, koo, äl, äm, än, oo, pee, kuu, är, äs, tee, uu, vee, kaksois-vee, äks, yy, tset, ruotsalainen oo, ää, öö*.
+|vowels (8)|*a e i o u y ä ö*|
+|everyday consonants|*d h j k l m n p r s t v* (and *g* inside *ng*)|
+|mostly loanwords and names|*b c f g q w x z å*|
+> In native words *d* mostly appears through gradation: *katu → kadun*.` },
+      { h: 'Spelling your name', body: `A typical exchange at a desk or on the phone:
+|*Mikä sinun nimi on?*|What's your name?|
+|*Minun nimi on Outi.*|My name is Outi.|
+|*Miten se kirjoitetaan?*|How is it spelled?|
+|*Se kirjoitetaan O-U-T-I.*|It's spelled O-U-T-I.|
+|*Entä sukunimi?*|And your surname?|
+|*Järvinen. J-Ä-R-V-I-N-E-N.*||
+|*Kaunis nimi!*|What a beautiful name!|
+Practise the same with your *sukunimi* (surname), *toinen nimi* (middle name) and *osoite* (address).
+> Double letters are simply said twice: *Hannu* → *hoo, aa, än, än, uu*. Formal style says *Mikä sinun nimesi on?*` },
+      { h: 'Tongue twisters (kielisolmut)', body: `Read slowly first, then faster. Watch every long sound and every double consonant:
+*Vesihiisi sihisi hississä.* (The water sprite hissed in the lift.)
+*Mustan kissan paksut posket.* (The black cat's fat cheeks.)
+> Record yourself and compare with SuomiT's audio. Length mistakes become easy to hear.` },
     ],
     topics: ['sounds'], skills: ['letters', 'length', 'vocab'],
   },
@@ -53,9 +76,18 @@ export const LESSONS = [
 > 2,30 € is said *kaks kolkyt*: euros first, then cents, no words in between.` },
       { h: 'Asking the price', body: `*Mitä se maksaa?* / *Kuinka paljon se maksaa?* = What does it cost?
 *Se maksaa kaksi euroa.* = It costs two euros.
-After numbers (except 1), the noun goes into the partitive: *kaksi euroa*, *viisi senttiä*. You'll master this in Module 3; for now just learn the chunks.` },
+After numbers (except 1), the noun goes into the partitive: *kaksi euroa*, *viisi senttiä*. You'll master this in Module 3; for now just learn the chunks.
+*Paljonko se maksaa yhteensä?* = How much is it in total?` },
+      { h: 'Phone numbers & number nicknames', body: `Phone numbers are read **digit by digit**, in small groups: *045 672 9812* → *nolla neljä viisi, kuusi seitsemän kaksi, yhdeksän kahdeksan yksi kaksi*.
+In fast speech you'll hear *viis, kuus, seittemän, yheksän* and also *kasi* (8) and *ysi* (9).
+Each digit also has a noun "nickname", used for buses, trams, school grades and banknotes:
+|1 *ykkönen*|2 *kakkonen*|3 *kolmonen*|4 *nelonen*|5 *vitonen*|
+|6 *kutonen*|7 *seiska*|8 *kasi*|9 *ysi*|10 *kymppi*|
+*Menen kutosella.* = I'll take the number 6 (tram). · *Saanko kympin?* = Can I have a tenner?
+*Mikä sinun puhelinnumerosi on?* — *Numeroni on…*
+> Finnish mobile numbers start with *04…* or *050*. Write the number down while you listen, then read it back.` },
     ],
-    topics: ['numbers'], skills: ['numbers', 'numbersSpoken', 'prices', 'vocab'],
+    topics: ['numbers'], skills: ['numbers', 'numbersSpoken', 'prices', 'vocab', 'phone'], reading: 'r-numbers',
   },
   {
     id: 'm1-3', mod: 'm1', title: 'Greetings', fi: 'Tervehdykset', icon: 'wave',
@@ -72,8 +104,15 @@ After numbers (except 1), the noun goes into the partitive: *kaksi euroa*, *viis
 *Hauska tavata!* — Nice to meet you!
 > Finns answer *Mitä kuuluu?* honestly. It's a real question, not just a greeting.` },
       { h: 'The magic words', body: `*Kiitos* thank you · *Ole hyvä* here you go / you're welcome · *Anteeksi* sorry / excuse me · *Ei se mitään* no worries · *Hyvää ruokahalua!* enjoy your meal · *Kippis!* cheers` },
+      { h: 'At the table and saying good night', body: `|before eating|*Hyvää ruokahalua!*|
+|the cook or host|*Toivottavasti maistuu!* (I hope you like it)|
+|after the meal|*Kiitos ruoasta!* / *Kiitos illallisesta!*|
+|leaving late|*Hyvää yötä! Nuku hyvin!*|
+|answering a wish|*Kiitos, samoin!* / *Hyvää yötä myös sinulle!*|
+Thanking **for** something uses *-sta/-stä*: *kiitos kahvista, kiitos lahjasta, kiitos avusta*.
+> Short greetings drop *hyvää*: *Huomenta! Päivää! Iltaa!* (they are in the partitive, Module 3).` },
     ],
-    topics: ['greetings'], skills: ['vocab', 'phrases'],
+    topics: ['greetings'], skills: ['vocab', 'phrases'], reading: 'r-class',
   },
   {
     id: 'm1-4', mod: 'm1', title: "Pronouns & 'to be'", fi: 'Persoonapronominit ja olla', icon: 'user',
@@ -94,6 +133,12 @@ Third column = spoken Finnish. *Hän* has no gender: one word for he **and** she
 *Sinä olet suomalainen.* → *Oletko sinä suomalainen?* (or just *Oletko suomalainen?*)
 *Hän on kotona.* → *Onko hän kotona?*
 Answer by repeating the verb: *Olen.* / *En ole.* (or *Joo* / *Ei*).` },
+      { h: 'Age and plural descriptions', body: `Age uses *olla* + number + *vuotta* (partitive after a number):
+*Minä olen 30 vuotta vanha.* = *Olen 30-vuotias.* · Spoken: *Mä oon kolkyt.*
+*Kuinka vanha sinä olet?* = How old are you?
+With a plural subject (*me, te, he*) a describing word goes into the **plural partitive**:
+*Me olemme iloisia.* · *He ovat opiskelijoita.* · *Te olette myöhässä.* (*myöhässä* never changes)
+> Spoken negative: *mä en oo, sä et oo, se ei oo, me ei olla, te ette oo, ne ei oo*.` },
     ],
     topics: ['pronouns'], skills: ['olla', 'ollaNeg', 'ollaQ', 'ollaSpoken', 'vocab'],
   },
@@ -107,8 +152,15 @@ Days are written in lower case. *Keskiviikko* means "middle of the week".` },
 *Mikä päivä tänään on?* — *Tänään on perjantai.*
 |*toissapäivänä*|*eilen*|*tänään*|*huomenna*|*ylihuomenna*|
 |day before yesterday|yesterday|today|tomorrow|day after tomorrow|` },
+      { h: 'Asking and answering "when?"', body: `|*Milloin sinä menet töihin?*|*Maanantaina.*|
+|*Milloin sinulla on vapaapäivä?*|*Torstaina.*|
+|*Milloin menet uimaan?*|*Huomenna.* / *Ylihuomenna.*|
+|*Mikä päivä tänään on?*|*Tänään on keskiviikko.*|
+|*Mikä päivä eilen oli?*|*Eilen oli tiistai.*|
+More time words: *viikonloppuna* (at the weekend), *joka päivä* (every day), *ensi viikolla* (next week).
+> Past days take the past tense: *Eilen oli tiistai*, not *on*.` },
     ],
-    topics: ['days'], skills: ['days', 'vocab'],
+    topics: ['days'], skills: ['days', 'vocab'], reading: 'r-week',
   },
   {
     id: 'm1-6', mod: 'm1', title: 'Vowel harmony', fi: 'Vokaaliharmonia', icon: 'scale',
@@ -158,13 +210,26 @@ Endings come in two versions, and the word decides which one:
 |*Ruotsi*|*ruotsalainen*|*ruotsi*|
 |*Saksa*|*saksalainen*|*saksa*|
 |*Hollanti*|*hollantilainen*|*hollanti*|
-Countries take a capital letter; nationalities and languages don't.` },
+|*Norja*|*norjalainen*|*norja*|
+|*Viro*|*virolainen*|*viro*|
+|*Venäjä*|*venäläinen*|*venäjä*|
+|*Englanti*|*englantilainen*|*englanti*|
+|*Ranska*|*ranskalainen*|*ranska*|
+|*Espanja*|*espanjalainen*|*espanja*|
+|*Italia*|*italialainen*|*italia*|
+|*Kiina*|*kiinalainen*|*kiina*|
+|*Yhdysvallat*|*amerikkalainen*|*englanti*|
+Countries take a capital letter; nationalities and languages don't. Nationalities almost always end in *-lainen / -läinen*.` },
       { h: 'The three key sentences', body: `*Mistä olet kotoisin?* — *Olen kotoisin Hollannista.* (from = *-sta/-stä*)
 *Minkä maalainen olet?* — *Olen hollantilainen.*
 *Mitä kieliä puhut?* — *Puhun hollantia, englantia ja vähän suomea.*
 > Languages after *puhua* are in the partitive: *suomea, ruotsia, englantia, saksaa*.` },
+      { h: 'More ways to ask', body: `*Mistä maasta sinä olet?* — Which country are you from?
+*Mikä sinun äidinkielesi on?* — *Äidinkieleni on venäjä.* (My mother tongue is Russian.)
+*Missä sinä asut?* — *Asun Suomessa, Espoossa.*
+> Two "from" forms to memorise: *Venäjältä* (from Russia) and *Yhdysvalloista* (from the USA).` },
     ],
-    topics: ['countries'], skills: ['countries', 'vocab'],
+    topics: ['countries'], skills: ['countries', 'vocab'], reading: 'r-countries',
   },
   {
     id: 'm1-9', mod: 'm1', title: 'Verb type 1', fi: 'Verbityyppi 1', icon: 'run',
@@ -192,11 +257,19 @@ Question: verb + *-ko/-kö* → *Puhutko suomea? Ostaako hän leipää?*` },
 |*missä*|where|*mistä*|from where|
 |*mihin*|to where|*milloin*|when|
 |*miksi*|why|*miten*|how|
-|*millainen*|what kind|*kuinka monta*|how many|
+|*millainen*|what kind|*kuinka vanha*|how old|
+|*kuinka monta*|how many|*kuinka paljon*|how much|
+|*mihin aikaan*|at what time|*minkä maalainen*|what nationality|
+|*mistä maasta*|from which country|*paljonko*|how much (spoken)|
 Word order stays straight: *Kuka hän on?* — *Hän on opettaja.*` },
       { h: 'Mikä or mitä?', body: `*Mikä* asks for the subject or identity: *Mikä tämä on?* *Mikä sinun nimi on?*
 *Mitä* asks for an object or activity: *Mitä sinä teet?* *Mitä sinä syöt?* *Mitä kuuluu?*
 > If the answer is the thing being done/eaten/wanted → *mitä*. If the answer is "it is X" → *mikä*.` },
+      { h: 'Open and closed questions', body: `A **question word** asks an open question: *Mihin sinä menet?* — *Kauppaan.*
+A **-ko/-kö question** is closed: the answer is yes, no or maybe.
+*Menetkö sinä töihin?* — *Joo.* / *Ei.* / *Ehkä.*
+Nicer answers repeat the verb: *Menen.* (yes) · *En mene.* (no)
+> Use either a question word or *-ko/-kö*, not both in the same question.` },
     ],
     topics: ['qwords'], skills: ['qwords', 'vocab'],
   },
@@ -235,8 +308,12 @@ Word order stays straight: *Kuka hän on?* — *Hän on opettaja.*` },
       { h: 'I like… = tykätä / pitää + -sta', body: `*Minä tykkään kesästä.* I like summer. · *Minä pidän lumesta.* I like snow.
 *En tykkää sateesta.* I don't like rain.
 The thing you like takes *-sta/-stä* (elative).` },
+      { h: 'Favourites: lempi-', body: `Put *lempi-* in front of a noun to make "favourite": *lempisää, lempivuodenaika, lempikuukausi, lempiväri, lempiruoka*.
+*Mikä on sinun lempivuodenaikasi?* — *Minun lempivuodenaikani on kesä.*
+*Mistä säästä et tykkää?* — *En tykkää sateesta enkä loskasta.*
+*Tykkään aurinkoisesta säästä.* · *Pidän kesäkuusta.*` },
     ],
-    topics: ['weather'], skills: ['vocab'], reading: 'r-weather',
+    topics: ['weather'], skills: ['vocab', 'forecast'], reading: 'r-weather',
   },
   {
     id: 'm2-3', mod: 'm2', title: 'Months & seasons', fi: 'Kuukaudet ja vuodenajat', icon: 'calendar',
@@ -250,8 +327,20 @@ In which month? → *-ssa*: *tammikuussa, heinäkuussa*.
 |*syksy*|*syksyllä*|in autumn|
 |*talvi*|*talvella*|in winter|
 *Milloin on juhannus?* — *Kesällä, kesäkuussa.*` },
+      { h: 'Questions with months and seasons', body: `|*Missä kuussa sinä olet syntynyt?*|*Olen syntynyt toukokuussa.*|
+|*Milloin sinulla on nimipäivä?*|*Lokakuussa.*|
+|*Milloin uusi vuosi alkaa?*|*Tammikuussa.*|
+|*Milloin Suomessa on lämmin?*|*Kesällä, kesä-, heinä- ja elokuussa.*|
+|*Milloin sataa lunta?*|*Talvella, esimerkiksi tammikuussa.*|
+|*Milloin on vappu?*|*Keväällä, toukokuun ensimmäisenä päivänä.*|
+Season and month together: *Talvella, joulukuussa.* · *Syksyllä, lokakuussa.*` },
+      { h: 'Parts of the day (vuorokaudenajat)', body: `|*aamu*|*aamulla*|in the morning|
+|*päivä*|*päivällä*|during the day|
+|*ilta*|*illalla*|in the evening|
+|*yö*|*yöllä*|at night|
+Like seasons, parts of the day take *-lla/-llä* for "when". More in Module 4 (*aamupäivällä, iltapäivällä*).` },
     ],
-    topics: ['months'], skills: ['months', 'vocab'],
+    topics: ['months'], skills: ['months', 'days', 'vocab'], reading: 'r-year',
   },
   {
     id: 'm2-4', mod: 'm2', title: 'Verb type 1 + consonant gradation', fi: 'Verbityyppi 1 + astevaihtelu', icon: 'gear',
@@ -284,8 +373,16 @@ Light/dark: *vaaleansininen* (light blue), *tummansininen* (dark blue).` }],
       { h: 'Mitä sinulla on päällä?', body: `*Minulla on päällä punainen paita, musta hattu ja siniset farkut.*
 Some clothes are (almost) always plural: *housut, farkut, shortsit, hanskat*. Their adjective goes plural too: *siniset farkut, mustat housut*.
 *Hänellä on päällä…* = He/she is wearing…` },
+      { h: 'Shopping for clothes', body: `|*Voinko auttaa?*|Can I help you?|
+|*Etsin lämmintä takkia.*|I'm looking for a warm coat.|
+|*Mikä koko sinulla on?*|What size are you?|
+|*Saanko sovittaa tätä?*|May I try this on?|
+|*Missä on sovituskoppi?*|Where is the fitting room?|
+|*Tämä on liian pieni.*|This is too small.|
+|*Onko teillä tätä isompana?*|Do you have it in a bigger size?|
+|*Paljonko nämä farkut maksavat?*|How much are these jeans?|` },
     ],
-    topics: ['clothes'], skills: ['clothes', 'vocab'],
+    topics: ['clothes'], skills: ['clothes', 'vocab'], reading: 'r-clothes',
   },
   {
     id: 'm2-7', mod: 'm2', title: "'I have'", fi: 'Minulla on', icon: 'gift',
@@ -297,6 +394,7 @@ Some clothes are (almost) always plural: *housut, farkut, shortsit, hanskat*. Th
 Names too: *Mirjalla on kissa. Jukalla on koira.* (*Jukka → Jukalla*: gradation!)` },
       { h: 'Questions & negatives', body: `*Onko sinulla koira?* — *On.* / *Ei ole.*
 *Kenellä on porkkana?* — *Mirjalla on porkkana.*
+*Kenellä ei ole koiraa?* — *Jukalla ei ole koiraa.*
 Negative: *Minulla ei ole koiraa.* The thing goes into the **partitive** (Module 3).
 > Don't confuse: *minä olen* = I am · *minulla on* = I have.` },
     ],
@@ -307,7 +405,10 @@ Negative: *Minulla ei ole koiraa.* The thing goes into the **partitive** (Module
     goals: ['Describe what a person looks like'],
     learn: [{ h: 'Minkänäköinen hän on?', body: `Use *on* for what someone **is**, *-lla on* for what someone **has**:
 *Hän on nuori ja pitkä.* · *Hänellä on pitkä musta tukka ja vihreät silmät.*
-*Hänellä on parta ja silmälasit.*` }],
+*Hänellä on parta ja silmälasit.*
+Plural body parts take plural adjectives: *siniset silmät, pitkät hiukset, isot korvakorut*.` },
+      { h: 'Millainen or minkänäköinen?', body: `*Minkänäköinen hän on?* asks only about looks: *Hän on pitkä ja tummatukkainen.*
+*Millainen hän on?* asks what someone is like, often character: *Hän on ystävällinen ja vähän hiljainen.*` }],
     topics: ['appearance'], skills: ['vocab', 'have'],
   },
   {
@@ -325,7 +426,8 @@ Learn them in pairs: *iso ↔ pieni, uusi ↔ vanha, kallis ↔ halpa, helppo �
       { h: 'Kenen? Minkä? → -n', body: `The genitive ends in *-n* and comes **before** the thing owned:
 *Kenen auto tämä on?* — *Tämä on lääkärin auto.*
 *Helsingin pormestari* = the mayor of Helsinki.
-Pronouns: *minun, sinun, hänen, meidän, teidän, heidän*.` },
+Pronouns: *minun, sinun, hänen, meidän, teidän, heidän*.
+Written Finnish adds a possessive suffix: *minun autoni, sinun autosi, hänen autonsa*. In everyday speech: *minun auto*.` },
       { h: 'Watch the stem', body: `Gradation and word type apply (same stem as the t-plural):
 |*pöytä*|*pöydän*|
 |*kauppa*|*kaupan*|
@@ -333,8 +435,21 @@ Pronouns: *minun, sinun, hänen, meidän, teidän, heidän*.` },
 |*huone*|*huoneen*|
 |*käsi*|*käden*|
 The genitive is also used with "must": *Minun pitää mennä.* (I must go.) and with postpositions: *pöydän alla* (under the table).` },
+      { h: 'Whose is it? X on Mirjan.', body: `The genitive can also stand on its own after *on*:
+*Kenen omena on?* — *Omena on Jukan.* · *Kenen tämä on?* — *Se on minun.*
+*Kirja on Annan.* = The book is Anna's.` },
+      { h: 'Category words', body: `|*eläin*|animal|*koira, hevonen, lehmä*|
+|*hedelmä*|fruit|*omena, banaani, päärynä*|
+|*vihannes*|vegetable|*porkkana, kurkku, sipuli*|
+|*marja*|berry|*mustikka, puolukka, mansikka*|
+|*huonekalu*|furniture|*sohva, pöytä, sänky*|
+|*kulkuneuvo*|vehicle|*auto, bussi, juna*|
+|*vaate*|clothing|*paita, housut, takki*|
+|*astia*|dish|*lautanen, kuppi, lasi*|
+|*työkalu*|tool|*vasara*|
+> Practise with the genitive: *koiran nimi, auton ovi, sohvan väri*.` },
     ],
-    topics: ['genitive'], skills: ['genitive', 'genitivePron', 'vocab'],
+    topics: ['genitive'], skills: ['genitive', 'genitivePron', 'vocab', 'genPred'], reading: 'r-whose',
   },
   {
     id: 'm2-11', mod: 'm2', title: 'Revision: grammar', fi: 'Kertaus: kielioppi', icon: 'repeat', revision: true,
@@ -350,19 +465,21 @@ The genitive is also used with "must": *Minun pitää mennä.* (I must go.) and 
     goals: ['Know when to use the partitive', 'Form it for common words'],
     learn: [
       { h: 'When?', body: `The partitive means "some of / an unbounded amount". Use it:
-• after numbers 2+: *kaksi kissaa, kolme euroa*
-• with amounts: *kilo lihaa, lasi viiniä, paljon vettä*
-• with uncountable stuff: *Juon kahvia. Syön leipää.*
-• in negative sentences: *Minulla ei ole autoa.*
-• with some verbs: *rakastaa, odottaa, auttaa, ajatella*: *Rakastan sinua.*
-• in greetings: *Hyvää huomenta!*` },
+• after numbers 2+: *kaksi kissaa, kolme euroa* (but *yksi kissa*)
+• after amount words: *kilo lihaa, lasi viiniä, pari omenaa, nippu tilliä, pussi karkkia, paljon vettä*
+• with eating and drinking: *Juon kahvia. Syön leipää.*
+• when the amount is open ("some"): *Lasissa on maitoa.* *Saanko lisää kahvia?* *Tarvitsen kangasta.*
+• in negative sentences: *Minulla ei ole autoa.* *En juo kahvia.* *Emme osta leipää.*
+• with some verbs: *rakastaa, odottaa, auttaa, ajatella, kiittää, opiskella, harrastaa, etsiä*: *Rakastan sinua.*
+• in greetings and wishes: *Hyvää huomenta! Päivää! Iltaa! Hyvää matkaa!*
+> Compare: *Minulla on kissa.* → *Minulla ei ole kissaa.*` },
       { h: 'How? Three endings', body: `|**-a / -ä**|most words ending in one vowel|*talo → taloa, kissa → kissaa*|
 |**-ta / -tä**|long vowel, diphthong or consonant|*maa → maata, puhelin → puhelinta*|
 |**-tta / -ttä**|words ending in -e|*huone → huonetta*|
 Old *-i* words change the stem: *nimi → nimeä*, *kieli → kieltä*, *vesi → vettä*.
 > No gradation in the partitive: *pöytä → pöytää*, *kauppa → kauppaa*.` },
     ],
-    topics: ['partitive'], skills: ['partitive', 'have', 'vocab'],
+    topics: ['partitive'], skills: ['partitive', 'have', 'vocab', 'partNeg'],
   },
   {
     id: 'm3-2', mod: 'm3', title: 'Verb types 1–5', fi: 'Verbityypit 1–5', icon: 'puzzle',
@@ -378,6 +495,13 @@ Old *-i* words change the stem: *nimi → nimeä*, *kieli → kieltä*, *vesi �
 Hän-forms: type 2 doesn't lengthen (*hän syö*), and a long vowel stays as it is (*hän pelaa, hän tapaa*).
 Irregular friends: *tehdä → teen, hän tekee* · *nähdä → näen, hän näkee*.
 > Type 3 & 4 gradation goes **the other way**: *ajatella → ajattelen*, *tavata → tapaan*.` },
+      { h: 'Full tables: one verb per type', body: `|type|*minä*|*sinä*|*hän*|*me*|*te*|*he*|*en …*|
+|1 *puhua*|*puhun*|*puhut*|*puhuu*|*puhumme*|*puhutte*|*puhuvat*|*puhu*|
+|2 *syödä*|*syön*|*syöt*|*syö*|*syömme*|*syötte*|*syövät*|*syö*|
+|3 *tulla*|*tulen*|*tulet*|*tulee*|*tulemme*|*tulette*|*tulevat*|*tule*|
+|4 *haluta*|*haluan*|*haluat*|*haluaa*|*haluamme*|*haluatte*|*haluavat*|*halua*|
+|5 *tarvita*|*tarvitsen*|*tarvitset*|*tarvitsee*|*tarvitsemme*|*tarvitsette*|*tarvitsevat*|*tarvitse*|
+The present tense also covers the future: *Menen kauppaan huomenna.* = I'll go to the shop tomorrow.` },
     ],
     topics: ['verbtypes'], skills: ['verbtype', 'vt15', 'vt15neg'], verbLesson: 'm3-2',
   },
@@ -385,8 +509,20 @@ Irregular friends: *tehdä → teen, hän tekee* · *nähdä → näen, hän nä
     id: 'm3-3', mod: 'm3', title: 'Home', fi: 'Koti', icon: 'home',
     goals: ['Describe rooms & furniture', 'Use postpositions (under, next to…)'],
     learn: [
-      { h: 'Rooms', body: `*keittiö (K), olohuone (OH), makuuhuone (MH), kylpyhuone (KH), vessa (WC), sauna (S), parveke (P), eteinen (ET)*
-Flat sizes: *yksiö* (1 room + kitchen), *kaksio* (2h+k), *kolmio* (3h+k).
+      { h: 'Homes and rooms', body: `Types of homes: *kerrostalo* (block of flats), *pienkerrostalo* (low-rise block), *rivitalo* (terraced house), *paritalo* (semi-detached), *omakotitalo* (detached house).
+|*K*|*keittiö*|kitchen|
+|*OH*|*olohuone*|living room|
+|*MH*|*makuuhuone*|bedroom|
+|*KH / KPH*|*kylpyhuone*|bathroom|
+|*VH*|*vaatehuone*|walk-in closet|
+|*ET*|*eteinen*|hallway|
+|*S*|*sauna*|sauna|
+|*P*|*parveke*|balcony|
+|*WC*|*vessa*|toilet|
+|*AVOK*|*avokeittiö*|open-plan kitchen|` },
+      { h: 'Reading a flat ad', body: `Flat sizes count the rooms **plus** a kitchen: *yksiö* (1h+k), *kaksio* (2h+k), *kolmio* (3h+k), *neljän huoneen asunto* (4h+k; some ads call it a *neliö*).
+Area is in square metres: *68 m²* is said *68 neliötä* (short for *neliömetriä*).
+*Missä sinä asut?* — *Asun kerrostalossa, kaksiossa.* · *Asunto on neljännessä kerroksessa.*
 > An ad saying "3H+K+S" means three rooms, a kitchen and a sauna. Yes, many flats have their own sauna.` },
       { h: 'Postpositions: genitive + word', body: `|*pöydän päällä*|on the table|
 |*pöydän alla*|under the table|
@@ -395,7 +531,7 @@ Flat sizes: *yksiö* (1 room + kitchen), *kaksio* (2h+k), *kolmio* (3h+k).
 |*oven takana*|behind the door|
 *Missä kissa on?* — *Kissa on sängyn alla.*` },
     ],
-    topics: ['home'], skills: ['postpos', 'vocab'],
+    topics: ['home'], skills: ['postpos', 'vocab'], reading: 'r-flat',
   },
   {
     id: 'm3-4', mod: 'm3', title: 'Nouns: word types & kpt', fi: 'Sanatyypit ja astevaihtelu', icon: 'repeat',
@@ -407,14 +543,35 @@ Flat sizes: *yksiö* (1 room + kitchen), *kaksio* (2h+k), *kolmio* (3h+k).
 |*-si*|*-si → -de-*|*uusi → uuden, käsi → käden*|
 |*-e*|add *-e-*|*huone → huoneen*|
 |*-nen*|*-nen → -se-*|*nainen → naisen*|
-|*-as / -is*|*-as → -aa-*|*rikas → rikkaan*|
+|*-as / -is*|*-as → -aa-*, *-is → -ii-*|*rikas → rikkaan, kallis → kalliin*|
+|*-ut / -yt*|*-ut → -ue-*|*olut → oluen, lyhyt → lyhyen*|
+|*-uus / -yys*|*-uus → -uude-*|*kansalaisuus → kansalaisuuden*|
 |*-in*|*-in → -ime-*|*puhelin → puhelimen*|
 |*-us/-ys*|*-us → -ukse-*|*kysymys → kysymyksen*|` },
-      { h: 'kpt in nouns: A-type and B-type', body: `**A (strong basic form)**: weakens in genitive/plural: *kauppa → kaupan*, *katu → kadun*, *pankki → pankin*.
-**B (weak basic form)**: *strengthens* in the stem: *hammas → hampaan*, *rikas → rikkaan*, *parveke → parvekkeen*.
+      { h: 'kpt in nouns: group A (strong → weak)', body: `In **A-words** the basic form is strong; the genitive, the t-plural and most cases are weak:
+|*kk → k*|*pankki → pankin*|
+|*pp → p*|*kauppa → kaupan*|
+|*tt → t*|*katto → katon*|
+|*k → –*|*jalka → jalan*, *ruoka → ruoan*|
+|*p → v*|*leipä → leivän*|
+|*t → d*|*katu → kadun*|
+|*nk → ng*|*kenkä → kengän*|
+|*mp → mm*|*kampa → kamman*|
+|*lt → ll*|*ilta → illan*|
+|*nt → nn*|*ranta → rannan*|
+|*rt → rr*|*parta → parran*|
+> The partitive and the illative keep the strong form: *kauppaa, kauppaan*.` },
+      { h: 'kpt in nouns: group B (weak → strong)', body: `**B-words** work the other way: the basic form is weak and the stem is strong. Most end in *-e* or *-as / -is*:
+|*t → tt*|*osoite → osoitteen*|
+|*k → kk*|*parveke → parvekkeen*, *rikas → rikkaan*|
+|*d → t*|*sade → sateen*, *tehdas → tehtaan*|
+|*p → pp*|*opas → oppaan*, *saapas → saappaan*|
+|*mm → mp*|*hammas → hampaan*, *lammas → lampaan*|
+|*ng → nk*|*rengas → renkaan*|
+The plural follows the stem: *sateet, hampaat, parvekkeet*. The partitive keeps the weak basic form: *sadetta, hammasta*.
 > In doubt? Check the word card in SuomiT. Every noun shows its genitive, partitive and plural.` },
     ],
-    topics: ['gradation', 'plural', 'harmony'], skills: ['genitive', 'tplural'],
+    topics: ['gradation', 'plural', 'harmony'], skills: ['genitive', 'tplural', 'gradAB'],
   },
   {
     id: 'm3-5', mod: 'm3', title: 'Revision: verb types & partitive', fi: 'Kertaus', icon: 'repeat', revision: true,
@@ -468,8 +625,17 @@ Use them for surfaces and open places: *pöydällä, torilla, asemalla, rannalla
       { h: 'Forming the illative (to where)', body: `|vowel ending|repeat the vowel + *n*|*talo → taloon*, *koulu → kouluun*|
 |one syllable, long vowel|*-h + vowel + n*|*maa → maahan*, *työ → työhön*|
 |2+ syllables, long vowel in the stem|*-seen*|*huone → huoneeseen*, *Espoo → Espooseen*|` },
+      { h: 'The six local cases by name', body: `|question|inner (in)|outer (on / at)|
+|*missä?* where|inessiivi *-ssa*|adessiivi *-lla*|
+|*mistä?* from where|elatiivi *-sta*|ablatiivi *-lta*|
+|*mihin?* to where|illatiivi *-Vn, -hVn, -seen*|allatiivi *-lle*|
+You don't need the names to speak, but grammar books and videos use them.` },
+      { h: 'Verbs pick the question', body: `|*olla, asua, istua, käydä*|→ *missä?*|*Asun Oulussa. Käyn kaupassa.*|
+|*tulla, lähteä*|→ *mistä?*|*Tulen töistä. Lähden kotoa.*|
+|*mennä, matkustaa, tulla* (to)|→ *mihin?*|*Menen kirjastoon. Tulen kotiin.*|
+> *Käydä* means "go and come back": *Käyn postissa.* = I'll pop into the post office.` },
     ],
-    topics: ['places'], skills: ['local', 'vocab'],
+    topics: ['places'], skills: ['local', 'vocab', 'caseVerb'], reading: 'r-city',
   },
   {
     id: 'm4-3', mod: 'm4', title: 'Time & clock', fi: 'Kellonajat', icon: 'clock',
@@ -486,7 +652,7 @@ Use them for surfaces and open places: *pöydällä, torilla, asemalla, rannalla
 |1 *yhdeltä*|2 *kahdelta*|3 *kolmelta*|4 *neljältä*|
 |5 *viideltä*|6 *kuudelta*|7 *seitsemältä*|8 *kahdeksalta*|
 |9 *yhdeksältä*|10 *kymmeneltä*|11 *yhdeltätoista*|12 *kahdeltatoista*|
-Times of day: *aamulla, päivällä, iltapäivällä, illalla, yöllä*.` },
+Times of day (*vuorokaudenajat*): *aamulla, aamupäivällä, päivällä, iltapäivällä, illalla, yöllä*.` },
     ],
     topics: ['time'], skills: ['clock', 'clockAbl', 'vocab'],
   },

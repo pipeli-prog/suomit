@@ -1,7 +1,7 @@
 // SuomiT vocabulary. Written for SuomiT; topics follow the course order.
 // Line format:  fi | english | pos | forms (genitive partitive plural) | example (fi = en)
 // pos: n noun, a adjective, p phrase, adv adverb, q question word, pr pronoun, num number, x other
-// "## id | lesson | Title | emoji" starts a topic.
+// "## id | lesson | Title | icon" starts a topic (icon = name from js/icons.js).
 const RAW = `
 ## sounds | m1-1 | Sounds & letters | type
 tuli|fire|n|tulen tulta tulet
@@ -31,9 +31,18 @@ kirjain|letter (of the alphabet)|n|kirjaimen kirjainta kirjaimet
 vokaali|vowel|n|vokaalin vokaalia vokaalit
 konsonantti|consonant|n|konsonantin konsonanttia konsonantit
 Miten se kirjoitetaan?|How is it spelled?|p
-Mikä sinun nimi on?|What is your name?|p
+Mikä sinun nimi on?|What is your name? (everyday)|p
+Mikä sinun nimesi on?|What is your name? (written)|p
 sukunimi|surname|n|sukunimen sukunimeä sukunimet
 osoite|address|n|osoitteen osoitetta osoitteet
+toinen nimi|middle name|n
+Se kirjoitetaan...|It is spelled...|p
+Kaunis nimi!|What a beautiful name!|p
+pitkä vokaali|long vowel|n
+kaksoiskonsonantti|double consonant|n|kaksoiskonsonantin kaksoiskonsonanttia kaksoiskonsonantit
+diftongi|diphthong (vowel pair)|n|diftongin diftongia diftongit
+Vesihiisi sihisi hississä.|The water sprite hissed in the lift. (tongue twister)|p
+Mustan kissan paksut posket.|The black cat's fat cheeks. (tongue twister)|p
 
 ## numbers | m1-2 | Numbers & prices | hash
 nolla|zero|num
@@ -65,6 +74,20 @@ kuitti|receipt|n|kuitin kuittia kuitit
 kassa|checkout, till|n|kassan kassaa kassat
 tarjous|special offer|n|tarjouksen tarjousta tarjoukset
 alennus|discount|n|alennuksen alennusta alennukset
+yhteensä|in total|adv
+Paljonko se maksaa?|How much is it?|p
+Mikä sinun puhelinnumerosi on?|What is your phone number?|p
+Numeroni on...|My number is...|p
+ykkönen|number one (bus, grade, digit)|n|ykkösen ykköstä ykköset
+kakkonen|number two (bus, grade, digit)|n|kakkosen kakkosta kakkoset
+kolmonen|number three (bus, grade, digit)|n|kolmosen kolmosta kolmoset
+nelonen|number four (bus, grade, digit)|n|nelosen nelosta neloset
+vitonen|number five; a five-euro note|n|vitosen vitosta vitoset
+kutonen|number six (bus, grade, digit)|n|kutosen kutosta kutoset
+seiska|number seven (spoken)|n|seiskan seiskaa seiskat
+kasi|number eight (spoken)|n|kasin kasia kasit
+ysi|number nine (spoken)|n|ysin ysiä ysit
+kymppi|number ten; a ten-euro note (spoken)|n|kympin kymppiä kympit
 
 ## greetings | m1-3 | Greetings & phrases | wave
 Hei!|Hi!|p
@@ -100,6 +123,16 @@ Hyvää matkaa!|Have a good trip!|p
 Hyvää joulua!|Merry Christmas!|p
 Hyvää päivänjatkoa!|Have a nice rest of the day!|p
 Kiitos samoin!|Thanks, you too!|p
+Samoin!|Likewise! / You too!|p
+Päivää!|Good day! (short)|p
+Huomenta!|Morning! (short)|p
+Iltaa!|Evening! (short)|p
+Kiitos ruoasta!|Thank you for the food!|p
+Kiitos illallisesta!|Thank you for the dinner!|p
+Toivottavasti maistuu!|I hope you enjoy it! (food)|p
+Hyvää yötä myös sinulle!|Good night to you too!|p
+illallinen|dinner, supper|n|illallisen illallista illalliset
+luokka|classroom; class|n|luokan luokkaa luokat
 Nuku hyvin!|Sleep well!|p
 Puhutko englantia?|Do you speak English?|p
 En ymmärrä.|I don't understand.|p
@@ -135,6 +168,8 @@ iloinen|happy|a|iloisen iloista iloiset
 mies|man|n|miehen miestä miehet
 nainen|woman|n|naisen naista naiset
 ranskalainen|French (person)|a|ranskalaisen ranskalaista ranskalaiset
+Olen 30-vuotias.|I'm 30 years old.|p
+Me olemme iloisia.|We are happy.|p
 
 ## days | m1-5 | Days of the week | calendar
 maanantai|Monday|n|maanantain maanantaita maanantait
@@ -156,6 +191,12 @@ toissapäivänä|the day before yesterday|adv
 nyt|now|adv
 pian|soon|adv
 Mikä päivä tänään on?|What day is it today?|p
+Mikä päivä eilen oli?|What day was it yesterday?|p
+viikonloppuna|at the weekend|adv
+joka päivä|every day|adv
+ensi viikolla|next week|adv
+vapaapäivä|day off|n|vapaapäivän vapaapäivää vapaapäivät
+Milloin sinä menet töihin?|When do you go to work?|p
 
 ## harmony | m1-6 | Vowel harmony | scale
 talo|house|n|talon taloa talot
@@ -203,6 +244,38 @@ pohjoinen|north|n|pohjoisen pohjoista
 etelä|south|n|etelän etelää
 itä|east|n|idän itää
 länsi|west|n|lännen länttä
+Mistä maasta sinä olet?|Which country are you from?|p
+Äidinkieleni on venäjä.|My mother tongue is Russian.|p
+Suomi|Finland; Finnish (the language)|n|Suomen Suomea
+suomalainen|Finn, Finnish (person)|a|suomalaisen suomalaista suomalaiset
+Ruotsi|Sweden; Swedish (the language)|n|Ruotsin Ruotsia
+ruotsalainen|Swede, Swedish (person)|a|ruotsalaisen ruotsalaista ruotsalaiset
+Norja|Norway; Norwegian (the language)|n|Norjan Norjaa
+norjalainen|Norwegian (person)|a|norjalaisen norjalaista norjalaiset
+Tanska|Denmark; Danish (the language)|n|Tanskan Tanskaa
+tanskalainen|Dane, Danish (person)|a|tanskalaisen tanskalaista tanskalaiset
+Viro|Estonia; Estonian (the language)|n|Viron Viroa
+virolainen|Estonian (person)|a|virolaisen virolaista virolaiset
+Venäjä|Russia; Russian (the language)|n|Venäjän Venäjää
+venäläinen|Russian (person)|a|venäläisen venäläistä venäläiset
+Saksa|Germany; German (the language)|n|Saksan Saksaa
+saksalainen|German (person)|a|saksalaisen saksalaista saksalaiset
+Ranska|France; French (the language)|n|Ranskan Ranskaa
+ranskalainen|French (person)|a|ranskalaisen ranskalaista ranskalaiset
+Espanja|Spain; Spanish (the language)|n|Espanjan Espanjaa
+espanjalainen|Spanish (person)|a|espanjalaisen espanjalaista espanjalaiset
+Italia|Italy; Italian (the language)|n|Italian Italiaa
+italialainen|Italian (person)|a|italialaisen italialaista italialaiset
+Englanti|England; English (the language)|n|Englannin Englantia
+englantilainen|English (person)|a|englantilaisen englantilaista englantilaiset
+Hollanti|the Netherlands; Dutch (the language)|n|Hollannin Hollantia
+hollantilainen|Dutch (person)|a|hollantilaisen hollantilaista hollantilaiset
+Kiina|China; Chinese (the language)|n|Kiinan Kiinaa
+kiinalainen|Chinese (person)|a|kiinalaisen kiinalaista kiinalaiset
+Japani|Japan; Japanese (the language)|n|Japanin Japania
+japanilainen|Japanese (person)|a|japanilaisen japanilaista japanilaiset
+Yhdysvallat|the United States|n
+amerikkalainen|American (person)|a|amerikkalaisen amerikkalaista amerikkalaiset
 
 ## verbs1 | m1-9 | Verb type 1 | run
 ## qwords | m1-10 | Question words | help
@@ -220,6 +293,8 @@ millainen|what kind of|q
 kuinka vanha|how old|q
 kuinka monta|how many|q
 kuinka paljon|how much|q
+mistä maasta|from which country|q
+Kuinka vanha sinä olet?|How old are you?|p
 paljonko|how much|q
 mihin aikaan|at what time|q
 minkä maalainen|what nationality|q
@@ -289,6 +364,12 @@ Aurinko paistaa.|The sun is shining.|p
 Tuulee.|It's windy.|p
 On pakkasta.|It's freezing.|p
 On kaunis ilma.|It's beautiful weather.|p
+lempivuodenaika|favourite season|n|lempivuodenajan lempivuodenaikaa lempivuodenajat
+lempiväri|favourite colour|n|lempivärin lempiväriä lempivärit
+lempiruoka|favourite food|n|lempiruoan lempiruokaa lempiruoat
+Mikä on sinun lempivuodenaikasi?|What is your favourite season?|p
+Mistä säästä et tykkää?|What kind of weather don't you like?|p
+Tykkään aurinkoisesta säästä.|I like sunny weather.|p
 
 ## months | m2-3 | Months & seasons | calendar
 tammikuu|January|n|tammikuun tammikuuta
@@ -321,6 +402,18 @@ syntymäpäivä|birthday|n|syntymäpäivän syntymäpäivää syntymäpäivät
 nimipäivä|name day|n|nimipäivän nimipäivää nimipäivät
 loma|holiday, vacation|n|loman lomaa lomat
 mökki|summer cottage|n|mökin mökkiä mökit
+Missä kuussa sinä olet syntynyt?|In which month were you born?|p
+Olen syntynyt toukokuussa.|I was born in May.|p
+loska|slush|n|loskan loskaa loskat
+kaamos|polar night, the dark season|n|kaamoksen kaamosta kaamokset
+vuorokaudenaika|time of day|n|vuorokaudenajan vuorokaudenaikaa vuorokaudenajat
+aamu|morning|n|aamun aamua aamut
+ilta|evening|n|illan iltaa illat
+yö|night|n|yön yötä yöt
+aamulla|in the morning|adv
+päivällä|during the day|adv
+illalla|in the evening|adv
+yöllä|at night|adv
 
 ## verbs1kpt | m2-4 | Verb type 1 + kpt | gear
 ## colors | m2-5 | Colours | palette
@@ -379,6 +472,13 @@ sormus|ring|n|sormuksen sormusta sormukset
 kello|watch; clock|n|kellon kelloa kellot
 Mitä sinulla on päällä?|What are you wearing?|p
 Minulla on päällä...|I'm wearing...|p
+koko|size|n|koon kokoa koot
+sovituskoppi|fitting room|n|sovituskopin sovituskoppia sovituskopit
+liian|too (much)|adv
+Saanko sovittaa tätä?|May I try this on?|p
+Mikä koko sinulla on?|What size are you?|p
+Tämä on liian pieni.|This is too small.|p
+Onko teillä tätä isompana?|Do you have this in a bigger size?|p
 
 ## have | m2-7 | "I have" | gift
 koira|dog|n|koiran koiraa koirat
@@ -402,6 +502,7 @@ pyörä|bicycle|n|pyörän pyörää pyörät
 Onko sinulla...?|Do you have...?|p
 Minulla ei ole...|I don't have...|p
 Kenellä on...?|Who has...?|p
+Kenellä ei ole...?|Who doesn't have...?|p
 
 ## appearance | m2-8 | Appearance | smile
 pitkä|tall; long|a|pitkän pitkää pitkät
@@ -433,6 +534,8 @@ hammas|tooth|n|hampaan hammasta hampaat
 kasvot|face|n
 sormi|finger|n|sormen sormea sormet
 Minkänäköinen hän on?|What does he/she look like?|p
+Millainen hän on?|What is he/she like? (character)|p
+ulkonäkö|appearance, looks|n|ulkonäön ulkonäköä ulkonäöt
 
 ## adjectives | m2-9 | Adjectives | sparkle
 iso|big|a|ison isoa isot
@@ -489,6 +592,28 @@ naapuri|neighbour|n|naapurin naapuria naapurit
 omena|apple|n|omenan omenaa omenat
 Kenen tämä on?|Whose is this?|p
 Tämä on minun.|This is mine.|p
+Kirja on Annan.|The book is Anna's.|p
+eläin|animal|n|eläimen eläintä eläimet
+lemmikki|pet|n|lemmikin lemmikkiä lemmikit
+hedelmä|fruit|n|hedelmän hedelmää hedelmät
+vihannes|vegetable|n|vihanneksen vihannesta vihannekset
+marja|berry|n|marjan marjaa marjat
+huonekalu|piece of furniture|n|huonekalun huonekalua huonekalut
+kulkuneuvo|vehicle|n|kulkuneuvon kulkuneuvoa kulkuneuvot
+astia|dish, container|n|astian astiaa astiat
+työkalu|tool|n|työkalun työkalua työkalut
+päärynä|pear|n|päärynän päärynää päärynät
+sitruuna|lemon|n|sitruunan sitruunaa sitruunat
+puolukka|lingonberry|n|puolukan puolukkaa puolukat
+vadelma|raspberry|n|vadelman vadelmaa vadelmat
+lakka|cloudberry|n|lakan lakkaa lakat
+vasara|hammer|n|vasaran vasaraa vasarat
+lautanen|plate|n|lautasen lautasta lautaset
+haarukka|fork|n|haarukan haarukkaa haarukat
+veitsi|knife|n|veitsen veistä veitset
+lusikka|spoon|n|lusikan lusikkaa lusikat
+tavara|thing, stuff|n|tavaran tavaraa tavarat
+lelu|toy|n|lelun lelua lelut
 
 ## partitive | m3-1 | Partitive | cup
 leipä|bread|n|leivän leipää leivät
@@ -535,6 +660,14 @@ pari|a couple of; pair|n|parin paria parit
 paljon|a lot, much|adv
 vähän|a little|adv
 Saanko...?|May I have...?|p
+nippu|bunch|n|nipun nippua niput
+pussi|bag (plastic or paper), packet|n|pussin pussia pussit
+purkki|jar, tin, pot|n|purkin purkkia purkit
+paketti|packet, parcel|n|paketin pakettia paketit
+kannu|jug, pot|n|kannun kannua kannut
+kangas|fabric, cloth|n|kankaan kangasta kankaat
+Saanko lisää kahvia?|Could I have some more coffee?|p
+Lasissa on maitoa.|There is (some) milk in the glass.|p
 
 ## verbtypes | m3-2 | Verb types 1–5 | puzzle
 ## home | m3-3 | Home & furniture | home
@@ -543,6 +676,8 @@ asunto|apartment, flat|n|asunnon asuntoa asunnot
 kerrostalo|apartment building|n|kerrostalon kerrostaloa kerrostalot
 omakotitalo|detached house|n|omakotitalon omakotitaloa omakotitalot
 rivitalo|terraced house|n|rivitalon rivitaloa rivitalot
+paritalo|semi-detached house|n|paritalon paritaloa paritalot
+pienkerrostalo|low-rise block of flats|n|pienkerrostalon pienkerrostaloa pienkerrostalot
 keittiö|kitchen|n|keittiön keittiötä keittiöt
 olohuone|living room|n|olohuoneen olohuonetta olohuoneet
 makuuhuone|bedroom|n|makuuhuoneen makuuhuonetta makuuhuoneet
@@ -555,6 +690,15 @@ piha|yard|n|pihan pihaa pihat
 yksiö|studio (1 room)|n|yksiön yksiötä yksiöt
 kaksio|2-room flat|n|kaksion kaksiota kaksiot
 kolmio|3-room flat|n|kolmion kolmiota kolmiot
+avokeittiö|open-plan kitchen|n|avokeittiön avokeittiötä avokeittiöt
+neliö|square; square metre (spoken)|n|neliön neliötä neliöt
+neliömetri|square metre|n|neliömetrin neliömetriä neliömetrit
+pinta-ala|floor area|n|pinta-alan pinta-alaa pinta-alat
+kerros|floor, storey|n|kerroksen kerrosta kerrokset
+hissi|lift, elevator|n|hissin hissiä hissit
+vuokra|rent|n|vuokran vuokraa vuokrat
+Missä sinä asut?|Where do you live?|p
+Asun kerrostalossa.|I live in a block of flats.|p
 tuoli|chair|n|tuolin tuolia tuolit
 nojatuoli|armchair|n|nojatuolin nojatuolia nojatuolit
 sänky|bed|n|sängyn sänkyä sängyt
@@ -592,6 +736,17 @@ lähellä|near|x
 keskellä|in the middle of|x
 
 ## gradation | m3-4 | Nouns: word types & kpt | repeat
+kampa|comb|n|kamman kampaa kammat
+opas|guide|n|oppaan opasta oppaat
+tehdas|factory|n|tehtaan tehdasta tehtaat
+rengas|tyre; ring|n|renkaan rengasta renkaat
+liike|shop, business; movement|n|liikkeen liikettä liikkeet
+hammas|tooth|n|hampaan hammasta hampaat
+sade|rain|n|sateen sadetta sateet
+parveke|balcony|n|parvekkeen parveketta parvekkeet
+kauppa|shop|n|kaupan kauppaa kaupat
+katu|street|n|kadun katua kadut
+kenkä|shoe|n|kengän kenkää kengät
 ## rev3a | m3-5 | Revision: verbs & partitive | repeat
 ## rev3b | m3-6 | Revision: kpt, word order, VT5 | repeat
 ## read3a | m3-7 | Reading: my room | read
@@ -628,6 +783,9 @@ suoraan|straight ahead|adv
 täällä|here|adv
 siellä|there|adv
 Missä on...?|Where is...?|p
+Mihin sinä menet?|Where are you going?|p
+Mistä sinä tulet?|Where are you coming from?|p
+Käyn kaupassa.|I'm popping into the shop.|p
 
 ## time | m4-3 | Time & clock | clock
 kello|o'clock|n|kellon kelloa kellot
@@ -647,6 +805,7 @@ yö|night|n|yön yötä yöt
 vuorokausi|day (24 hours)|n|vuorokauden vuorokautta vuorokaudet
 aamulla|in the morning|adv
 päivällä|during the day|adv
+aamupäivällä|in the late morning|adv
 iltapäivällä|in the afternoon|adv
 illalla|in the evening|adv
 yöllä|at night|adv

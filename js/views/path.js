@@ -12,6 +12,7 @@ import { strength } from '../srs.js';
 import { checkAchievements } from '../gamify.js';
 import { rerender, go } from '../app.js';
 import { wordRow, wireWordRows } from './words.js';
+import { setsFor, setCards, wireSetCards, playSet } from '../practice.js';
 
 const stars = n => `<span class="stars">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}">★</i>`).join('')}</span>`;
 
@@ -88,7 +89,9 @@ export function renderLesson(el, id, tab = 'learn') {
         return `<button class="drill" data-s="${s}"><span class="d-ico">${icon(SKILL_ICON[s] || 'puzzle')}</span><div class="d-t"><b>${esc(SKILL_NAMES[s])}</b>
           <div class="mini-bar"><div style="width:${acc ?? 0}%"></div></div></div><span class="muted small">${acc == null ? 'new' : acc + '%'}</span></button>`;
       }).join('') : ''}
+      ${setsFor(id).length ? `<h3 class="sec">${icon('book')} From your course resources</h3><p class="muted small">The course's external exercises, rebuilt inside SuomiT.</p>${setCards(id, setsFor(id))}` : ''}
       <p class="muted small center">Drills generate fresh questions every time, so you can't run out.</p>`;
+    wireSetCards(body, id, rerender);
     body.querySelector('#p-mix').onclick = () => start('practice');
     body.querySelector('#p-test').onclick = () => start('test');
     body.querySelectorAll('[data-s]').forEach(b => b.onclick = () => runSession({ title: SKILL_NAMES[b.dataset.s], mode: 'drill', questions: skillDrill(b.dataset.s, 12), onClose: rerender, again: () => b.click() }));
@@ -111,8 +114,16 @@ export function renderLesson(el, id, tab = 'learn') {
       const items = res.filter(r => r.t === t); if (!items.length) return '';
       return `<h3 class="sec">${h}</h3>` + items.map(r => `<div class="res ${S.res[r.u] ? 'done' : ''}">
         <button class="chk" data-u="${esc(r.u)}" aria-label="Mark done">${S.res[r.u] ? '✓' : ''}</button>
-        <a href="${esc(r.u)}" target="_blank" rel="noopener" data-t="${t}" class="res-a"><b>${esc(r.n)}</b><span class="muted small">${esc(new URL(r.u).hostname.replace('www.', ''))}</span></a></div>`).join('');
+        <a href="${esc(r.u)}" target="_blank" rel="noopener" data-t="${t}" class="res-a"><b>${esc(r.n)}</b><span class="muted small">${t === 'video' ? 'plays here' : setsFor(id, r.u).length ? 'rebuilt in SuomiT · original ↗' : esc(new URL(r.u).hostname.replace('www.', '')) + ' ↗'}</span></a>
+        ${setsFor(id, r.u).length ? `<button class="btn sm inapp" data-src="${esc(r.u)}">${icon('play')} ${setsFor(id, r.u).length > 1 ? setsFor(id, r.u).length + ' sets' : 'Practise'}</button>` : ''}</div>`).join('');
     }).join('') : `<p class="muted">No external resources for this lesson. The drills have you covered.</p>`;
+    body.querySelectorAll('.inapp').forEach(b => b.onclick = () => {
+      const sets = setsFor(id, b.dataset.src);
+      if (sets.length === 1) return playSet(id, sets[0], rerender);
+      const m = modal(`<h3>Practise in SuomiT</h3><div class="psets">${setCards(id, sets)}</div>`);
+      wireSetCards(m.el, id, () => { m.close(); rerender(); });
+      m.el.querySelectorAll('[data-set]').forEach(x => x.addEventListener('click', () => m.close()));
+    });
     body.querySelectorAll('.chk').forEach(b => b.onclick = () => {
       const u = b.dataset.u;
       if (S.res[u]) delete S.res[u]; else { S.res[u] = Date.now(); store.addXp(5); toast('+5 XP', 'check', 1200); }

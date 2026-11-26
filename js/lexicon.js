@@ -4,6 +4,7 @@ import { VERBS } from '../data/verbs.js';
 import { COUNTRIES, PLACES, NAMES } from '../data/grammar.js';
 import { present, negative, past, local, hv, OLLA_SPOKEN, ADESSIVE_PRON, GENITIVE_PRON, PERSONS, numWord } from './fi.js';
 import { state } from './store.js';
+import { PRACTICE } from '../data/practice/index.js';
 
 let IDX = null;
 const add = (form, entry, note) => {
@@ -50,6 +51,10 @@ function build() {
   }
   for (const n of NAMES) { add(n.gen, { fi: n.fi, en: `${n.fi}'s`, pos: 'name' }); add(n.ade, { fi: n.fi, en: `${n.fi} has… (at ${n.fi})`, pos: 'name' }); }
   for (let i = 0; i <= 100; i++) add(numWord(i), { fi: numWord(i), en: String(i), pos: 'num' });
+  for (const sets of Object.values(PRACTICE)) for (const st of sets) {
+    const pairs = st.kind === 'pairs' ? st.items : st.kind === 'listen' ? st.items.map(q => [q.fi, q.en]) : [];
+    for (const [fi, en] of pairs) if (fi && en && !String(fi).includes(' ')) add(fi, { fi, en, pos: 'x' });
+  }
 }
 
 /** Look up a token. Returns {fi, en, pos, note, id?} or null. */
