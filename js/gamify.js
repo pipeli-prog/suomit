@@ -106,7 +106,7 @@ export const isEquipped = it => {
 };
 
 // ------------------------------------------------------------ Yllätyslaatikko (surprise box): uniform random over unowned cosmetics
-export const LOOT_PRICE = 120;
+export const LOOT_PRICE = 100;
 export const KIND_LABEL = { animal: 'New friend', theme: 'New theme', hat: 'New hat', face: 'New glasses', neck: 'New neckwear', color: 'New colour' };
 /** Cosmetics the player does not own yet: every one has exactly the same chance. */
 export const lootPool = () => COSMETICS.filter(it => !owns(it.id));
