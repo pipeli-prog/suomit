@@ -1,0 +1,50 @@
+/* in-app practice sets */
+.pset{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:8px 0;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:left;color:var(--ink)}
+.pset.done{opacity:.6}
+.ps-ico{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--acc2) 18%,transparent)}
+.ps-ico .ic{width:22px;height:22px;color:var(--acc2)}
+.ps-t{display:flex;flex-direction:column;flex:1;min-width:0}.ps-t small{color:var(--mute);font-size:.78rem}
+.ps-go .ic{width:18px;height:18px;color:var(--acc)}
+.res .inapp{flex:none;padding:7px 10px;font-size:.8rem}
+.psets{margin-top:6px}
+
+/* streak calendar */
+.cal-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cal-t{display:flex;flex-direction:column;align-items:center}.cal-t b{font-size:1.15rem;text-transform:capitalize}
+.cal-nav{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center}
+.cal-nav .ic{width:20px;height:20px}.cal-nav.next .ic{transform:scaleX(-1)}.cal-nav:disabled{opacity:.3}
+.cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.cal-g .wd{text-align:center;font-size:.72rem;font-weight:800;color:var(--mute);text-transform:uppercase}
+.cd{position:relative;aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;background:var(--soft);font-size:.85rem}
+.cd b{font-weight:800}.cd .ic{width:14px;height:14px;margin-bottom:1px}
+.cd.empty{background:none}
+.cd.kept{background:linear-gradient(160deg,#ff9d4d,#ff6a3d);color:#fff}
+.cd.frozen{background:linear-gradient(160deg,#7cc4ff,#4a8dff);color:#fff}
+.cd.missed{background:color-mix(in srgb,var(--bad) 22%,transparent);color:color-mix(in srgb,var(--bad) 70%,var(--ink))}
+.cd.partial{background:color-mix(in srgb,var(--warn) 22%,transparent)}
+.cd.today,.cd.today-part{outline:2px solid var(--acc);outline-offset:-2px}
+.cd.future,.cd.before{opacity:.45}
+.cal-leg{display:flex;justify-content:center;gap:14px;margin-top:10px;font-size:.8rem;color:var(--mute)}
+.cal-leg .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.dot.kept{background:#ff7a3d}.dot.frozen{background:#5aa2ff}.dot.missed{background:var(--bad)}
+
+/* end-of-session reward chest */
+.reward-chest{display:flex;flex-direction:column;align-items:center;margin:6px 0 4px}
+.rc-box{position:relative;display:flex;flex-direction:column;align-items:center}
+.chest-svg{width:120px;height:100px;overflow:visible}
+.chest-svg .lid{transform-origin:14px 44px;transition:transform .45s cubic-bezier(.3,1.6,.5,1)}
+.chest-svg .glow{opacity:0;transition:opacity .4s;transform-origin:60px 44px}
+.reward-chest.shake:not(.open) .chest-svg{animation:shake .5s 2}
+.reward-chest.open .lid{transform:rotate(-38deg) translate(-6px,-10px)}
+.reward-chest.open .glow{opacity:1;animation:glowp 1.2s ease-in-out infinite alternate}
+@keyframes glowp{to{transform:scale(1.25);opacity:.5}}
+.rc-tap{font-size:.75rem;font-weight:800;color:var(--mute);margin-top:2px}.reward-chest.open .rc-tap{visibility:hidden}
+.rc-loot{display:flex;gap:12px;margin-top:4px;opacity:0;transform:translateY(10px) scale(.9);transition:.4s cubic-bezier(.2,1.5,.5,1)}
+.reward-chest.show .rc-loot{opacity:1;transform:none}
+.rc-item{min-width:104px;padding:10px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:center}
+.rc-item b{display:block;font-size:1.6rem;font-weight:900}.rc-item small{color:var(--mute);font-weight:700}
+.rc-item.xp b{color:var(--acc)}.rc-item.coins b{color:#ffc94d}
+.loot-home{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,color-mix(in srgb,#ffc94d 20%,var(--card)),var(--card) 70%)}
+.lh-ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,#ffc94d 25%,transparent)}.lh-ico .ic{width:26px;height:26px;color:#ffc94d}
+.lh-p{margin-left:auto;font-weight:900;white-space:nowrap}.lh-p .ic{color:#ffc94d}
+.end .reward-chest{margin:0 0 6px}.end .mascot{display:inline-block}

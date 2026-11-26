@@ -37,7 +37,7 @@ const GEN_RUNS = 400;
 export const key = t => String(t).trim().replace(/\s+/g, ' ');
 // Priority order: when the size cap bites, later categories are dropped first (generator samples
 // are ordered by how often sampling hit them, so the rare ones go first).
-const PRIORITY = ['vocab', 'readings', 'phrases', 'numbers', 'learn', 'verb-drills', 'verbs', 'grammar', 'generators', 'tap-words', 'vocab-forms', 'answers'];
+const PRIORITY = ['vocab', 'readings', 'practice', 'phrases', 'numbers', 'learn', 'verb-drills', 'verbs', 'grammar', 'generators', 'tap-words', 'vocab-forms', 'answers'];
 const BY = Object.fromEntries(PRIORITY.map(c => [c, new Map()])); // category → key → hits
 function add(category, t) {
   if (t == null) return;
@@ -75,6 +75,21 @@ for (const v of VERBS) {
   (F.past(v) || []).forEach((f, p) => add('verb-drills', `Eilen ${F.PERSONS[p]} ${f}.`));
 }
 
+// 2b. in-app practice sets (rebuilt course resources)
+{
+  const { PRACTICE } = await imp('data/practice/index.js');
+  const fiLike = t => typeof t === 'string' && /[a-zäöå]/i.test(t);
+  for (const sets of Object.values(PRACTICE)) for (const st of sets) {
+    const it = st.items || [];
+    if (st.kind === 'pairs') it.forEach(([fi]) => add('practice', fi));
+    if (st.kind === 'listen') it.forEach(q => add('practice', q.fi));
+    if (st.kind === 'order') it.forEach(q => add('practice', q.fi));
+    if (st.kind === 'tf') it.forEach(q => add('practice', q.s));
+    if (st.kind === 'gap') it.forEach(q => { const a = Array.isArray(q.a) ? q.a[0] : q.a; add('practice', q.s.replace(/_{2,}/, a)); });
+    if (st.kind === 'mc') it.forEach(q => { if (q.say) add('practice', q.say); });
+    if (st.kind === 'read') { (st.text || []).forEach(([fi]) => add('practice', fi)); (st.q || []).forEach(q => { add('practice', q.q); (q.o || []).forEach(o => fiLike(o) && add('practice', o)); }); }
+  }
+}
 // 3. readings
 for (const r of READINGS) {
   add('readings', r.title);

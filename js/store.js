@@ -29,23 +29,38 @@ const fresh = () => ({
 
 let S = load();
 const subs = new Set();
+/** Fill in defaults, including NESTED ones (an old save without profile.goal must not break the streak). */
+function hydrate(raw) {
+  const f = fresh(), out = Object.assign(f, raw);
+  for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
+  for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  if (!Array.isArray(out.lists) || !out.lists.length) out.lists = fresh().lists;
+  return out;
+}
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return Object.assign(fresh(), JSON.parse(raw));
+    if (raw) return hydrate(JSON.parse(raw));
   } catch (e) { /* private mode etc. */ }
   return fresh();
 }
 let saveT = null;
+const write = () => { saveT = null; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
 export function save() {
   S.updated = Date.now();
   clearTimeout(saveT);
-  saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } }, 120);
+  saveT = setTimeout(write, 120);
   subs.forEach(f => f(S));
+}
+/** Write a pending save immediately (the debounced write would be lost if the tab is closed within 120 ms). */
+export function flush() { if (saveT) { clearTimeout(saveT); write(); } }
+if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+  window.addEventListener('pagehide', flush);
+  window.addEventListener('visibilitychange', () => { if (typeof document !== 'undefined' && document.visibilityState === 'hidden') flush(); });
 }
 export const state = () => S;
 export const subscribe = f => (subs.add(f), () => subs.delete(f));
-export function replace(next) { S = Object.assign(fresh(), next); save(); }
+export function replace(next) { S = hydrate(next); save(); }
 export function resetAll() { S = fresh(); save(); }
 
 // ------------------------------------------------------------ day log
@@ -55,6 +70,8 @@ export function addXp(n) {
   d.xp += n;
   // 1 coin ("markka") per 10 XP
   d.coins += Math.floor(d.xp / 10) - Math.floor(before / 10);
+  // remember that the goal was met that day, so raising the goal later does not break an existing streak
+  if (d.xp >= S.profile.goal) d.met = 1;
   save();
 }
 export function addCoins(n) { dayRec().coins += n; save(); }
@@ -67,7 +84,8 @@ export const RANKS = ['Aloittelija', 'Turisti', 'Kielikurssilainen', 'Kahvinjuoj
 export const rank = (l = level()) => RANKS[Math.min(RANKS.length - 1, Math.floor((l - 1) / 3))];
 
 // ------------------------------------------------------------ streak
-const goalMet = k => (S.days[k]?.xp || 0) >= S.profile.goal || !!S.frozen[k];
+const goalMet = k => !!S.days[k]?.met || (S.days[k]?.xp || 0) >= S.profile.goal || !!S.frozen[k];
+export const goalMetOn = k => goalMet(k);
 export const freezesOwned = () => Object.keys(S.spent).filter(k => k.startsWith('freeze:')).length - Object.keys(S.frozen).length;
 /** Use streak freezes for missed days (called on app start). */
 export function applyFreezes() {
@@ -76,10 +94,11 @@ export function applyFreezes() {
   while (!goalMet(k) && missed.length < 7) { missed.push(k); k = dayOffset(k, -1); }
   // only save a streak that existed before the gap
   if (!missed.length || !goalMet(k)) return 0;
-  let used = 0;
-  for (const m of missed.reverse()) { if (freezesOwned() <= 0) break; S.frozen[m] = 1; used++; }
-  if (used) save();
-  return used;
+  // all-or-nothing: freezing only part of a gap would spend shields and still lose the streak
+  if (freezesOwned() < missed.length) return 0;
+  for (const m of missed) S.frozen[m] = 1;
+  save();
+  return missed.length;
 }
 export function streak() {
   const t = today();
@@ -193,9 +212,9 @@ export function merge(o) {
   for (const [k, v] of Object.entries(o.reads || {})) a.reads[k] = Math.max(a.reads[k] || 0, v);
   for (const l of o.lists || []) {
     const m = a.lists.find(x => x.id === l.id);
-    if (!m) a.lists.push(l); else m.items = [...new Set([...m.items, ...l.items])];
+    if (!m) a.lists.push({ ...l, items: [...new Set(l.items || [])] }); else m.items = [...new Set([...m.items, ...(l.items || [])])];
   }
   for (const k of Object.keys(a.best)) a.best[k] = Math.max(a.best[k] || 0, o.best?.[k] || 0);
-  if ((o.profile?.updated || 0) > (a.profile.updated || 0)) { a.profile = o.profile; a.mascot = o.mascot || a.mascot; }
+  if ((o.profile?.updated || 0) > (a.profile.updated || 0)) { a.profile = { ...fresh().profile, ...o.profile }; a.mascot = { ...fresh().mascot, ...(o.mascot || a.mascot) }; }
   save();
 }

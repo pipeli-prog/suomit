@@ -30,7 +30,7 @@ function forgetS(d, s, r) {
 }
 function shortS(s, g) {
   let inc = Math.exp(W[17] * (g - 3 + W[18])) * Math.pow(s, -W[19]);
-  if (g >= 2) inc = Math.max(1, inc);
+  if (g >= 3) inc = Math.max(1, inc); // py-fsrs: only Good/Easy are floored at 1 (Hard may shrink S)
   return s * inc;
 }
 export function intervalDays(s, retention = RETENTION) {

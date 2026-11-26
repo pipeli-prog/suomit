@@ -1,7 +1,8 @@
 // Practice session runner: renders questions, checks answers, schedules reviews, awards XP.
 import * as store from './store.js';
 import { icon } from './icons.js';
-import { check, stripDots } from './fi.js';
+import { gradeAnswer, same } from './fi.js';
+import { chestHTML, wireChest } from './chest.js';
 import { speak, sfx, buzz, stopSpeaking } from './audio.js';
 import { esc, fw, toast, confetti, mascotSVG, shuffle } from './ui.js';
 import { vocabQ } from './exercises.js';
@@ -15,13 +16,15 @@ const pickP = a => a[Math.floor(Math.random() * a.length)];
  * opts: { title, questions, mode: 'learn'|'review'|'drill'|'speed'|'flash', seconds, onFinish(result), xpPer }
  */
 export function runSession(opts) {
+  // nothing to ask (no learned words yet, an empty list, …): don't open an empty session that scores 0 %
+  if (!opts.questions?.length) { toast('Nothing to practise here yet. Learn a few words first!', 'alert'); return; }
   const root = document.getElementById('session');
   const S = store.state();
   const queue = [...opts.questions];
   const total0 = queue.length;
   const graded = new Set(), skillStats = {};
   let i = 0, combo = 0, bestCombo = 0, ok = 0, bad = 0, xp = 0, done = 0, finished = false, startT = Date.now(), qStart = 0;
-  const xpBefore = store.dayRec().xp;
+  const xpBefore = store.dayRec().xp, coinsBefore = store.coins();
   let timer = null, timeLeft = opts.seconds || 0;
   root.hidden = false; document.body.classList.add('in-session');
   root.innerHTML = `
@@ -83,7 +86,7 @@ export function runSession(opts) {
       foot.innerHTML = `<button class="btn ghost skip">I don't know</button><button class="btn go">Check</button>`;
       const inp = card.querySelector('.ans');
       card.querySelectorAll('[data-ch]').forEach(b => b.onpointerdown = e => { e.preventDefault(); const s = inp.selectionStart; inp.value = inp.value.slice(0, s) + b.dataset.ch + inp.value.slice(inp.selectionEnd); inp.setSelectionRange(s + 1, s + 1); });
-      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); if (inp.value.trim()) answer(q, inp.value); } };
+      inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (inp.value.trim()) answer(q, inp.value); } };
       foot.querySelector('.go').onclick = () => inp.value.trim() ? answer(q, inp.value) : inp.focus();
       foot.querySelector('.skip').onclick = () => answer(q, '');
       setTimeout(() => inp.focus({ preventScroll: true }), 60);
@@ -141,12 +144,12 @@ export function runSession(opts) {
     const card = $('.s-card'), foot = $('.s-foot');
     if (card.classList.contains('answered')) return;
     card.classList.add('answered'); card.classList.remove('no-tap');
-    const res = check(input, q.answer, { strictDots: S.profile.strictDots });
+    const res = gradeAnswer(q, input, { strictDots: S.profile.strictDots });
     const good = res.ok, first = !q._retry;
     // UI marks
     if (q.kind === 'mc') card.querySelectorAll('.choice').forEach(b => {
       b.disabled = true; const c = q.choices[+b.dataset.k];
-      if (check(c, q.answer).grade === 'exact') b.classList.add('right'); else if (b === btn) b.classList.add('wrong');
+      if (same(c, q.answer)) b.classList.add('right'); else if (b === btn) b.classList.add('wrong');
     });
     card.querySelectorAll('input').forEach(x => { x.disabled = true; x.classList.add(good ? 'right' : 'wrong'); });
     card.querySelector('.tile-ans')?.classList.add(good ? 'right' : 'wrong');
@@ -162,7 +165,7 @@ export function runSession(opts) {
     if (q.item && !graded.has(q.item)) {
       graded.add(q.item);
       const fast = Date.now() - qStart < 6000;
-      const g = !good ? 1 : res.grade !== 'exact' ? 2 : (q.kind === 'type' || q.kind === 'tiles') && fast && store.card(q.item)?.reps ? 4 : 3;
+      const g = !good ? 1 : res.grade !== 'exact' || res.alt ? 2 : (q.kind === 'type' || q.kind === 'tiles') && fast && store.card(q.item)?.reps ? 4 : 3;
       store.grade(q.item, g);
     }
     if (!good && !q._retry && opts.mode !== 'speed') {
@@ -172,10 +175,11 @@ export function runSession(opts) {
     done++; progress();
     if (opts.mode === 'speed') { setTimeout(() => { i++; next(); }, good ? 250 : 700); return; }
     // feedback sheet
+    const ansShown = Array.isArray(q.answer) ? q.answer[0] : q.answer;
     const note = res.grade === 'dots' ? `<div class="warn">Careful with the dots: <b>${esc(res.best)}</b> (ä/ö change the meaning!)</div>`
       : res.grade === 'typo' ? `<div class="warn">Small typo, the correct spelling is <b>${esc(res.best)}</b></div>`
-        : res.grade === 'length' ? `<div class="warn">Watch the length! Double letters change the meaning in Finnish.</div>` : '';
-    const ansShown = Array.isArray(q.answer) ? q.answer[0] : q.answer;
+        : res.grade === 'length' ? `<div class="warn">Watch the length! Double letters change the meaning in Finnish.</div>`
+          : res.alt ? `<div class="warn">Also correct! The word we were practising: <b>${esc(ansShown)}</b></div>` : '';
     foot.className = 's-foot fb ' + (good ? 'good' : 'bad');
     foot.innerHTML = `<div class="fb-txt">
         <div class="fb-h">${good ? '✓ ' + pickP(PRAISE) : '✗ Oikea vastaus:'}</div>
@@ -208,7 +212,7 @@ export function runSession(opts) {
     clearInterval(timer); stopSpeaking(); document.removeEventListener('keydown', onKey);
     for (const [sk, st] of Object.entries(skillStats)) if (st.n >= 3) store.gradeSkill(sk, st.ok / st.n);
     const total = ok + bad, acc = total ? ok / total : 0;
-    const result = { ok, bad, total, acc, xp, bestCombo, quit, secs: Math.round((Date.now() - startT) / 1000) };
+    const result = { ok, bad, total, acc, xp, bestCombo, quit, secs: Math.round((Date.now() - startT) / 1000), coins: store.coins() - coinsBefore };
     if (total >= 1 && !quit) G.unlock('first');
     if (total >= 10 && bad === 0 && opts.mode !== 'flash') G.unlock('perfect');
     opts.onFinish?.(result);
@@ -225,8 +229,8 @@ export function runSession(opts) {
     root.innerHTML = `<div class="end">
       ${mascotSVG(undefined, { size: 130, mood })}
       <h2>${title}</h2>
+      ${chestHTML(r)}
       <div class="end-stats">
-        <div><b>+${r.xp}</b><span>XP</span></div>
         <div><b>${Math.round(r.acc * 100)}%</b><span>accuracy</span></div>
         <div><b>${r.bestCombo}</b><span>best combo</span></div>
         ${opts.mode === 'speed' ? `<div><b>${r.ok}</b><span>points</span></div>` : `<div><b>${Math.floor(r.secs / 60)}:${String(r.secs % 60).padStart(2, '0')}</b><span>time</span></div>`}
@@ -237,7 +241,8 @@ export function runSession(opts) {
     </div>`;
     root.querySelector('.go').onclick = close;
     root.querySelector('.again').onclick = () => { close(); opts.again?.(); };
-    if (chest) setTimeout(() => G.chestModal(chest, store.streak()), 500);
+    wireChest(root);
+    if (chest) setTimeout(() => G.chestModal(chest, store.streak()), 2600);
   }
   function close() { root.hidden = true; root.innerHTML = ''; document.body.classList.remove('in-session'); opts.onClose?.(); }
   next();
