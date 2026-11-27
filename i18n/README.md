@@ -52,7 +52,13 @@ i18n/<lang>/course.js          the lesson explanations, REWRITTEN for speakers o
 `{ "English": "context" }`. Each pack file is `export default { "English": "Nederlands", … }`.
 
 - **Not a literal translation.** Write what a good Dutch / Spanish teacher would write. Short, natural, the learner's
-  everyday register: Dutch *je/jij*, Spanish *tú*; Spanish uses neutral international Spanish.
+  everyday register: Dutch *je/jij* (Netherlands Dutch), Spanish *tú* (Spain Spanish: *vosotros* for Finnish *te*
+  when it means "you all", *usted* only where the English says formal/polite).
+- Keep the grammar hints the English gives: "you (pl.)", "he/she", "(formal)", "(spoken)". They tell the learner which
+  Finnish form is wanted. Dutch *jullie* is already plural; Spanish *vosotros* too, so "(pl.)" can go there.
+- Workflow: the to-do lists are cut into chunks `i18n/_todo/<lang>/in/<group>.<k>.json`. For each chunk write
+  `i18n/_todo/<lang>/out/<group>.<k>.json` with exactly the same keys and your translations as values (valid JSON).
+  `node tools/i18n-assemble.mjs <lang>` builds the pack files; `node tools/i18n-check.mjs <lang> <group>` checks one.
 - **Keep every `{placeholder}`** exactly, and keep the Finnish inside a string exactly as it is
   (`'Say "kiitos"'` → `'Zeg "kiitos"'`). If the string is Finnish (some practice options are), the translation is the
   same string.
