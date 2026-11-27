@@ -50,25 +50,34 @@ export const ANIMALS = {
       <g stroke="${dark}" stroke-width="1.4" stroke-linecap="round" opacity=".8"><path d="M48 76 l-14 -2"/><path d="M48 79 l-13 3"/><path d="M72 76 l14 -2"/><path d="M72 79 l13 3"/></g>`,
   },
   sadekonna: {
-    name: 'Pip', fi: 'sadekonna', en: 'Desert rain frog: round, grumpy, squeaky', price: 350,
-    pal: ['#c9a46b', '#ecd9b0', '#8f6c3c'],
-    at: { hat: [60, 43, .82], eyes: [60, 57, 1.4], nose: [60, 71, 1.05], neck: [60, 99, .95] },
+    name: 'Pip', fi: 'sammakko', en: 'Chubby green frog: round, happy, squeaky', price: 350,
+    pal: ['#7cc65a', '#f6f1cf', '#4e9a3c'],
+    at: { hat: [60, 34, .9], eyes: [60, 47, 1.3], nose: [60, 60, .95], neck: [60, 76, .95] },
     draw: ([body, belly, dark], mood) => {
-      const brow = mood === 'sad' ? 'M30 45 L46 41' : mood === 'wow' ? 'M30 41 Q38 36 46 40' : 'M30 41 L47 46';
-      const frown = mood === 'wow' ? `<ellipse cx="60" cy="84" rx="4.5" ry="5.5" fill="#5a2a2a"/>`
-        : `<path d="${mood === 'sad' ? 'M49 88 q11 -11 22 0' : 'M50 84 q10 -6 20 0'}" stroke="#3b2a1a" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
-      return `${shadow(40)}
-      <ellipse cx="32" cy="109" rx="11" ry="5" fill="${dark}"/><ellipse cx="88" cy="109" rx="11" ry="5" fill="${dark}"/>
-      <path d="M14 82 Q14 48 60 48 Q106 48 106 82 Q106 112 60 112 Q14 112 14 82Z" fill="${body}"/>
-      <circle cx="40" cy="56" r="15" fill="${body}"/><circle cx="80" cy="56" r="15" fill="${body}"/>
-      <ellipse cx="60" cy="96" rx="30" ry="14" fill="${belly}" opacity=".85"/>
-      <g fill="${dark}" opacity=".35"><circle cx="24" cy="80" r="2.4"/><circle cx="96" cy="82" r="2.8"/><circle cx="30" cy="92" r="1.8"/><circle cx="90" cy="94" r="2"/><circle cx="60" cy="56" r="1.8"/><circle cx="68" cy="62" r="1.3"/></g>
-      ${mood === 'sad' ? eyes(mood, [40, 58], [80, 58], 8.5) : `<circle cx="40" cy="57" r="${mood === 'wow' ? 10 : 9}" fill="${INK}"/><circle cx="80" cy="57" r="${mood === 'wow' ? 10 : 9}" fill="${INK}"/><circle cx="43" cy="53" r="3.2" fill="#fff"/><circle cx="83" cy="53" r="3.2" fill="#fff"/><circle cx="37" cy="61" r="1.4" fill="#fff" opacity=".7"/><circle cx="77" cy="61" r="1.4" fill="#fff" opacity=".7"/>`}
-      ${pair(`<path d="${brow}" stroke="${dark}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`)}
-      ${cheeks(29, 91, 76, 6)}
-      <circle cx="56" cy="70" r="1.6" fill="${dark}"/><circle cx="64" cy="70" r="1.6" fill="${dark}"/>
-      ${frown}
-      <ellipse cx="44" cy="105" rx="7" ry="4" fill="${dark}" opacity=".7"/><ellipse cx="76" cy="105" rx="7" ry="4" fill="${dark}" opacity=".7"/>`;
+      const spot = (x, y, rx, ry = rx * .8) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}"/>`;
+      // big round eyes: pale ring, black pupil, two shines (sad: closed arcs)
+      const eye = x => mood === 'sad'
+        ? `<circle cx="${x}" cy="46" r="11.5" fill="${belly}" stroke="${dark}" stroke-width="1.4"/><path d="M${x - 7} 47 q7 -6 14 0" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>`
+        : `<circle cx="${x}" cy="46" r="12" fill="${belly}" stroke="${dark}" stroke-width="1.4"/><circle cx="${x}" cy="46.5" r="${mood === 'wow' ? 9.6 : 8.6}" fill="${INK}"/><circle cx="${x + 3}" cy="42.5" r="3.2" fill="#fff"/><circle cx="${x - 3}" cy="50" r="1.4" fill="#fff" opacity=".8"/>`;
+      const smile = mood === 'wow' ? `<ellipse cx="60" cy="67" rx="4.5" ry="5" fill="#5a2a2a"/>`
+        : mood === 'sad' ? `<path d="M50 70 q10 -7 20 0" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`
+        : `<path d="M41 62 Q60 76 79 62" stroke="${INK}" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M40 60.5 q1.5 2.5 -.5 4 M80 60.5 q-1.5 2.5 .5 4" stroke="${INK}" stroke-width="1.8" fill="none" stroke-linecap="round"/>`;
+      return `${shadow(44)}
+      ${pair(`<ellipse cx="28" cy="98" rx="17" ry="13" transform="rotate(-20 28 98)" fill="${body}"/>
+        <g fill="${dark}" opacity=".55">${spot(22, 94, 3.2)}${spot(31, 101, 2.4)}${spot(21, 103, 1.8)}</g>
+        <path d="M40 106 Q47 108 50 112" stroke="${body}" stroke-width="6" fill="none" stroke-linecap="round"/>
+        <g fill="${body}"><circle cx="45" cy="114" r="2.6"/><circle cx="50" cy="115" r="2.6"/><circle cx="54.5" cy="113" r="2.4"/></g>`)}
+      <path d="M60 30 C84 30 93 41 93 55 C93 63 102 72 102 87 C102 105 84 112 60 112 C36 112 18 105 18 87 C18 72 27 63 27 55 C27 41 36 30 60 30Z" fill="${body}"/>
+      <circle cx="42" cy="45" r="15" fill="${body}"/><circle cx="78" cy="45" r="15" fill="${body}"/>
+      <path d="M60 66 C78 66 90 78 90 91 C90 104 77 110 60 110 C43 110 30 104 30 91 C30 78 42 66 60 66Z" fill="${belly}"/>
+      <g fill="${dark}" opacity=".55">${spot(60, 36, 3)}${spot(51, 40, 1.8)}${spot(70, 39, 2.2)}${spot(30, 60, 2.6)}${spot(91, 62, 3)}${spot(25, 75, 3.4)}${spot(96, 78, 2.6)}</g>
+      ${pair(`<path d="M27 70 Q30 84 43 85" stroke="${body}" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <g fill="${body}"><circle cx="45.5" cy="80.5" r="2.4"/><circle cx="47.5" cy="85" r="2.4"/><circle cx="45" cy="89" r="2.3"/></g>
+        <g fill="${dark}" opacity=".5">${spot(29, 75, 1.7)}</g>`)}
+      ${eye(42)}${eye(78)}
+      <circle cx="56.5" cy="56" r="1.3" fill="${dark}"/><circle cx="63.5" cy="56" r="1.3" fill="${dark}"/>
+      ${smile}
+      <path d="M58 99 q2 2 4 0" stroke="${dark}" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".6"/>`;
     },
   },
   hirvi: {
