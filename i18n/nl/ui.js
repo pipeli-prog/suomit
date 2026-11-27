@@ -1,5 +1,6 @@
 // ui strings for SuomiT (English → nl). Keys are the exact English strings. See i18n/README.md.
 export default {
+  "You know {n} of {total} words": "Je kent {n} van de {total} woorden",
   "Streak": "Reeks",
   "Level": "Level",
   "A Sisu shield saved your streak ({n} days)": "Een Sisu-schild heeft je reeks gered ({n} dagen)",
@@ -344,7 +345,7 @@ export default {
   "Regular": "Normaal",
   "Serious": "Serieus",
   "Intense": "Intensief",
-  "12 XP ≈ 10–15 minutes. Consistency beats intensity.": "12 XP ≈ 10–15 minuten. Regelmaat wint het van intensiteit.",
+  "50 XP ≈ 10–15 minutes. Consistency beats intensity.": "50 XP ≈ 10–15 minuten. Regelmaat wint het van intensiteit.",
   "Sound & voice": "Geluid & stem",
   "SuomiT plays recorded neural Finnish audio (voice: Noora). Anything without a recording uses your device's Finnish voice below.": "SuomiT speelt opgenomen neurale Finse audio af (stem: Noora). Alles zonder opname gebruikt de Finse stem van je apparaat hieronder.",
   "Sound effects": "Geluidseffecten",

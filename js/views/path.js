@@ -8,13 +8,19 @@ import { LESSON_RESOURCES } from '../../data/resources.js';
 import { READING_BY_ID } from '../../data/readings.js';
 import { lessonLearn, lessonPractice, lessonTest, skillDrill, lessonWords, currentLesson } from '../plan.js';
 import { SKILL_NAMES, SKILL_ICON } from '../exercises.js';
-import { strength } from '../srs.js';
+import { strength, isLearned } from '../srs.js';
 import { checkAchievements } from '../gamify.js';
 import { rerender, go } from '../app.js';
 import { wordRow, wireWordRows, listName } from './words.js';
 import { setsFor, setCards, wireSetCards, playSet } from '../practice.js';
 import { t, lessonText } from '../i18n.js';
 
+/** How many of a lesson's words you know (practised, and remembered for at least a day). */
+function wordsKnown(l) {
+  const ws = lessonWords(l), cards = store.state().cards;
+  return { known: ws.filter(w => isLearned(cards[w.id])).length, total: ws.length };
+}
+const wordBar = ({ known, total }, cls = '') => total ? `<span class="w-bar ${cls}" title="${esc(t('You know {n} of {total} words', { n: known, total }))}"><i style="width:${known / total * 100}%"></i></span>` : '';
 const stars = n => `<span class="stars">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}">★</i>`).join('')}</span>`;
 
 export function renderPath(el) {
@@ -28,7 +34,7 @@ export function renderPath(el) {
       const st = S.lessons[l.id]?.stars || 0, off = [0, 1, 2, 1][i % 4];
       return `<a class="node ${st ? 'done' : ''} ${l === cur ? 'cur' : ''} ${l.revision ? 'rev' : ''}" style="--off:${off}" href="#/lesson/${l.id}">
           <span class="n-ico">${icon(l.icon)}</span>${l === cur ? `<span class="here">${t('START')}</span>` : ''}
-          <span class="n-lbl">${esc(lessonText(l).title)}</span>${stars(st)}</a>`;
+          <span class="n-lbl">${esc(lessonText(l).title)}</span>${stars(st)}${wordBar(wordsKnown(l), 'node-w')}</a>`;
     }).join('')}</div></section>`;
   }).join('');
   setTimeout(() => el.querySelector('.node.cur')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 80);
@@ -48,6 +54,7 @@ export function renderLesson(el, id, tab = 'learn') {
       <h1>${esc(lt.title)}</h1><div class="fi">${fw(l.fi)}</div>
       ${stars(rec.stars)}
       <div class="star-help small muted">${t('★ finish the lesson · ★★ practice ≥ 85% · ★★★ test ≥ 90%')}</div>
+      ${(() => { const k = wordsKnown(l); return k.total ? `<a class="l-words" href="#/lesson/${id}/words">${wordBar(k)}<span class="small">${esc(t('You know {n} of {total} words', { n: k.known, total: k.total }))}</span></a>` : ''; })()}
     </div>
     <nav class="tabs">${tabs.map(([k, n]) => `<a class="${k === tab ? 'on' : ''}" href="#/lesson/${id}/${k}">${n}</a>`).join('')}</nav>
     <div class="l-body"></div>

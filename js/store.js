@@ -11,8 +11,8 @@ export const dayOffset = (k, n) => { const [y, m, d] = k.split('-').map(Number);
 /** New installs start in the phone's language when we have it (Dutch / Spanish), else English. */
 const browserLang = () => { try { const l = (navigator.language || '').slice(0, 2).toLowerCase(); return ['nl', 'es'].includes(l) ? l : 'en'; } catch { return 'en'; } };
 const fresh = () => ({
-  v: 2, created: Date.now(), updated: Date.now(), // v2: XP is a quarter of v1 XP (see migrateXp)
-  profile: { name: '', lang: browserLang(), goal: 12, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
+  v: 3, created: Date.now(), updated: Date.now(), // v2: XP is a quarter of v1 XP; v3: daily goals back to v1 numbers (see migrateXp)
+  profile: { name: '', lang: browserLang(), goal: 50, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
   mascot: { hat: null, face: null, neck: null, color: 'grey' },
   days: {},      // 'YYYY-MM-DD' → { xp, coins, ans, ok, new, rev, listen, best, q: {questId: progress}, qc: {questId:1}, read }
   frozen: {},    // days saved by a streak freeze
@@ -31,14 +31,17 @@ const fresh = () => ({
 });
 
 /** Fill in defaults, including NESTED ones (an old save without profile.goal must not break the streak). */
-/** v1 saves used 4× bigger XP numbers. Same effort, coins, streaks and levels; only the XP numbers shrink. */
-const OLD_GOALS = { 20: 5, 50: 12, 100: 25, 150: 40, 250: 60 };
+/** v1 saves used 4× bigger XP numbers (v2+: a right answer is 2.5 XP, coins and levels take the same effort).
+ *  v2 also shrank the daily goals to match; v3 puts the goals back (20 / 50 / 100 / 150 / 250), so a goal takes
+ *  more practice than in v1, as intended. */
+const V2_GOALS = { 5: 20, 12: 50, 25: 100, 40: 150, 60: 250 };
 function migrateXp(o) {
-  if (!o || typeof o !== 'object' || o.v >= 2) return o;
-  const days = {};
-  for (const [k, d] of Object.entries(o.days || {})) days[k] = d && typeof d === 'object' ? { ...d, xp: (d.xp || 0) / 4 } : d;
-  const out = { ...o, days, v: 2 };
-  if (o.profile && o.profile.goal != null) out.profile = { ...o.profile, goal: OLD_GOALS[o.profile.goal] ?? Math.max(1, Math.round(o.profile.goal / 4)) };
+  if (!o || typeof o !== 'object' || o.v >= 3) return o;
+  const out = { ...o, v: 3 };
+  if (!(o.v >= 2)) { // v1: XP numbers ÷ 4 (the goal keeps its number)
+    out.days = {};
+    for (const [k, d] of Object.entries(o.days || {})) out.days[k] = d && typeof d === 'object' ? { ...d, xp: (d.xp || 0) / 4 } : d;
+  } else if (o.profile && o.profile.goal != null) out.profile = { ...o.profile, goal: V2_GOALS[o.profile.goal] ?? o.profile.goal * 4 };
   return out;
 }
 function hydrate(raw) {

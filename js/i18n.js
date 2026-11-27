@@ -51,3 +51,12 @@ export function lessonText(l) {
 export const missing = () => [...miss];
 export const clearMissing = () => miss.clear();
 if (typeof window !== 'undefined') window.__i18n = { missing, lang };
+
+// Small drawn flags for the language button (no emoji: the app uses its own drawings).
+let flagN = 0;
+export function flagSVG(l) {
+  const id = 'fl' + (++flagN), a = 'width="100%" height="100%" preserveAspectRatio="xMidYMid slice" aria-hidden="true"';
+  if (l === 'nl') return `<svg viewBox="0 0 9 6" ${a}><path fill="#AE1C28" d="M0 0h9v2H0z"/><path fill="#fff" d="M0 2h9v2H0z"/><path fill="#21468B" d="M0 4h9v2H0z"/></svg>`;
+  if (l === 'es') return `<svg viewBox="0 0 750 500" ${a}><path fill="#AA151B" d="M0 0h750v500H0z"/><path fill="#F1BF00" d="M0 125h750v250H0z"/></svg>`;
+  return `<svg viewBox="0 0 60 30" ${a}><clipPath id="${id}a"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="${id}b"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath><g clip-path="url(#${id}a)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#${id}b)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg>`;
+}

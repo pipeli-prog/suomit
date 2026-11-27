@@ -68,6 +68,14 @@ body.in-session{position:fixed;inset:0;overflow:hidden;width:100%}
 /* home */
 .hero{display:flex;align-items:center;gap:6px;margin:4px 0}
 .hero-m{animation:bob 3s ease-in-out infinite}
+.lang-pick{position:relative;margin-left:auto;align-self:flex-start;margin-top:6px}
+.lang-flag{display:block;width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid var(--line);box-shadow:0 2px 0 var(--line);padding:0;background:var(--card)}
+.lang-flag:active{transform:scale(.94)}
+.lang-flag.sm{width:26px;height:26px;border-width:1px;box-shadow:none;flex:none}
+.lang-menu{position:absolute;right:0;top:48px;z-index:30;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px;min-width:180px;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:2px}
+.lang-menu[hidden]{display:none}
+.lang-menu button{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;font-weight:700;color:var(--ink);text-align:left}
+.lang-menu button.on{background:var(--line)}
 @keyframes bob{50%{transform:translateY(-5px) rotate(-2deg)}}
 .bubble{position:relative;background:var(--card);border:1px solid var(--line);padding:10px 14px;border-radius:18px;display:flex;flex-direction:column}
 .bubble::before{content:"";position:absolute;left:-7px;top:50%;width:14px;height:14px;background:var(--card);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
@@ -101,6 +109,10 @@ body.in-session{position:fixed;inset:0;overflow:hidden;width:100%}
 @keyframes pulse{0%,100%{box-shadow:0 6px 0 var(--line),0 0 0 0 color-mix(in srgb,var(--mc) 60%,transparent)}50%{box-shadow:0 6px 0 var(--line),0 0 0 12px transparent}}
 .here{position:absolute;top:-14px;background:var(--mc);color:#111;font-weight:900;font-size:.7rem;padding:2px 8px;border-radius:8px;letter-spacing:.5px;animation:bob 2s infinite}
 .n-lbl{font-size:.82rem;font-weight:800;margin-top:7px;line-height:1.15}
+.w-bar{display:block;height:6px;border-radius:3px;background:var(--line);overflow:hidden;width:100%}
+.w-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--good),var(--acc));min-width:0}
+.w-bar.node-w{width:70px;margin-top:5px;height:5px}
+.l-words{display:flex;flex-direction:column;align-items:center;gap:5px;margin:10px auto 2px;max-width:260px;color:var(--mute)}
 .stars{display:inline-flex;gap:1px;font-size:.9rem}.stars i{font-style:normal;color:var(--soft);-webkit-text-stroke:1px var(--line)}.stars i.on{color:#ffd166;-webkit-text-stroke:0}
 
 /* lesson */

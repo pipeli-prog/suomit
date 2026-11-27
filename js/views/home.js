@@ -1,6 +1,6 @@
 import * as store from '../store.js';
 import { icon } from '../icons.js';
-import { t, lessonText } from '../i18n.js';
+import { t, lessonText, lang, LANGS, flagSVG } from '../i18n.js';
 import { mascotSVG, esc, fw } from '../ui.js';
 import { runSession } from '../session.js';
 import { dailyMix, mixSummary, currentLesson, lessonLearn, sourceWords, trainerQuestions } from '../plan.js';
@@ -26,6 +26,8 @@ const TIPS = () => [
   ['Puoli neljä = 3:30', t('"Half four" in Finnish is half-way TO four. Classic trap!')],
 ];
 
+/** "Good night!" + Thomas → "Good night, Thomas!" (also "¡Buenas noches, Thomas!") */
+const withName = (greet, name) => /[!.]$/.test(greet) ? greet.replace(/([!.])$/, `, ${name}$1`) : `${greet}, ${name}`;
 export function renderHome(el) {
   const S = store.state(), goal = S.profile.goal, dxp = store.dayRec().xp, pct = Math.min(1, dxp / goal);
   const [g, gEn] = GREET(), mix = mixSummary(), cur = currentLesson(), mod = MODULE_BY_ID[cur.mod];
@@ -36,7 +38,9 @@ export function renderHome(el) {
   el.innerHTML = `
   <section class="hero">
     <div class="hero-m">${mascotSVG(undefined, { size: 96, mood: pct >= 1 ? 'wow' : 'happy' })}</div>
-    <div class="bubble"><b class="fi">${fw(g)}</b><span>${gEn}${S.profile.name ? ', ' + esc(S.profile.name) : ''}</span></div>
+    <div class="bubble"><b class="fi">${fw(g)}</b><span>${S.profile.name ? withName(gEn, esc(S.profile.name)) : gEn}</span></div>
+    <div class="lang-pick"><button class="lang-flag" id="lang-btn" aria-label="${t('Your language')}" aria-expanded="false">${flagSVG(lang())}</button>
+      <div class="lang-menu" id="lang-menu" hidden>${Object.entries(LANGS).map(([k, n]) => `<button class="${k === lang() ? 'on' : ''}" data-lang="${k}"><span class="lang-flag sm">${flagSVG(k)}</span>${n}</button>`).join('')}</div></div>
   </section>
 
   <section class="card mix">
@@ -75,6 +79,11 @@ export function renderHome(el) {
   ${!hasFinnishVoice() && !hasNeuralAudio() ? `<section class="card warn-card"><b>${icon('mute')} ${t('No Finnish voice found')}</b><p class="small">${t("Pronunciation uses your device's voice. iPhone: Settings → Accessibility → Spoken Content → Voices → Finnish (Satu). Mac: System Settings → Accessibility → Spoken Content → System voice → Manage voices → Finnish.")}</p></section>` : ''}
   ${!standalone ? `<section class="card install"><b>${icon('phone')} ${t('Install SuomiT')}</b><p class="small">${t('iPhone: Safari → Share → <i>Add to Home Screen</i>. Mac: Safari → File → <i>Add to Dock</i>, or Chrome → Install. Works offline.')}</p></section>` : ''}
   `;
+  // language: the flag opens a small menu; a new language reloads the app so every screen is built in it
+  const lb = el.querySelector('#lang-btn'), lm = el.querySelector('#lang-menu');
+  const closeMenu = e => { if (!e || !e.target.closest('.lang-pick')) { lm.hidden = true; lb.setAttribute('aria-expanded', 'false'); document.removeEventListener('pointerdown', closeMenu, true); } };
+  lb.onclick = () => { lm.hidden = !lm.hidden; lb.setAttribute('aria-expanded', String(!lm.hidden)); if (!lm.hidden) document.addEventListener('pointerdown', closeMenu, true); else closeMenu(); };
+  lm.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { if (b.dataset.lang === lang()) return closeMenu(); store.setProfile({ lang: b.dataset.lang }); store.flush(); location.reload(); });
   el.querySelector('#mix').onclick = () => {
     const m = dailyMix();
     if (!m.questions.length) return go('#/lesson/' + cur.id);

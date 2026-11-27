@@ -122,8 +122,8 @@ export function renderSettings(el) {
       <div class="chips">${Object.entries(LANGS).map(([k, n]) => `<button class="chip ${(p.lang || 'en') === k ? 'on' : ''}" data-lang="${k}">${n}</button>`).join('')}</div>
     </section>
     <section class="card set">
-      <h3>${t('Daily goal')}</h3><div class="chips">${[[5, t('Chill')], [12, t('Regular')], [25, t('Serious')], [40, t('Intense')], [60, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
-      <p class="muted small">${t('12 XP ≈ 10–15 minutes. Consistency beats intensity.')}</p>
+      <h3>${t('Daily goal')}</h3><div class="chips">${[[20, t('Chill')], [50, t('Regular')], [100, t('Serious')], [150, t('Intense')], [250, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
+      <p class="muted small">${t('50 XP ≈ 10–15 minutes. Consistency beats intensity.')}</p>
     </section>
     <section class="card set">
       <h3>${t('Sound & voice')}</h3><p class="muted small">${t("SuomiT plays recorded neural Finnish audio (voice: Noora). Anything without a recording uses your device's Finnish voice below.")}</p>
