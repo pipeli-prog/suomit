@@ -82,6 +82,8 @@ for (const sk of Object.keys(E.SKILL_NAMES)) for (let i = 0; i < 400; i++) { try
 for (const w of VOCAB) for (const m of ['intro', 'mcFiEn', 'mcEnFi', 'listenMc', 'listenType', 'typeEnFi', 'tiles']) { try { E.vocabQ(w, { force: m }); } catch { } }
 try { const P = await import(R('js/practice.js')); for (const sets of Object.values(PRACTICE)) for (const s of sets) try { P.setQuestions(s); } catch { } } catch { }
 const known = new Set(Object.values(groups).flatMap(g => [...g.keys()]));
+// sentences the drills compose from data, one key each (every verb × person, colour × garment, …): js/exercises.js i18nKeys()
+for (const s of E.i18nKeys?.() || []) if (!known.has(s)) put('ui', s, 'drill prompt built from data (js/exercises.js); keep {placeholders}; he/she = hij/zij, él/ella; you (pl.) = jullie, vosotros');
 for (const s of I.missing()) if (!s.startsWith('lesson:') && !known.has(s)) put('ui', s, 'asked for at runtime by a question generator / screen');
 if (extraArg > 0) for (const s of JSON.parse(readFileSync(process.argv[extraArg + 1], 'utf8'))) if (!known.has(s)) put('ui', s, 'shown on a screen (runtime crawl)');
 

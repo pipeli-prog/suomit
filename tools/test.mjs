@@ -492,6 +492,59 @@ section('listening audio');
   for (const n of [0, 7, 100, 101, 999, 1000, 1001, 1999, 2030]) eq(F.numSay(n).replace(/ /g, ''), F.numWord(n), `numSay(${n}) reads as numWord`);
 }
 
+// ======================================================================= 10. i18n: generators speak the learner's language
+// A pack that marks every translated string «…»: whatever a learner reads must be marked (or Finnish / numbers),
+// meaning choices stay distinct and gradable, and every key asked for is one the catalog can find.
+section('i18n generators');
+{
+  const I = await import(root + 'js/i18n.js');
+  const { readFileSync } = await import('node:fs');
+  const asked = new Set();
+  // each sense is marked on its own ("«to know »(«a fact)»;« to feel»"), so a gloss cut at ; , / ( stays marked
+  const markAll = new Proxy({}, { get: (_, k) => { if (typeof k !== 'string') return undefined; asked.add(k); return '«' + k.replace(/[;,/(]/g, m => '»' + m + '«') + '»'; } });
+  I.usePack('xx', { DICT: markAll, COURSE: {} });
+  I.clearMissing();
+  const unmarked = s => { let x = strip(s), y; while ((y = x.replace(/«[^«»]*»/g, ' ')) !== x) x = y; return x; };
+  // English words that are not Finnish (he, me, te, on are Finnish pronouns / verbs)
+  const ENGLISH = /(?<!\p{L})(the|a|an|is|are|am|of|and|or|what|which|how|who|whose|write|choose|listen|make|turn|put|build|word|words|type|number|price|plural|answer|question|verb|ending|vowels?|case|negative|form|with|without|from|after|takes?|you|your|my|his|her|their|our|have|has|in|at|to|it|I|they|we|she|doesn't|don't|can't|yesterday|spoken|digits|also|everyday|genitive|partitive|compound|group|strong|weak|place|sound)(?!\p{L})/iu;
+  const visible = q => [['prompt', q.prompt], ['sub', q.sub], ['reveal', q.reveal], ['explain', q.explain]];
+  const checkQ = (q, where) => {
+    for (const [f, v] of visible(q)) if (v) { const rest = unmarked(v); ok(!ENGLISH.test(rest), `i18n ${where}: untranslated English in ${f}: "${rest.trim()}" (from "${strip(v)}")`); }
+    if (q.kind === 'mc') {
+      // a translated answer means a meaning question: then every option must be translated too
+      if (!q.fiChoices && /^«.*»$/.test(q.answer)) for (const c of q.choices) ok(/^«.*»$/.test(c), `i18n ${where}: meaning choice "${c}" not translated`);
+      if (!q.fiChoices && /[a-z]{4,}/i.test(q.answer) && !/^«.*»$/.test(q.answer)) ok(!ENGLISH.test(q.answer), `i18n ${where}: English answer "${q.answer}"`);
+      ok(q.choices.filter(c => c === q.answer).length === 1, `i18n ${where}: answer among the translated choices once`);
+      ok(new Set(q.choices.map(F.norm)).size === q.choices.length, `i18n ${where}: translated choices distinct ${q.choices}`);
+    }
+    if (q.kind === 'tiles' && q.prompt) ok(/«/.test(q.prompt) || !/[a-z]/i.test(unmarked(q.prompt)), `i18n ${where}: tiles prompt translated`);
+  };
+  for (const sk of Object.keys(E.SKILL_NAMES)) for (let i = 0; i < 200; i++) checkQ(E.SKILLS[sk](), `skill ${sk}`);
+  const MODES = ['intro', 'mcFiEn', 'mcEnFi', 'listenMc', 'listenType', 'typeEnFi', 'tiles'];
+  for (const w of VOCAB) for (const m of MODES) checkQ(E.vocabQ(w, { force: m }), `vocab ${w.fi} ${m}`);
+  for (const [k, n] of Object.entries(E.SKILL_NAMES)) ok(['have', 'local'].includes(k) ? !n.includes('«') : /^«.+»$/.test(n), `i18n: skill name ${k} "${n}"`);
+  eq(I.missing(), [], 'i18n: nothing missing with a complete pack');
+  // every key asked for can be found by tools/i18n-catalog.mjs: a literal t('…') in exercises.js, i18nKeys(), or a data meaning
+  const src = readFileSync(new URL('../js/exercises.js', import.meta.url), 'utf8');
+  const RE = /\bt\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"|`((?:\\.|[^`\\$])*)`)/g;
+  const findable = new Set([...[...src.matchAll(RE)].map(m => (m[1] ?? m[2] ?? m[3]).replace(/\\(['"`\\])/g, '$1')), ...E.i18nKeys(), ...VOCAB.map(w => w.en), ...VERBS.map(v => v.en)]);
+  const lost = [...asked].filter(k => !findable.has(k));
+  eq(lost.slice(0, 10), [], 'i18n: every generator key is in the catalog (literal, i18nKeys() or data)');
+  ok(E.i18nKeys().every(k => !k.includes('${') && !/undefined/.test(k)), 'i18n: i18nKeys() are clean');
+  // two English meanings that share one translation: choices must still be distinct and exactly one right
+  I.usePack('xx', { DICT: new Proxy({}, { get: (_, k) => typeof k === 'string' ? `«${k.length % 11}»` : undefined }), COURSE: {} });
+  for (const w of VOCAB) for (const m of ['mcFiEn', 'mcEnFi']) {
+    const q = E.vocabQ(w, { force: m });
+    ok(q.choices.length >= 2 && new Set(q.choices.map(F.norm)).size === q.choices.length && q.choices.filter(c => F.gradeAnswer(q, c).ok).length === 1, `i18n collisions: vocab ${w.fi} ${m} choices ${q.choices}`);
+  }
+  for (const sk of ['length', 'forecast', 'verbtype', 'gradAB']) for (let i = 0; i < 100; i++) {
+    const q = E.SKILLS[sk]();
+    if (q.kind === 'mc') ok(new Set(q.choices.map(F.norm)).size === q.choices.length && q.choices.filter(c => F.gradeAnswer(q, c).ok).length === 1, `i18n collisions: ${sk} choices ${q.choices}`);
+  }
+  I.usePack('en', null);
+  I.clearMissing();
+}
+
 // ======================================================================= report
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) { console.log('\nFailures:'); for (const f of failures) console.log(' - ' + f); process.exit(1); }
