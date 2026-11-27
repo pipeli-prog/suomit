@@ -7,7 +7,8 @@ import { speak, sfx, buzz, stopSpeaking } from './audio.js';
 import { esc, fw, toast, confetti, mascotSVG, shuffle } from './ui.js';
 import { vocabQ } from './exercises.js';
 import { VOCAB_BY_ID } from '../data/vocab.js';
-import { itemWord } from './plan.js';
+import { itemWord, meaning } from './plan.js';
+import { t, tx } from './i18n.js';
 import * as G from './gamify.js';
 
 const PRAISE = ['Oikein!', 'Hienoa!', 'Mahtavaa!', 'Loistavaa!', 'Upeaa!', 'Hyvä!', 'Täydellistä!', 'Juuri niin!', 'Erinomaista!', 'Nappiin!'];
@@ -16,11 +17,11 @@ const pickP = a => a[Math.floor(Math.random() * a.length)];
  *  (digits, English answers, whole sentences). */
 export function copyTarget(q) {
   const w = q.item && itemWord(q.item);
-  let t = w ? w.fi : q.kind === 'mc' && q.fiChoices ? q.answer : q.kind === 'type' && !q.numeric ? (Array.isArray(q.answer) ? q.answer[0] : q.answer) : null;
-  if (!t) return null;
-  t = String(t).replace(/[.!?]+$/, '').trim();
-  if (!/[a-zåäö]/i.test(t) || /\d|€/.test(t) || /^type /i.test(t) || t.split(/\s+/).length > 6) return null;
-  return t;
+  let s = w ? w.fi : q.kind === 'mc' && q.fiChoices ? q.answer : q.kind === 'type' && !q.numeric ? (Array.isArray(q.answer) ? q.answer[0] : q.answer) : null;
+  if (!s) return null;
+  s = String(s).replace(/[.!?]+$/, '').trim();
+  if (!/[a-zåäö]/i.test(s) || /\d|€/.test(s) || /^type /i.test(s) || s.split(/\s+/).length > 6) return null;
+  return s;
 }
 
 /**
@@ -28,7 +29,7 @@ export function copyTarget(q) {
  */
 export function runSession(opts) {
   // nothing to ask (no learned words yet, an empty list, …): don't open an empty session that scores 0 %
-  if (!opts.questions?.length) { toast('Nothing to practise here yet. Learn a few words first!', 'alert'); return; }
+  if (!opts.questions?.length) { toast(t('Nothing to practise here yet. Learn a few words first!'), 'alert'); return; }
   const root = document.getElementById('session');
   const S = store.state();
   const queue = [...opts.questions];
@@ -40,15 +41,15 @@ export function runSession(opts) {
   root.hidden = false; document.body.classList.add('in-session');
   root.innerHTML = `
     <div class="s-top">
-      <button class="s-x" aria-label="Quit">✕</button>
+      <button class="s-x" aria-label="${t('Quit')}">✕</button>
       <div class="s-bar"><div class="s-fill"></div></div>
       ${opts.seconds ? `<div class="s-timer">${icon('clock')} <b>${timeLeft}</b></div>` : ''}
-      <div class="s-combo" title="Combo"><span>${icon('flame')}</span><b>0</b></div>
+      <div class="s-combo" title="${t('Combo')}"><span>${icon('flame')}</span><b>0</b></div>
     </div>
     <div class="s-body"><div class="s-card"></div></div>
     <div class="s-foot"></div>`;
   const $ = s => root.querySelector(s);
-  $('.s-x').onclick = () => { if (done < 2 || confirm('Quit this session? Progress so far is saved.')) finish(true); };
+  $('.s-x').onclick = () => { if (done < 2 || confirm(t('Quit this session? Progress so far is saved.'))) finish(true); };
   if (opts.seconds) timer = setInterval(() => { timeLeft--; $('.s-timer b').textContent = timeLeft; if (timeLeft <= 5) $('.s-timer').classList.add('hot'); if (timeLeft <= 0) finish(); }, 1000);
 
   function progress() {
@@ -73,12 +74,12 @@ export function runSession(opts) {
       ? `<div class="listen"><button class="say" data-r="1">${icon('speaker')}</button><button class="say slow" data-r=".55">${icon('slow')}</button></div>` : '';
     if (q.kind === 'intro') {
       const w = q.word;
-      card.innerHTML = `<div class="tag new">New word</div>
-        <div class="big fi">${fw(w.fi)}</div><div class="en-big">${esc(w.en)}</div>
-        ${w.gen ? `<div class="forms"><span>genitive <b>${w.gen}</b></span><span>partitive <b>${w.part}</b></span><span>plural <b>${w.pl}</b></span></div>` : ''}
-        ${w.ex ? `<p class="fi ex">${fw(w.ex.fi)}<br><span class="muted">${esc(w.ex.en)}</span></p>` : ''}${listenBtns}
-        <p class="muted small">Say it out loud twice. Saying it helps you remember.</p>`;
-      foot.innerHTML = `<button class="btn wide go">Got it →</button>`;
+      card.innerHTML = `<div class="tag new">${t('New word')}</div>
+        <div class="big fi">${fw(w.fi)}</div><div class="en-big">${esc(meaning(w))}</div>
+        ${w.gen ? `<div class="forms"><span>${t('genitive')} <b>${w.gen}</b></span><span>${t('partitive')} <b>${w.part}</b></span><span>${t('plural')} <b>${w.pl}</b></span></div>` : ''}
+        ${w.ex ? `<p class="fi ex">${fw(w.ex.fi)}<br><span class="muted">${esc(tx(w.ex.en))}</span></p>` : ''}${listenBtns}
+        <p class="muted small">${t('Say it out loud twice. Saying it helps you remember.')}</p>`;
+      foot.innerHTML = `<button class="btn wide go">${t('Got it')} →</button>`;
       foot.querySelector('.go').onclick = () => {
         // follow up with a recall question 2–3 cards later
         queue.splice(Math.min(queue.length, i + 3), 0, vocabQ(w, { force: Math.random() < .5 ? 'mcFiEn' : 'mcEnFi' }));
@@ -87,14 +88,14 @@ export function runSession(opts) {
       speak(w.fi); wireSay(q); return;
     }
     if (q.kind === 'flash') return renderFlash(q);
-    const head = `${q.skill ? `<div class="tag">${esc(q.skillName || '')}</div>` : ''}${q.prompt}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
+    const head = `${q.skill ? `<div class="tag">${esc(tx(q.skillName) || '')}</div>` : ''}${q.prompt}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
     if (q.kind === 'mc') {
       card.innerHTML = head + `<div class="choices ${q.choices.some(c => c.length > 22) ? 'col' : ''}">${q.choices.map((c, k) => `<button class="choice" data-k="${k}"><span class="kn">${k + 1}</span>${q.fiChoices ? fw(c) : esc(c)}</button>`).join('')}</div>`;
       card.querySelectorAll('.choice').forEach(b => b.onclick = e => { if (e.target.closest('.fw') && !b.disabled && b.closest('.answered')) return; answer(q, q.choices[+b.dataset.k], b); });
     } else if (q.kind === 'type') {
       card.innerHTML = head + `<div class="type-wrap"><input class="ans" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="${q.numeric ? '123' : 'Kirjoita…'}" ${q.numeric ? 'inputmode="numeric"' : ''}>
         ${q.numeric ? '' : `<div class="dots"><button data-ch="ä">ä</button><button data-ch="ö">ö</button></div>`}</div>`;
-      foot.innerHTML = `<button class="btn ghost skip">I don't know</button><button class="btn go">Check</button>`;
+      foot.innerHTML = `<button class="btn ghost skip">${t("I don't know")}</button><button class="btn go">${t('Check')}</button>`;
       const inp = card.querySelector('.ans');
       card.querySelectorAll('[data-ch]').forEach(b => b.onpointerdown = e => { e.preventDefault(); const s = inp.selectionStart; inp.value = inp.value.slice(0, s) + b.dataset.ch + inp.value.slice(inp.selectionEnd); inp.setSelectionRange(s + 1, s + 1); });
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (inp.value.trim()) answer(q, inp.value); } };
@@ -102,7 +103,7 @@ export function runSession(opts) {
       foot.querySelector('.skip').onclick = () => answer(q, '');
       setTimeout(() => inp.focus({ preventScroll: true }), 60);
     } else if (q.kind === 'tiles') {
-      card.innerHTML = head + `<div class="tile-ans"></div><div class="tile-bank">${q.tiles.map((t, k) => `<button class="tile" data-k="${k}">${esc(t)}</button>`).join('')}</div>`;
+      card.innerHTML = head + `<div class="tile-ans"></div><div class="tile-bank">${q.tiles.map((x, k) => `<button class="tile" data-k="${k}">${esc(x)}</button>`).join('')}</div>`;
       const ans = card.querySelector('.tile-ans'), bank = card.querySelector('.tile-bank');
       // tap a word: it moves into the answer box (in the order you tap) and leaves an empty slot in the bank;
       // tap it in the box to send it back
@@ -115,17 +116,17 @@ export function runSession(opts) {
         const b = e.target.closest('.tile'); if (!b || locked()) return;
         const src = bank.querySelector(`[data-k="${b.dataset.src}"]`); src.classList.remove('used'); src.disabled = false; b.remove();
       };
-      foot.innerHTML = `<button class="btn ghost skip">I don't know</button><button class="btn go">Check</button>`;
+      foot.innerHTML = `<button class="btn ghost skip">${t("I don't know")}</button><button class="btn go">${t('Check')}</button>`;
       foot.querySelector('.go').onclick = () => {
         if (!ans.children.length) { ans.classList.remove('shake'); void ans.offsetWidth; ans.classList.add('shake'); return; }
-        answer(q, [...ans.children].map(t => t.textContent).join(' '));
+        answer(q, [...ans.children].map(x => x.textContent).join(' '));
       };
       foot.querySelector('.skip').onclick = () => answer(q, '');
     }
     wireSay(q);
     if (q.listen) { // the big speaker / phone / cloud picture in the prompt plays the sound too
       const big = card.querySelector('.big');
-      if (big) { big.classList.add('say-big'); big.setAttribute('role', 'button'); big.setAttribute('aria-label', 'Play again'); big.onclick = () => speak(q.say); }
+      if (big) { big.classList.add('say-big'); big.setAttribute('role', 'button'); big.setAttribute('aria-label', t('Play again')); big.onclick = () => speak(q.say); }
       setTimeout(() => speak(q.say), 250);
     }
     else if (q.autoSay && store.state().profile.autoSpeak) setTimeout(() => speak(q.say), 200);
@@ -134,17 +135,17 @@ export function runSession(opts) {
 
   function renderFlash(q) {
     const w = q.word, card = $('.s-card'), foot = $('.s-foot');
-    const front = q.dir === 'en' ? `<div class="big">${esc(w.en)}</div>` : `<div class="big fi">${fw(w.fi)}</div>`;
-    card.innerHTML = `<div class="flash"><div class="flash-front">${front}<div class="sub">Tap to flip</div></div></div>`;
-    foot.innerHTML = `<button class="btn wide go">Show answer</button>`;
+    const front = q.dir === 'en' ? `<div class="big">${esc(meaning(w))}</div>` : `<div class="big fi">${fw(w.fi)}</div>`;
+    card.innerHTML = `<div class="flash"><div class="flash-front">${front}<div class="sub">${t('Tap to flip')}</div></div></div>`;
+    foot.innerHTML = `<button class="btn wide go">${t('Show answer')}</button>`;
     if (q.dir !== 'en') speak(w.fi);
     const flip = () => {
       sfx('flip');
-      card.innerHTML = `<div class="flash flipped">${front}<hr><div class="${q.dir === 'en' ? 'big fi' : 'en-big'}">${q.dir === 'en' ? fw(w.fi) : esc(w.en)}</div>
-        ${w.gen ? `<div class="forms"><span>gen <b>${w.gen}</b></span><span>part <b>${w.part}</b></span><span>pl <b>${w.pl}</b></span></div>` : ''}
+      card.innerHTML = `<div class="flash flipped">${front}<hr><div class="${q.dir === 'en' ? 'big fi' : 'en-big'}">${q.dir === 'en' ? fw(w.fi) : esc(meaning(w))}</div>
+        ${w.gen ? `<div class="forms"><span>${t('gen')} <b>${w.gen}</b></span><span>${t('part')} <b>${w.part}</b></span><span>${t('pl')} <b>${w.pl}</b></span></div>` : ''}
         <div class="listen"><button class="say" data-r="1">${icon('speaker')}</button><button class="say slow" data-r=".55">${icon('slow')}</button></div></div>`;
       wireSay(q); if (q.dir === 'en') speak(w.fi);
-      foot.innerHTML = `<div class="grades">${[['Again', 1, 'g1'], ['Hard', 2, 'g2'], ['Good', 3, 'g3'], ['Easy', 4, 'g4']].map(([n, g, c]) => `<button class="btn ${c}" data-g="${g}"><small>${g}</small>${n}</button>`).join('')}</div>`;
+      foot.innerHTML = `<div class="grades">${[[t('Again'), 1, 'g1'], [t('Hard'), 2, 'g2'], [t('Good'), 3, 'g3'], [t('Easy'), 4, 'g4']].map(([n, g, c]) => `<button class="btn ${c}" data-g="${g}"><small>${g}</small>${n}</button>`).join('')}</div>`;
       foot.querySelectorAll('[data-g]').forEach(b => b.onclick = () => flashGrade(q, +b.dataset.g));
     };
     card.onclick = e => { if (!e.target.closest('.say,.fw') && !card.querySelector('.flipped')) flip(); };
@@ -204,10 +205,11 @@ export function runSession(opts) {
     if (opts.mode === 'speed') { setTimeout(() => { i++; next(); }, good ? 250 : 700); return; }
     // feedback sheet
     const ansShown = Array.isArray(q.answer) ? q.answer[0] : q.answer;
-    const note = res.grade === 'dots' ? `<div class="warn">Careful with the dots: <b>${esc(res.best)}</b> (ä/ö change the meaning!)</div>`
-      : res.grade === 'typo' ? `<div class="warn">Small typo, the correct spelling is <b>${esc(res.best)}</b></div>`
-        : res.grade === 'length' ? `<div class="warn">Watch the length! Double letters change the meaning in Finnish.</div>`
-          : res.alt ? `<div class="warn">Also correct! The word we were practising: <b>${esc(ansShown)}</b></div>` : '';
+    const B = x => `<b>${esc(x)}</b>`;
+    const note = res.grade === 'dots' ? `<div class="warn">${t('Careful with the dots: {word} (ä/ö change the meaning!)', { word: B(res.best) })}</div>`
+      : res.grade === 'typo' ? `<div class="warn">${t('Small typo, the correct spelling is {word}', { word: B(res.best) })}</div>`
+        : res.grade === 'length' ? `<div class="warn">${t('Watch the length! Double letters change the meaning in Finnish.')}</div>`
+          : res.alt ? `<div class="warn">${t('Also correct! The word we were practising: {word}', { word: B(ansShown) })}</div>` : '';
     const target = good ? null : copyTarget(q);
     foot.className = 's-foot fb ' + (good ? 'good' : 'bad');
     foot.innerHTML = `<div class="fb-txt">
@@ -215,10 +217,10 @@ export function runSession(opts) {
         ${!good || q.reveal ? `<div class="fb-a ${/[a-zäö]/i.test(ansShown) ? 'fi' : ''}">${good ? '' : fw(ansShown)}${q.reveal ? `<div class="muted">${fw(q.reveal)}</div>` : ''}</div>` : ''}
         ${note}${q.explain && (!good || res.grade !== 'exact') ? `<div class="explain">${q.explain}</div>` : ''}
       </div>
-      ${target ? `<div class="copy"><label class="copy-l">Type it to continue: <b class="fi">${esc(target)}</b></label>
+      ${target ? `<div class="copy"><label class="copy-l">${t('Type it to continue: {word}', { word: `<b class="fi">${esc(target)}</b>` })}</label>
         <div class="copy-row"><input class="ans copy-in" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Kirjoita…">
         <div class="dots"><button data-ch="ä">ä</button><button data-ch="ö">ö</button></div></div></div>` : ''}
-      <div class="fb-btns">${q.say ? `<button class="say-a" aria-label="Listen">${icon('speaker')}</button>` : ''}<button class="btn go" ${target ? 'disabled' : ''}>${good ? 'Continue' : target ? 'Type it first' : 'Got it'}</button></div>`;
+      <div class="fb-btns">${q.say ? `<button class="say-a" aria-label="${t('Listen')}">${icon('speaker')}</button>` : ''}<button class="btn go" ${target ? 'disabled' : ''}>${good ? t('Continue') : target ? t('Type it first') : t('Got it')}</button></div>`;
     // the right/wrong sound first, then the voice (on iPhone a starting voice clip can cut the sound off)
     const qi = i;
     if ((q.say && !q.listen) || (q.listen && !good)) setTimeout(() => { if (i === qi && !finished) speak(q.say); }, 380);
@@ -227,7 +229,7 @@ export function runSession(opts) {
     if (target) {
       const inp = foot.querySelector('.copy-in');
       const matches = () => gradeAnswer({ kind: 'type', answer: target }, inp.value, { strictDots: true }).grade === 'exact';
-      const update = () => { const m = matches(); if (m && go.disabled) sfx('tap'); go.disabled = !m; go.textContent = m ? 'Continue' : 'Type it first'; inp.classList.toggle('right', m); };
+      const update = () => { const m = matches(); if (m && go.disabled) sfx('tap'); go.disabled = !m; go.textContent = m ? t('Continue') : t('Type it first'); inp.classList.toggle('right', m); };
       inp.addEventListener('input', update);
       foot.querySelectorAll('[data-ch]').forEach(b => b.onpointerdown = e => { e.preventDefault(); const p = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, p) + b.dataset.ch + inp.value.slice(inp.selectionEnd ?? p); inp.setSelectionRange(p + 1, p + 1); update(); });
       inp.onkeydown = e => {
@@ -270,20 +272,20 @@ export function runSession(opts) {
   function showEnd(r, chest) {
     const goal = store.state().profile.goal, dxp = store.dayRec().xp, pct = Math.min(1, dxp / goal);
     const mood = r.acc >= .8 ? 'wow' : r.acc >= .5 ? 'happy' : 'sad';
-    const title = r.acc >= .95 ? 'Täydellistä!' : r.acc >= .8 ? 'Mahtavaa!' : r.acc >= .6 ? 'Hyvää työtä!' : 'Sisua! Keep going';
+    const title = r.acc >= .95 ? 'Täydellistä!' : r.acc >= .8 ? 'Mahtavaa!' : r.acc >= .6 ? 'Hyvää työtä!' : t('Sisua! Keep going');
     if (r.acc >= .8) { confetti(); sfx('win'); }
     root.innerHTML = `<div class="end">
       ${mascotSVG(undefined, { size: 130, mood })}
       <h2>${title}</h2>
       ${chestHTML(r)}
       <div class="end-stats">
-        <div><b>${Math.round(r.acc * 100)}%</b><span>accuracy</span></div>
-        <div><b>${r.bestCombo}</b><span>best combo</span></div>
-        ${opts.mode === 'speed' ? `<div><b>${r.ok}</b><span>points</span></div>` : `<div><b>${Math.floor(r.secs / 60)}:${String(r.secs % 60).padStart(2, '0')}</b><span>time</span></div>`}
+        <div><b>${Math.round(r.acc * 100)}%</b><span>${t('accuracy')}</span></div>
+        <div><b>${r.bestCombo}</b><span>${t('best combo')}</span></div>
+        ${opts.mode === 'speed' ? `<div><b>${r.ok}</b><span>${t('points')}</span></div>` : `<div><b>${Math.floor(r.secs / 60)}:${String(r.secs % 60).padStart(2, '0')}</b><span>${t('time')}</span></div>`}
       </div>
-      <div class="goal-bar"><div style="width:${pct * 100}%"></div><span>${store.fmtXp(dxp)} / ${goal} XP today</span></div>
+      <div class="goal-bar"><div style="width:${pct * 100}%"></div><span>${t('{xp} / {goal} XP today', { xp: store.fmtXp(dxp), goal })}</span></div>
       ${opts.endExtra?.(r) || ''}
-      <div class="end-btns"><button class="btn ghost again">↻ Again</button><button class="btn go">Continue</button></div>
+      <div class="end-btns"><button class="btn ghost again">↻ ${t('Again')}</button><button class="btn go">${t('Continue')}</button></div>
     </div>`;
     root.querySelector('.go').onclick = close;
     root.querySelector('.again').onclick = () => { close(); opts.again?.(); };
