@@ -1495,7 +1495,7 @@ export default {
         ['kymmentä vaille viisi', '4:50'], ['kahtakymmentäviittä vaille yksitoista', '10:35'], ['kaksikymmentäviisi yli yksitoista', '11:25'],
         ['kahtakymmentä vaille neljä', '3:40'], ['varttia yli kolme', '3:15'], ['tasan kahdeksan', '8:00'], ['puoli yhdeksän', '8:30'],
       ] },
-    { src: S.wwKello3, title: 'Paljonko kello on?', kind: 'mc', note: 'digits → Finnish',
+    { src: S.wwKello3, title: 'Mitä kello on?', kind: 'mc', note: 'digits → Finnish',
       items: [
         M('3:00', 'Kello on tasan kolme.', ['Kello on puoli kolme.', 'Kello on varttia yli kolme.']),
         M('7:15', 'Kello on varttia yli seitsemän.', ['Kello on varttia vaille seitsemän.', 'Kello on puoli seitsemän.']),

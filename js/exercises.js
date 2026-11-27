@@ -69,9 +69,11 @@ export function clash(w, x) {
   return false;
 }
 /** Other Finnish words a learner may type for w's English prompt (same part of speech, identical sense incl. qualifier). */
+/** Other correct ways to say a phrase that are not taught as words of their own. */
+const ALSO = { 'w:mitä kello on?': ['Paljonko kello on'] };
 function synonymsFi(w) {
   const mine = new Set(splitSenses(w.en));
-  return VOCAB.filter(x => x.id !== w.id && x.pos === w.pos && splitSenses(x.en).some(s => mine.has(s))).map(x => x.fi.replace(/[!?.]$/, ''));
+  return [...VOCAB.filter(x => x.id !== w.id && x.pos === w.pos && splitSenses(x.en).some(s => mine.has(s))).map(x => x.fi.replace(/[!?.]$/, '')), ...(ALSO[w.id] || [])];
 }
 
 // ------------------------------------------------------------ vocabulary
@@ -281,7 +283,7 @@ const QW = [
   ['___ hän on?', 'Hän on Pekka.', 'kuka'], ['___ tämä on?', 'Tämä on kirja.', 'mikä', ['mitä']], ['___ sinä teet?', 'Minä luen.', 'mitä'],
   ['___ sinä tulet?', 'Huomenna.', 'milloin'], ['___ sinä olet väsynyt?', 'Koska nukuin huonosti.', 'miksi'], ['___ sanotaan "thank you" suomeksi?', 'Kiitos.', 'miten', ['kuinka']],
   ['___ sää on?', 'Sää on kaunis.', 'millainen', ['miten', 'kuinka']], ['___ auto tämä on?', 'Se on Pekan auto.', 'kenen'], ['___ vanha sinä olet?', 'Olen 30 vuotta vanha.', 'kuinka', ['miten']],
-  ['___ kello on?', 'Kello on kolme.', 'paljonko', ['mitä']], ['___ sinä syöt?', 'Syön leipää.', 'mitä'], ['___ sinun nimesi on?', 'Minun nimeni on Tom.', 'mikä'],
+  ['___ kello on?', 'Kello on kolme.', 'mitä', ['paljonko']], ['___ sinä syöt?', 'Syön leipää.', 'mitä'], ['___ sinun nimesi on?', 'Minun nimeni on Tom.', 'mikä'],
   ['___ kieliä sinä puhut?', 'Puhun suomea.', 'mitä'], ['___ monta lasta sinulla on?', 'Minulla on kaksi lasta.', 'kuinka'], ['___ juna lähtee?', 'Kello kahdeksalta.', 'milloin'],
 ];
 const QWORDS = ['Missä', 'Mistä', 'Mihin', 'Kuka', 'Mikä', 'Mitä', 'Milloin', 'Miksi', 'Miten', 'Millainen', 'Kenen', 'Kuinka', 'Paljonko'];
@@ -400,7 +402,7 @@ export const CLOCK_MINS = [0, 0, 15, 30, 30, 45, 5, 10, 20, 40, 50, 55];
 S.clock = () => {
   const h = randInt(1, 12), m = pick(CLOCK_MINS), words = F.clockWords(h, m);
   const t = `${h}:${String(m).padStart(2, '0')}`;
-  if (Math.random() < .55) return type(`<div class="big num">${t}</div>`, uniq(words.flatMap(w => [w, `kello on ${w}`])), { sub: 'Paljonko kello on? (12-hour words)', say: `Kello on ${words[0]}.`, strictDots: true });
+  if (Math.random() < .55) return type(`<div class="big num">${t}</div>`, uniq(words.flatMap(w => [w, `kello on ${w}`])), { sub: 'Mitä kello on? (12-hour words)', say: `Kello on ${words[0]}.`, strictDots: true });
   const others = []; while (others.length < 3) { const o = `${randInt(1, 12)}:${String(pick(CLOCK_MINS)).padStart(2, '0')}`; if (o !== t && !others.includes(o)) others.push(o); }
   return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, t, others, { listen: true, say: `Kello on ${words[0]}.`, sub: 'Listen: what time is it?', reveal: `Kello on ${words[0]}.` });
 };

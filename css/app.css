@@ -241,7 +241,8 @@ textarea.code{min-height:120px;font-family:ui-monospace,monospace;font-size:.75r
 .tile-ans.right{border-color:var(--good);border-style:solid}.tile-ans.wrong{border-color:var(--bad);border-style:solid}
 .tile-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .tile{padding:10px 14px;border-radius:12px;background:var(--card);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);font-weight:800;font-size:1.05rem}
-.tile.used{visibility:hidden}
+.tile.used{color:transparent;background:var(--line);border-color:transparent;box-shadow:none;pointer-events:none}
+.tile-ans .tile{animation:tilein .16s ease-out}@keyframes tilein{from{transform:scale(.8);opacity:.4}}
 .s-foot{display:flex;gap:10px;justify-content:space-between;align-items:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom));max-width:680px;width:100%;margin:0 auto}
 .s-foot .btn{flex:1}.s-foot .btn.ghost{flex:.6}
 .s-foot.fb{flex-direction:column;align-items:stretch;max-width:none;border-radius:22px 22px 0 0;animation:slideup .3s cubic-bezier(.2,1.2,.5,1)}
