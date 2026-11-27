@@ -95,20 +95,33 @@ export function sourceWords(src) {
   if (src === 'weak') return Object.entries(S.cards).filter(([, c]) => isLeech(c) || (c.lapses >= 2 && retrievability(c) < .85)).map(([id]) => itemWord(id)).filter(Boolean);
   if (src === 'learned') return Object.keys(S.cards).map(itemWord).filter(Boolean);
   if (src === 'all') return VOCAB;
+  if (src === 'new') return VOCAB.filter(w => !S.cards[w.id]);
   if (src.startsWith('list:')) return (S.lists.find(l => l.id === src.slice(5))?.items || []).map(itemWord).filter(Boolean);
   if (src.startsWith('topic:')) return (TOPIC_BY_ID[src.slice(6)]?.words || []).map(id => VOCAB_BY_ID[id]).filter(Boolean);
   if (src.startsWith('lesson:')) { const l = LESSON_BY_ID[src.slice(7)]; return l ? lessonWords(l) : []; }
   return [];
 }
+/** Trainer order: words you have never practised first (in list order), then the ones practised longest ago.
+ *  Session after session this walks through the whole selection instead of drawing random words. */
+export function trainerPick(words, n = 20) {
+  const S = store.state(), seen = w => S.cards[w.id];
+  const fresh = words.filter(w => !seen(w)), old = words.filter(seen).sort((a, b) => (seen(a).last || 0) - (seen(b).last || 0));
+  return [...fresh, ...old].slice(0, n);
+}
+/** How far through a selection you are: words practised at least once / all. */
+export const trainerProgress = words => ({ done: words.filter(w => store.state().cards[w.id]).length, total: words.length });
+
 export function trainerQuestions(words, mode, n = 20) {
-  const pool = shuffle(words).slice(0, n);
+  const pool = shuffle(trainerPick(words, n));
   const one = w => w.pos === 'custom' ? customQ(w, mode) : null;
+  // a word you have never seen gets its intro card first (meaning, forms, audio), then the exercise
+  const intro = (w, q) => w.pos !== 'custom' && !store.state().cards[w.id] ? [vocabQ(w, { force: 'intro' }), q] : [q];
   switch (mode) {
     case 'flashFi': return pool.map(w => flashQ(w, 'fi'));
     case 'flashEn': return pool.map(w => flashQ(w, 'en'));
-    case 'write': return pool.map(w => one(w) || vocabQ(w, { force: w.fi.split(' ').length >= 3 ? 'tiles' : 'typeEnFi' }));
-    case 'listen': return pool.map(w => one(w) || vocabQ(w, { force: 'listenType' }));
-    case 'mc': return pool.map(w => one(w) || vocabQ(w, { force: Math.random() < .5 ? 'mcFiEn' : 'mcEnFi' }));
+    case 'write': return pool.flatMap(w => intro(w, one(w) || vocabQ(w, { force: w.fi.split(' ').length >= 3 ? 'tiles' : 'typeEnFi' })));
+    case 'listen': return pool.flatMap(w => intro(w, one(w) || vocabQ(w, { force: 'listenType' })));
+    case 'mc': return pool.flatMap(w => intro(w, one(w) || vocabQ(w, { force: Math.random() < .5 ? 'mcFiEn' : 'mcEnFi' })));
     case 'speed': return shuffle(words).slice(0, 80).map(w => one(w) || vocabQ(w, { force: Math.random() < .5 ? 'mcFiEn' : 'mcEnFi' }));
     default: return pool.map(w => one(w) || vocabQ(w));
   }

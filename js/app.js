@@ -10,6 +10,7 @@ import { renderWords } from './views/words.js';
 import { renderRead, renderStory } from './views/read.js';
 import { renderMe, renderShop, renderSettings, renderAbout } from './views/me.js';
 import { renderSet } from './practice.js';
+import { renderTwisters } from './views/twisters.js';
 
 const routes = [
   [/^\/?$|^\/home$/, renderHome, 'home'],
@@ -17,6 +18,7 @@ const routes = [
   [/^\/lesson\/([\w-]+)(?:\/(\w+))?$/, renderLesson, 'path'],
   [/^\/words(?:\/(\w+))?(?:\/(.+))?$/, renderWords, 'words'],
   [/^\/read$/, renderRead, 'read'],
+  [/^\/twisters$/, renderTwisters, 'read'],
   [/^\/read\/([\w-]+)$/, renderStory, 'read'],
   [/^\/set\/([\w-]+)\/(\d+)$/, renderSet, 'path'],
   [/^\/me$/, renderMe, 'me'],

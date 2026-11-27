@@ -432,6 +432,27 @@ section('course');
   for (const l of LESSONS) ok(plan.lessonWords(l).every(Boolean), `lesson ${l.id}: all topic words exist`);
 }
 
+// ======================================================================= 8b. Trainer order + tongue twisters
+section('trainer + twisters');
+{
+  const { TWISTERS } = await import(root + 'data/twisters.js');
+  const fiSet = new Set(VOCAB.map(w => w.fi));
+  ok(TWISTERS.every(t => !fiSet.has(t.fi)), 'tongue twisters are not vocabulary (never in reviews)');
+  const { LESSONS } = await import(root + 'data/course.js');
+  const lw = plan.sourceWords('lesson:' + LESSONS[0].id);
+  // fresh store state for this block
+  for (const w of lw) delete store.state().cards[w.id];
+  const first = plan.trainerPick(lw, 5).map(w => w.id);
+  eq(first, lw.slice(0, 5).map(w => w.id), 'trainer starts with never-practised words in list order');
+  for (const id of first) store.grade(id, 3);
+  const second = plan.trainerPick(lw, 5).map(w => w.id);
+  ok(second.every(id => !first.includes(id)) || lw.length <= 5, 'next session continues with the words not done yet');
+  eq(plan.trainerProgress(lw).done, Math.min(5, lw.length), 'trainer progress counts practised words');
+  const qs = plan.trainerQuestions(lw, 'write', 20);
+  ok(qs.filter(q => q.kind === 'intro').length === lw.filter(w => !store.state().cards[w.id]).slice(0, 20).length || lw.length > 20, 'unseen words get an intro card in write mode');
+  ok(plan.sourceWords('new').every(w => !store.state().cards[w.id]), "'new' source = never practised words");
+}
+
 // ======================================================================= 9. Listening audio
 // A listening question shows no text, so it must never depend on the device voice: every `say` has to be
 // a recorded clip or a chain of recorded pieces (js/audio.js clipPlan).

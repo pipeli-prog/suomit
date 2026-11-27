@@ -21,6 +21,7 @@ const fresh = () => ({
   lessons: {},   // lessonId → { stars, learned, best, sessions }
   res: {},       // resource url → timestamp watched
   reads: {},     // reading id → best score
+  twisters: {},  // tongue twister index → when you first said it 3× fast
   lists: [{ id: 'mine', name: 'My words', items: [], created: 1 }],
   custom: {},    // 'c:…' → {fi,en}
   ach: {},       // achievement id → ts
@@ -33,7 +34,7 @@ const subs = new Set();
 function hydrate(raw) {
   const f = fresh(), out = Object.assign(f, raw);
   for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
-  for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (!Array.isArray(out.lists) || !out.lists.length) out.lists = fresh().lists;
   return out;
 }
@@ -213,6 +214,7 @@ export function merge(o) {
     m.learned = m.learned || l.learned; m.sessions = Math.max(m.sessions, l.sessions || 0);
   }
   for (const [k, v] of Object.entries(o.reads || {})) a.reads[k] = Math.max(a.reads[k] || 0, v);
+  for (const [k, v] of Object.entries(o.twisters || {})) a.twisters[k] = Math.min(a.twisters[k] || v, v);
   for (const l of o.lists || []) {
     const m = a.lists.find(x => x.id === l.id);
     if (!m) a.lists.push({ ...l, items: [...new Set(l.items || [])] }); else m.items = [...new Set([...m.items, ...(l.items || [])])];

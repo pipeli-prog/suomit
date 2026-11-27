@@ -28,6 +28,7 @@ h3.sec{margin:22px 4px 10px;font-size:1.05rem}
 .nav a span{font-size:1.4rem;transition:transform .2s}.nav a small{font-size:.72rem;font-weight:800}
 .nav a.on{color:var(--ink);background:var(--soft)}.nav a.on span{transform:translateY(-2px) scale(1.12)}
 body.in-session #hdr,body.in-session .nav,body.in-session #main{display:none}
+body.in-session{position:fixed;inset:0;overflow:hidden;width:100%}
 
 /* cards & buttons */
 .card{display:block;background:var(--card);border-radius:var(--r);padding:16px;margin:12px 0;border:1px solid var(--line);color:var(--ink);box-shadow:0 6px 24px -12px #0006}
@@ -336,3 +337,10 @@ h3 .ic,.sec .ic{color:var(--acc2);margin-right:2px}
 .chip .ic{width:15px;height:15px}
 .wr-r .ic{width:15px;height:15px;color:var(--acc2)}
 .big .ic.xl{display:block;margin:4px 0}
+
+/* tongue twisters */
+.tw-list{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.tw-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:1.15rem}
+.tw.done{border-color:color-mix(in srgb,var(--good) 55%,var(--line))}.tw-ok{color:var(--good)}
+.tw-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.loot-home.tw-home{background:linear-gradient(135deg,color-mix(in srgb,var(--acc2) 22%,var(--card)),var(--card) 70%);color:var(--ink)}

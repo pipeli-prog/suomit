@@ -10,6 +10,17 @@ export function initViewport() {
   document.addEventListener('touchmove', e => { if (e.scale !== undefined && e.scale !== 1) e.preventDefault(); }, { passive: false });
 
   const vv = window.visualViewport;
+  const session = document.getElementById('session');
+  // While practising, the page behind the session is locked (body.in-session is position: fixed in the CSS), so
+  // there is no page scroll for iOS to get out of sync with. Remember and restore where the page was.
+  let savedY = 0, lastY = 0, shown = false;
+  window.addEventListener('scroll', () => { if (session.hidden) lastY = scrollY; }, { passive: true }); // read before the lock zeroes it
+  new MutationObserver(() => {
+    const now = !session.hidden;
+    if (now && !shown) savedY = lastY;
+    if (!now && shown) requestAnimationFrame(() => window.scrollTo(0, savedY));
+    shown = now;
+  }).observe(session, { attributes: true, attributeFilter: ['hidden'] });
   if (!vv) return;
   let wasOpen = false;
   const fit = () => {
@@ -27,6 +38,21 @@ export function initViewport() {
   };
   vv.addEventListener('resize', fit);
   vv.addEventListener('scroll', fit);
-  // a new question re-renders the session: re-fit it if the keyboard is still up
-  new MutationObserver(fit).observe(document.getElementById('session'), { attributes: true, attributeFilter: ['hidden'] });
+  new MutationObserver(fit).observe(session, { attributes: true, attributeFilter: ['hidden'] });
+  // Coming back from another app, iOS can draw the page in one place while taps still land where it was
+  // (you tap an answer and the one above it gets picked). Close the keyboard when leaving, and on return
+  // reset the scroll, re-measure and force a fresh layout so drawing and tapping line up again.
+  const resync = () => {
+    if (!session.hidden) window.scrollTo(0, 0);
+    else { const y = scrollY; window.scrollTo(0, y + 1); window.scrollTo(0, y); } // a scroll makes iOS redo hit-testing
+    fit();
+    requestAnimationFrame(fit);
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if (document.activeElement?.matches?.('input,textarea')) document.activeElement.blur(); }
+    else resync();
+  });
+  window.addEventListener('pageshow', resync);
+  window.addEventListener('focus', resync);
+  window.addEventListener('orientationchange', () => setTimeout(resync, 300));
 }

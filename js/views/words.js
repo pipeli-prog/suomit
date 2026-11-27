@@ -8,7 +8,7 @@ import { VERBS, VERB_BY_INF } from '../../data/verbs.js';
 import { LESSONS } from '../../data/course.js';
 import { present, negative, past, PERSONS } from '../fi.js';
 import { strength, retrievability } from '../srs.js';
-import { sourceWords, trainerQuestions, itemWord } from '../plan.js';
+import { sourceWords, trainerQuestions, trainerProgress, itemWord } from '../plan.js';
 import { unlock } from '../gamify.js';
 import { rerender, go } from '../app.js';
 
@@ -124,13 +124,20 @@ function renderTrainer(body, preset) {
     ['learned', icon('check') + ' All learned', Object.keys(S.cards).length],
     ...S.lists.map(l => ['list:' + l.id, icon('pin') + ' ' + esc(l.name), l.items.length]),
     ...LESSONS.filter(l => sourceWords('lesson:' + l.id).length).map(l => ['lesson:' + l.id, `${icon(l.icon)} ${esc(l.title)}`, sourceWords('lesson:' + l.id).length]),
+    ['new', icon('sprout') + ' New words', sourceWords('new').length],
     ['all', icon('book') + ' Everything', VOCAB.length],
   ];
   let src = preset && sources.find(s => s[0] === preset) ? preset : (sources.find(s => s[2] > 0)?.[0] || 'all'), mode = 'smart';
   body.innerHTML = `<h3 class="sec">1 · Which words?</h3><div class="chips src">${sources.map(([k, n, c]) => `<button class="chip ${k === src ? 'on' : ''}" data-src="${esc(k)}" ${c ? '' : 'disabled'}>${n} <small>${c}</small></button>`).join('')}</div>
+    <p class="muted small" id="tprog"></p>
     <h3 class="sec">2 · How?</h3><div class="modes">${MODES.map(([k, i, n, d]) => `<button class="mode ${k === mode ? 'on' : ''}" data-mode="${k}"><span>${i}</span><b>${n}</b><small>${d}</small></button>`).join('')}</div>
     <div class="sticky-cta"><button class="btn big-btn wide" id="tgo">${icon('play')} Start training</button></div>`;
-  body.querySelectorAll('[data-src]').forEach(b => b.onclick = () => { src = b.dataset.src; body.querySelectorAll('[data-src]').forEach(x => x.classList.toggle('on', x === b)); });
+  const showProg = () => {
+    const { done, total } = trainerProgress(sourceWords(src));
+    body.querySelector('#tprog').innerHTML = total ? `${icon('chart')} You have practised <b>${done} of ${total}</b> words here. Each session starts with words you haven't done yet (new words get a short intro first), then the ones you practised longest ago.` : '';
+  };
+  showProg();
+  body.querySelectorAll('[data-src]').forEach(b => b.onclick = () => { src = b.dataset.src; body.querySelectorAll('[data-src]').forEach(x => x.classList.toggle('on', x === b)); showProg(); });
   body.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { mode = b.dataset.mode; body.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('on', x === b)); });
   body.querySelector('#tgo').onclick = function start() {
     const words = sourceWords(src);

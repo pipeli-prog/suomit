@@ -67,6 +67,8 @@ export function renderHome(el) {
     <button class="tile-btn" data-m="weak"><span>${icon('alert')}</span><b>Weak words</b><small>${sourceWords('weak').length} to fix</small></button>
   </section>
 
+  <a class="card loot-home tw-home" href="#/twisters"><span class="lh-ico">${icon('chat')}</span><div><b class="fi">Kielisolmut</b><div class="muted small">Tongue twisters: train your pronunciation</div></div><span class="lh-p">${icon('play')}</span></a>
+
   <section class="card tip"><b class="fi">${icon('bulb')} ${esc(tip[0])}</b><p>${esc(tip[1])}</p></section>
   ${!hasFinnishVoice() && !hasNeuralAudio() ? `<section class="card warn-card"><b>${icon('mute')} No Finnish voice found</b><p class="small">Pronunciation uses your device's voice. iPhone: Settings → Accessibility → Spoken Content → Voices → Finnish (Satu). Mac: System Settings → Accessibility → Spoken Content → System voice → Manage voices → Finnish.</p></section>` : ''}
   ${!standalone ? `<section class="card install"><b>${icon('phone')} Install SuomiT</b><p class="small">iPhone: Safari → Share → <i>Add to Home Screen</i>. Mac: Safari → File → <i>Add to Dock</i>, or Chrome → Install. Works offline.</p></section>` : ''}

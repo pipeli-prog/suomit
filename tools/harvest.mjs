@@ -24,6 +24,7 @@ const F = await imp('js/fi.js');
 const { VOCAB } = await imp('data/vocab.js');
 const { VERBS } = await imp('data/verbs.js');
 const { READINGS } = await imp('data/readings.js');
+const { TWISTERS } = await imp('data/twisters.js');
 const G = await imp('data/grammar.js');
 const { LESSONS, MODULES } = await imp('data/course.js');
 let EX = null;
@@ -97,6 +98,9 @@ for (const r of READINGS) {
   for (const q of r.q || []) { add('readings', q.q); each('readings', q.o || []); }
   TOKEN_SRC.push(r.title, ...r.s.map(s => s[0]), ...(r.q || []).flatMap(q => [q.q, ...(q.o || [])]));
 }
+
+// 3b. tongue twisters (their own page)
+for (const t of TWISTERS) { add('readings', t.fi); TOKEN_SRC.push(t.fi); }
 
 // 4. phrases & fixed app strings
 add('phrases', 'Hyvää huomenta, mitä kuuluu?'); // settings "test voice"

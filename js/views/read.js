@@ -38,6 +38,7 @@ export function renderRead(el) {
   const S = store.state();
   el.innerHTML = `<h1 class="pg">Lue <span class="muted">· read & listen</span></h1>
     <p class="muted">Short stories written for SuomiT. Tap any word to translate it, then answer the questions.</p>
+    <a class="card loot-home tw-home" href="#/twisters"><span class="lh-ico">${icon('chat')}</span><div><b class="fi">Kielisolmut</b><div class="muted small">Tongue twisters: slow, normal and fast, plus two games</div></div><span class="lh-p">${icon('play')}</span></a>
     <div class="stories">${READINGS.map(r => {
     const sc = S.reads[r.id];
     return `<a class="story ${sc != null ? 'done' : ''}" href="#/read/${r.id}"><span class="s-e">${icon(r.icon)}</span><div><b class="fi">${esc(r.title)}</b>
