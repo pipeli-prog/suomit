@@ -1,5 +1,5 @@
 // SuomiT service worker: offline-first app shell. Bump VERSION on every release.
-const VERSION = 'suomit-v14';
+const VERSION = 'suomit-v15';
 // Speech clips (audio/<xx>/<hash>.mp3) are immutable (content-addressed), so they live in their own cache that
 // survives version bumps and fills up as clips are played. They are never precached.
 const AUDIO_CACHE = 'suomit-audio';
@@ -71,7 +71,8 @@ const SHELL = [
   'icons/icon-512.png',
   'icons/icon-180.png',
   'icons/favicon-32.png'];
-self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
+// cache: 'reload' so a new version never precaches a stale copy from the browser's HTTP cache
+self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== AUDIO_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
@@ -96,8 +97,12 @@ self.addEventListener('fetch', e => {
       return r;
     }))).then(r => ranged(e.request, r)));
   } else if (u.origin === location.origin) {
-    e.respondWith(fetch(e.request).then(r => { const c = r.clone(); caches.open(VERSION).then(x => x.put(e.request, c)); return r; })
-      .catch(() => caches.match(e.request, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
+    // App files: cache first, so the app opens instantly (also offline and on slow mobile data). Every release has
+    // a new VERSION, whose install step downloads the new files; the page then reloads into it (js/app.js).
+    e.respondWith(caches.open(VERSION).then(c => c.match(e.request, { ignoreSearch: true }).then(hit => hit || fetch(e.request).then(r => {
+      if (r.ok && r.type === 'basic') c.put(e.request, r.clone());
+      return r;
+    }).catch(() => e.request.mode === 'navigate' ? c.match('index.html') : Response.error()))));
   } else if (/fonts\.(googleapis|gstatic)\.com/.test(u.host)) {
     e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => { const c = res.clone(); caches.open(VERSION).then(x => x.put(e.request, c)); return res; })));
   }

@@ -136,34 +136,83 @@ export const stopSpeaking = () => { stopClip(); window.speechSynthesis?.cancel()
 // iPhone: Web Audio is muted by the silent switch and can get cut off when a voice clip starts. The 'playback'
 // audio session (Safari 17+) makes the sounds behave like the voice clips: they play like media does.
 try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
-let ctx;
+let ctx, out;
 const wake = () => {
   try {
-    ctx ||= new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state !== 'running') ctx.resume();
+    if (!ctx) {
+      ctx = new (window.AudioContext || window.webkitAudioContext)();
+      // one soft master chain: gentle low-pass + compressor, so no sound is ever sharp or loud
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 4;
+      out = ctx.createGain(); out.gain.value = 0.9;
+      out.connect(lp).connect(comp).connect(ctx.destination);
+    }
+    // 'suspended' before the first tap, 'interrupted' on iPhone after a call / another app / a voice clip
+    if (ctx.state !== 'running') {
+      ctx.resume();
+      const b = ctx.createBuffer(1, 1, 22050), src = ctx.createBufferSource(); src.buffer = b; src.connect(ctx.destination); src.start(0);
+    }
   } catch (e) { }
 };
-// (re)start the sound engine inside a real tap, the only time iOS allows it (it suspends it in the background)
-if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => { if (state().profile.sound) wake(); }, { capture: true, passive: true });
-function tone(freq, t0, dur, type = 'sine', gain = 0.12) {
-  const c = ctx, o = c.createOscillator(), g = c.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, c.currentTime + t0);
-  g.gain.setValueAtTime(0, c.currentTime + t0);
-  g.gain.linearRampToValueAtTime(gain, c.currentTime + t0 + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + t0 + dur);
-  o.connect(g).connect(c.destination); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + 0.02);
+// iOS only lets a page start audio in touchend / click (pointerdown does not count), so wake on all of them
+if (typeof document !== 'undefined') for (const t of ['pointerdown', 'touchend', 'click'])
+  document.addEventListener(t, () => { if (state().profile.sound) wake(); }, { capture: true, passive: true });
+
+/** One soft note: sine body + a quiet octave for shine, fast attack, smooth exponential tail. */
+function note(freq, t0 = 0, dur = 0.18, gain = 0.09, bend = 0) {
+  const c = ctx, t = c.currentTime + t0 + 0.005;
+  for (const [mult, g0] of [[1, 1], [2, 0.18]]) {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(freq * mult, t);
+    if (bend) o.frequency.exponentialRampToValueAtTime(freq * mult * bend, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain * g0, t + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(out); o.start(t); o.stop(t + dur + 0.03);
+  }
 }
+/** A tiny filtered click, like a key on a phone keyboard. */
+function click(gain = 0.05, freq = 2400) {
+  const c = ctx, t = c.currentTime + 0.003, n = Math.floor(c.sampleRate * 0.012), b = c.createBuffer(1, n, c.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 6);
+  const src = c.createBufferSource(), bp = c.createBiquadFilter(), g = c.createGain();
+  src.buffer = b; bp.type = 'bandpass'; bp.frequency.value = freq; bp.Q.value = 1.4; g.gain.value = gain;
+  src.connect(bp).connect(g).connect(out); src.start(t);
+}
+let lastTap = 0;
 const SFX = {
-  ok: () => { tone(660, 0, 0.12, 'triangle', 0.16); tone(990, 0.08, 0.2, 'triangle', 0.16); },
-  combo: () => { tone(660, 0, 0.1, 'triangle'); tone(880, 0.07, 0.1, 'triangle'); tone(1320, 0.14, 0.22, 'triangle'); },
-  bad: () => { tone(240, 0, 0.16, 'square', 0.07); tone(170, 0.12, 0.26, 'square', 0.07); },
-  tap: () => tone(520, 0, 0.05, 'sine', 0.05),
-  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.3, 'triangle', 0.1)),
-  coin: () => { tone(988, 0, 0.08, 'square', 0.05); tone(1319, 0.07, 0.25, 'square', 0.05); },
-  flip: () => tone(380, 0, 0.06, 'sine', 0.05),
+  tap: () => { const n = performance.now(); if (n - lastTap < 80) return; lastTap = n; click(0.045); }, // one click per tap, however many handlers ask
+  flip: () => click(0.05, 1600),
+  ok: () => { note(1046.5, 0, 0.16, 0.07); note(1568, 0.075, 0.32, 0.075); },             // soft two-note "pling" (C6 → G6)
+  combo: () => { note(1046.5, 0, 0.14, 0.06); note(1318.5, 0.07, 0.14, 0.06); note(1568, 0.14, 0.36, 0.07); },
+  bad: () => { note(330, 0, 0.2, 0.09, 0.82); note(247, 0.09, 0.26, 0.07, 0.9); },          // low, round "dum-dum", never harsh
+  coin: () => { note(1760, 0, 0.1, 0.05); note(2349, 0.06, 0.28, 0.05); },
+  win: () => [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => note(f, i * 0.09, 0.42, 0.06)),
 };
 export function sfx(name) {
   if (!state().profile.sound) return;
-  try { wake(); SFX[name]?.(); } catch (e) { }
+  try { wake(); if (ctx.state === 'running' || ctx.state === 'suspended') SFX[name]?.(); } catch (e) { }
 }
-export function buzz(ms = 15) { if (state().profile.haptics) navigator.vibrate?.(ms); }
+
+// ---------- haptics
+// Android: the vibration API. iPhone (iOS 18+): Safari has no vibration API, but toggling a native switch control
+// gives the system "tick" haptic, so we toggle an invisible one. Must run inside a tap (click / touchend).
+let hapLabel = null;
+function iosTick() {
+  if (!hapLabel) {
+    hapLabel = document.createElement('label'); hapLabel.setAttribute('aria-hidden', 'true'); hapLabel.style.display = 'none';
+    const i = document.createElement('input'); i.type = 'checkbox'; i.setAttribute('switch', ''); i.tabIndex = -1;
+    hapLabel.appendChild(i); document.body.appendChild(hapLabel);
+  }
+  hapLabel.click();
+}
+const isIOS = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+/** kind: 'light' (a tap), 'ok' (right answer), 'bad' (wrong: two ticks). Old callers pass a number of ms. */
+export function buzz(kind = 'light') {
+  if (!state().profile.haptics) return;
+  try {
+    const ms = typeof kind === 'number' ? (kind >= 50 ? 'bad' : 'light') : kind;
+    if (isIOS) { iosTick(); if (ms === 'bad') setTimeout(iosTick, 90); return; } // the second tick may be skipped outside the tap; that's fine
+    navigator.vibrate?.(ms === 'bad' ? [18, 60, 18] : ms === 'ok' ? 14 : 8);
+  } catch (e) { }
+}

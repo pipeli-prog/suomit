@@ -1,5 +1,7 @@
 // ui strings for SuomiT (English → es). Keys are the exact English strings. See i18n/README.md.
 export default {
+  "Sounds (taps, right / wrong)": "Sonidos (toques, bien / mal)",
+  "Haptic feedback": "Respuesta háptica (vibración)",
   "You know {n} of {total} words": "Conoces {n} de {total} palabras",
   "Streak": "Racha",
   "Level": "Nivel",
