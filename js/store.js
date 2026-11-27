@@ -36,7 +36,17 @@ function hydrate(raw) {
   for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
   for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (!Array.isArray(out.lists) || !out.lists.length) out.lists = fresh().lists;
+  renameItems(out);
   return out;
+}
+/** Words that were renamed: progress and list entries move to the new id. */
+const RENAMED = { 'w:paljonko kello on?': 'w:mitä kello on?' };
+function renameItems(o) {
+  for (const [from, to] of Object.entries(RENAMED)) {
+    const c = o.cards?.[from];
+    if (c) { if (!o.cards[to] || (c.last || 0) > (o.cards[to].last || 0)) o.cards[to] = c; delete o.cards[from]; }
+    for (const l of o.lists || []) if (l.items?.includes(from)) l.items = [...new Set(l.items.map(x => x === from ? to : x))];
+  }
 }
 function load() {
   try {
@@ -194,6 +204,7 @@ export async function decodeCode(code) {
 /** Merge another device's state into this one. Nothing is lost: union of history, newest card state wins. */
 export function merge(o) {
   const a = S;
+  o = { ...o, cards: { ...(o.cards || {}) }, lists: (o.lists || []).map(l => ({ ...l })) }; renameItems(o);
   const maxDay = (x = {}, y = {}) => {
     const r = { ...x };
     for (const [k, v] of Object.entries(y)) {

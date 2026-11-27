@@ -83,7 +83,7 @@ export function wireSetCards(root, lesson, back) {
 /** Reading set page: #/set/<lesson>/<index> */
 export function renderSet(el, lesson, idx) {
   const set = PRACTICE[lesson]?.[+idx];
-  if (!set) { location.hash = '#/lesson/' + lesson + '/res'; return; }
+  if (!set || set.kind !== 'read') { location.hash = '#/lesson/' + lesson + '/res'; return; } // only reading sets have a page
   const l = LESSON_BY_ID[lesson];
   el.innerHTML = `<a class="back" href="#/lesson/${lesson}/res">‹ ${esc(l?.title || 'Lesson')}</a>
     <h1 class="pg fi">${esc(set.title)}</h1>${set.note ? `<p class="muted">${esc(set.note)}</p>` : ''}

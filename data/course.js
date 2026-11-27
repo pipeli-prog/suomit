@@ -641,7 +641,7 @@ You don't need the names to speak, but grammar books and videos use them.` },
     id: 'm4-3', mod: 'm4', title: 'Time & clock', fi: 'Kellonajat', icon: 'clock',
     goals: ['Tell the time', 'Say at what time something happens'],
     learn: [
-      { h: 'Paljonko kello on?', body: `|3:00|*Kello on kolme.*|
+      { h: 'Mitä kello on?', body: `|3:00|*Kello on kolme.*|
 |3:15|*Kello on varttia yli kolme.*|
 |3:30|*Kello on puoli neljä.*| (half **to** four!)
 |3:45|*Kello on varttia vaille neljä.*|

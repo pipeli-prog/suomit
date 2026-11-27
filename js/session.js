@@ -104,10 +104,22 @@ export function runSession(opts) {
     } else if (q.kind === 'tiles') {
       card.innerHTML = head + `<div class="tile-ans"></div><div class="tile-bank">${q.tiles.map((t, k) => `<button class="tile" data-k="${k}">${esc(t)}</button>`).join('')}</div>`;
       const ans = card.querySelector('.tile-ans'), bank = card.querySelector('.tile-bank');
-      bank.onclick = e => { const b = e.target.closest('.tile'); if (!b || b.classList.contains('used')) return; sfx('tap'); b.classList.add('used'); const c = b.cloneNode(true); c.dataset.src = b.dataset.k; ans.appendChild(c); };
-      ans.onclick = e => { const b = e.target.closest('.tile'); if (!b) return; bank.querySelector(`[data-k="${b.dataset.src}"]`).classList.remove('used'); b.remove(); };
+      // tap a word: it moves into the answer box (in the order you tap) and leaves an empty slot in the bank;
+      // tap it in the box to send it back
+      const locked = () => card.classList.contains('answered');
+      bank.onclick = e => {
+        const b = e.target.closest('.tile'); if (!b || locked() || b.classList.contains('used')) return;
+        sfx('tap'); const c = b.cloneNode(true); c.dataset.src = b.dataset.k; b.classList.add('used'); b.disabled = true; ans.appendChild(c);
+      };
+      ans.onclick = e => {
+        const b = e.target.closest('.tile'); if (!b || locked()) return;
+        const src = bank.querySelector(`[data-k="${b.dataset.src}"]`); src.classList.remove('used'); src.disabled = false; b.remove();
+      };
       foot.innerHTML = `<button class="btn ghost skip">I don't know</button><button class="btn go">Check</button>`;
-      foot.querySelector('.go').onclick = () => answer(q, [...ans.children].map(t => t.textContent).join(' '));
+      foot.querySelector('.go').onclick = () => {
+        if (!ans.children.length) { ans.classList.remove('shake'); void ans.offsetWidth; ans.classList.add('shake'); return; }
+        answer(q, [...ans.children].map(t => t.textContent).join(' '));
+      };
       foot.querySelector('.skip').onclick = () => answer(q, '');
     }
     wireSay(q);

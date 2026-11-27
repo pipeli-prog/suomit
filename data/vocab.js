@@ -66,7 +66,7 @@ halpa|cheap|a|halvan halpaa halvat
 kallis|expensive|a|kalliin kallista kalliit
 Mitä se maksaa?|What does it cost?|p
 Kuinka paljon se maksaa?|How much does it cost?|p
-Paljonko kello on?|What time is it?|p
+Mitä kello on?|What time is it?|p
 Se maksaa kaksi euroa.|It costs two euros.|p
 kuitti|receipt|n|kuitin kuittia kuitit
 kassa|checkout, till|n|kassan kassaa kassat
@@ -814,7 +814,6 @@ usein|often|adv
 joskus|sometimes|adv
 harvoin|rarely|adv
 ei koskaan|never|adv
-Paljonko kello on?|What time is it?|p
 Mitä kello on?|What time is it?|p
 Mihin aikaan?|At what time?|q
 

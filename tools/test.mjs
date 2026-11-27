@@ -222,7 +222,7 @@ const many = (sk, n = 400) => Array.from({ length: n }, () => E.SKILLS[sk]());
   for (const q of many('qwords')) {
     const p = strip(q.prompt);
     if (p.includes('thank you')) ok(!q.choices.includes('Kuinka'), 'qwords: Kuinka sanotaan is also right');
-    if (p.startsWith('___ kello on')) ok(!q.choices.includes('Mitä'), 'qwords: Mitä kello on is also right');
+    if (p.startsWith('___ kello on')) ok(q.answer === 'Mitä' && !q.choices.includes('Paljonko'), 'qwords: Mitä kello on is the answer, Paljonko never a wrong option');
     if (p.startsWith('___ tämä on')) ok(!q.choices.includes('Mitä'), 'qwords: Mitä tämä on is also right');
     if (p.startsWith('___ vanha')) ok(!q.choices.includes('Miten'), 'qwords: Miten vanha (colloquial)');
   }
@@ -451,6 +451,22 @@ section('trainer + twisters');
   const qs = plan.trainerQuestions(lw, 'write', 20);
   ok(qs.filter(q => q.kind === 'intro').length === lw.filter(w => !store.state().cards[w.id]).slice(0, 20).length || lw.length > 20, 'unseen words get an intro card in write mode');
   ok(plan.sourceWords('new').every(w => !store.state().cards[w.id]), "'new' source = never practised words");
+}
+
+section('what time is it');
+{
+  const t = VOCAB.filter(w => w.en === 'What time is it?');
+  eq(t.map(w => w.fi), ['Mitä kello on?'], '"What time is it?" is taught as Mitä kello on?');
+  const q = E.vocabQ(t[0], { force: 'typeEnFi' }); // 3-word phrases are built from tiles
+  ok(q.kind === 'tiles' && F.gradeAnswer(q, 'Mitä kello on').ok && q.tiles.includes('Mitä'), 'building it: Mitä kello on');
+  const mc = E.vocabQ(t[0], { force: 'mcEnFi' });
+  ok(mc.answer === 'Mitä kello on?' && !mc.choices.some(c => /paljonko kello/i.test(c)), 'choose-the-Finnish: Mitä kello on? with no Paljonko trap');
+  // progress on the old phrase moves over (cloud merge path)
+  store.state().cards['w:mitä kello on?'] && delete store.state().cards['w:mitä kello on?'];
+  store.merge({ cards: { 'w:paljonko kello on?': { s: 3, d: 5, due: 1, last: 5, reps: 2, lapses: 0 } }, lists: [{ id: 'xx-rename', name: 'x', items: ['w:paljonko kello on?'] }] });
+  ok(store.state().cards['w:mitä kello on?']?.reps === 2 && !store.state().cards['w:paljonko kello on?'], 'old card renamed on merge');
+  eq(store.state().lists.find(l => l.id === 'xx-rename')?.items, ['w:mitä kello on?'], 'list entry renamed on merge');
+  store.state().lists = store.state().lists.filter(l => l.id !== 'xx-rename');
 }
 
 // ======================================================================= 9. Listening audio
