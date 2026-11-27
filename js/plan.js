@@ -3,12 +3,17 @@ import * as store from './store.js';
 import { VOCAB, VOCAB_BY_ID, TOPIC_BY_ID } from '../data/vocab.js';
 import { LESSONS, LESSON_BY_ID } from '../data/course.js';
 import { vocabQ, flashQ, skillQs, topicWords, SKILL_NAMES } from './exercises.js';
-import { isLeech, retrievability } from './srs.js';
+import { isLeech, retrievability, isLearned } from './srs.js';
 import { t } from './i18n.js';
 
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const tagSkill = qs => qs.map(q => ({ ...q, skillName: SKILL_NAMES[q.skill] || '' }));
 export const lessonWords = l => topicWords(l.topics);
+/** How many of a lesson's words you know (practised, and remembered for at least a day). */
+export function wordsKnown(l) {
+  const ws = lessonWords(l), cards = store.state().cards;
+  return { known: ws.filter(w => isLearned(cards[w.id])).length, total: ws.length };
+}
 export const itemWord = id => VOCAB_BY_ID[id] || (store.state().custom[id] && { id, ...store.state().custom[id], pos: 'custom', topics: [] });
 /** A word's meaning in the learner's language (your own words keep the translation you typed). */
 export const meaning = w => w.pos === 'custom' ? w.en : t(w.en);

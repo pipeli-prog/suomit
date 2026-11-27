@@ -1,7 +1,7 @@
 /* Shop, mascot cosmetics and the Yllätyslaatikko (surprise box). Layered after app.css. */
 
 /* ---------- Minä: mascot name */
-.pet-name{font-size:.82rem;font-weight:800;color:var(--mute);margin:-2px 0 6px}
+.pet-name{font-size:.82rem;font-weight:650;color:var(--mute);margin:-2px 0 6px}
 .pet-name .ic{width:14px;height:14px;color:#ff8fab}
 
 /* ---------- live preview hero */
@@ -12,7 +12,7 @@
 .sh-info{min-width:0}
 .sh-info h3{margin:2px 0 4px;font-size:1.2rem}.sh-info h3 .muted{font-size:.95rem;font-weight:700}
 .sh-info p{margin:0}
-.sh-tag{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--acc2)}
+.sh-tag{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--acc2)}
 .sh-tag .ic{width:14px;height:14px}
 @keyframes sh-bob{50%{transform:translateY(-4px) rotate(-1.5deg)}}
 
@@ -31,10 +31,10 @@
 .lootbox-svg{display:block;overflow:visible}
 
 /* ---------- tabs */
-.shop-tabs{flex-wrap:wrap;overflow:visible;position:sticky;top:calc(env(safe-area-inset-top) + 58px);z-index:5;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);background:color-mix(in srgb,var(--bg) 70%,var(--soft))}
-.shop-tabs button{flex:1 0 auto;min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 12px;border-radius:11px;color:var(--mute);font-weight:800;font-size:.9rem;white-space:nowrap}
-.shop-tabs button.on{background:var(--card);color:var(--ink);box-shadow:0 2px 8px #0003}
-.shop-tabs button small{font-size:.7rem;font-weight:800;opacity:.75}
+.shop-tabs{flex-wrap:nowrap;overflow-x:auto;position:sticky;top:calc(env(safe-area-inset-top) + 60px);z-index:5;-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);background:color-mix(in srgb,var(--bg2) 55%,transparent)}
+.shop-tabs button{flex:1 0 auto;min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:8px 13px;border-radius:99px;color:var(--mute);font-weight:600;font-size:.9rem;white-space:nowrap;transition:background .25s,color .25s}
+.shop-tabs button.on{background:color-mix(in srgb,var(--ink) 13%,transparent);color:var(--ink);box-shadow:inset 0 1px 0 var(--spec)}
+.shop-tabs button small{font-size:.7rem;font-weight:650;opacity:.75}
 .shop-tabs .ic{width:16px;height:16px}
 .shop-tabs button.on .ic{color:var(--acc2)}
 
@@ -75,7 +75,7 @@
 .lb-stage>*{grid-area:1/1}
 .lb-box{animation:lb-shake 1.3s cubic-bezier(.36,.07,.19,.97) both;transform-origin:50% 90%}
 .lb-box .lb-lid{transform-origin:60px 54px;transition:transform .45s cubic-bezier(.2,1.4,.4,1),opacity .45s}
-.lb-hint{align-self:end;margin:0;transform:translateY(130px);font-weight:800;opacity:.7;animation:lb-pulse 1.2s ease-in-out infinite}
+.lb-hint{align-self:end;margin:0;transform:translateY(130px);font-weight:650;opacity:.7;animation:lb-pulse 1.2s ease-in-out infinite}
 @keyframes lb-shake{
   0%{transform:scale(.6);opacity:0}12%{transform:scale(1.05);opacity:1}20%{transform:scale(1)}
   30%,50%,70%{transform:rotate(-6deg)}40%,60%,80%{transform:rotate(6deg)}88%{transform:rotate(-10deg) scale(1.06)}94%{transform:rotate(10deg) scale(1.1)}100%{transform:scale(1.14)}}
@@ -85,7 +85,7 @@
   -webkit-mask:radial-gradient(circle,#000 18%,transparent 66%);mask:radial-gradient(circle,#000 18%,transparent 66%)}
 .lb-reveal{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transform:scale(.3);pointer-events:none;width:100%;
   padding:22px 18px 18px;border-radius:26px;background:var(--card);color:var(--ink);border:1px solid var(--line);box-shadow:0 30px 80px -20px #000}
-.lb-kind{font-size:.78rem;font-weight:900;text-transform:uppercase;letter-spacing:.08em;color:var(--acc2)}
+.lb-kind{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--acc2)}
 .lb-art{display:grid;place-items:center;min-height:170px}
 .lb-art .tsw{border-radius:28px}
 .lb-name{margin:4px 0 0;font-size:1.6rem}

@@ -1,5 +1,5 @@
 /* in-app practice sets */
-.pset{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:8px 0;border-radius:14px;background:var(--card);border:1px solid var(--line);text-align:left;color:var(--ink)}
+.pset{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;margin:8px 0;border-radius:14px;background:var(--glass);box-shadow:var(--edge);text-align:left;color:var(--ink)}
 .pset.done{opacity:.6}
 .ps-ico{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--acc2) 18%,transparent)}
 .ps-ico .ic{width:22px;height:22px;color:var(--acc2)}
@@ -14,9 +14,9 @@
 .cal-nav{width:40px;height:40px;border-radius:12px;background:var(--soft);display:grid;place-items:center}
 .cal-nav .ic{width:20px;height:20px}.cal-nav.next .ic{transform:scaleX(-1)}.cal-nav:disabled{opacity:.3}
 .cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-g .wd{text-align:center;font-size:.72rem;font-weight:800;color:var(--mute);text-transform:uppercase}
+.cal-g .wd{text-align:center;font-size:.72rem;font-weight:650;color:var(--mute);text-transform:uppercase}
 .cd{position:relative;aspect-ratio:1;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-style:normal;background:var(--soft);font-size:.85rem}
-.cd b{font-weight:800}.cd .ic{width:14px;height:14px;margin-bottom:1px}
+.cd b{font-weight:650}.cd .ic{width:14px;height:14px;margin-bottom:1px}
 .cd.empty{background:none}
 .cd.kept{background:linear-gradient(160deg,#ff9d4d,#ff6a3d);color:#fff}
 .cd.frozen{background:linear-gradient(160deg,#7cc4ff,#4a8dff);color:#fff}
@@ -38,13 +38,13 @@
 .reward-chest.open .lid{transform:rotate(-38deg) translate(-6px,-10px)}
 .reward-chest.open .glow{opacity:1;animation:glowp 1.2s ease-in-out infinite alternate}
 @keyframes glowp{to{transform:scale(1.25);opacity:.5}}
-.rc-tap{font-size:.75rem;font-weight:800;color:var(--mute);margin-top:2px}.reward-chest.open .rc-tap{visibility:hidden}
+.rc-tap{font-size:.75rem;font-weight:650;color:var(--mute);margin-top:2px}.reward-chest.open .rc-tap{visibility:hidden}
 .rc-loot{display:flex;gap:12px;margin-top:4px;opacity:0;transform:translateY(10px) scale(.9);transition:.4s cubic-bezier(.2,1.5,.5,1)}
 .reward-chest.show .rc-loot{opacity:1;transform:none}
-.rc-item{min-width:104px;padding:10px 14px;border-radius:16px;background:var(--card);border:1px solid var(--line);text-align:center}
-.rc-item b{display:block;font-size:1.6rem;font-weight:900}.rc-item small{color:var(--mute);font-weight:700}
+.rc-item{min-width:104px;padding:10px 14px;border-radius:16px;background:var(--glass);box-shadow:var(--edge);text-align:center}
+.rc-item b{display:block;font-size:1.6rem;font-weight:700}.rc-item small{color:var(--mute);font-weight:700}
 .rc-item.xp b{color:var(--acc)}.rc-item.coins b{color:#ffc94d}
 .loot-home{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,color-mix(in srgb,#ffc94d 20%,var(--card)),var(--card) 70%)}
 .lh-ico{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:color-mix(in srgb,#ffc94d 25%,transparent)}.lh-ico .ic{width:26px;height:26px;color:#ffc94d}
-.lh-p{margin-left:auto;font-weight:900;white-space:nowrap}.lh-p .ic{color:#ffc94d}
+.lh-p{margin-left:auto;font-weight:700;white-space:nowrap}.lh-p .ic{color:#ffc94d}
 .end .reward-chest{margin:0 0 6px}.end .mascot{display:inline-block}
