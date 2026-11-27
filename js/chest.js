@@ -1,5 +1,6 @@
 // End-of-session reward chest: shakes, opens, and counts up the XP + markkaa you just earned.
 import { sfx } from './audio.js';
+import { t } from './i18n.js';
 
 const CHEST = `<svg class="chest-svg" viewBox="0 0 120 100" aria-hidden="true">
   <g class="lid"><path d="M14 44 Q14 18 60 18 Q106 18 106 44 Z" fill="var(--chest-a,#c7772e)" stroke="#5a3415" stroke-width="3"/>
@@ -14,7 +15,7 @@ const CHEST = `<svg class="chest-svg" viewBox="0 0 120 100" aria-hidden="true">
 /** HTML for the chest block. r = session result {xp, coins}. */
 export function chestHTML(r) {
   return `<div class="reward-chest" data-xp="${Math.round(r.xp || 0)}" data-coins="${r.coins || 0}">
-    <button class="rc-box" aria-label="Open chest">${CHEST}<span class="rc-tap">Tap to open</span></button>
+    <button class="rc-box" aria-label="${t('Open chest')}">${CHEST}<span class="rc-tap">${t('Tap to open')}</span></button>
     <div class="rc-loot"><div class="rc-item xp"><b>+<span class="n">0</span></b><small>XP</small></div><div class="rc-item coins"><b>+<span class="n">0</span></b><small>markkaa</small></div></div>
   </div>`;
 }
