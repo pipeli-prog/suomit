@@ -87,7 +87,7 @@ export function renderLesson(el, id, tab = 'learn') {
       </div>
       ${sk.length ? `<h3 class="sec">${t('Grammar drills')}</h3>` + sk.map(s => {
         const c = S.skills[s], acc = c?.acc != null ? Math.round(c.acc * 100) : null;
-        return `<button class="drill" data-s="${s}"><span class="d-ico">${icon(SKILL_ICON[s] || 'puzzle')}</span><div class="d-t"><b>${esc(t(SKILL_NAMES[s]))}</b>
+        return `<button class="drill" data-s="${s}"><span class="d-ico">${icon(SKILL_ICON[s] || 'puzzle')}</span><div class="d-t"><b>${esc(SKILL_NAMES[s])}</b>
           <div class="mini-bar"><div style="width:${acc ?? 0}%"></div></div></div><span class="muted small">${acc == null ? t('new') : acc + '%'}</span></button>`;
       }).join('') : ''}
       ${setsFor(id).length ? `<h3 class="sec">${icon('book')} ${t('From your course resources')}</h3><p class="muted small">${t("The course's external exercises, rebuilt inside SuomiT.")}</p>${setCards(id, setsFor(id))}` : ''}
@@ -95,7 +95,7 @@ export function renderLesson(el, id, tab = 'learn') {
     wireSetCards(body, id, rerender);
     body.querySelector('#p-mix').onclick = () => start('practice');
     body.querySelector('#p-test').onclick = () => start('test');
-    body.querySelectorAll('[data-s]').forEach(b => b.onclick = () => runSession({ title: t(SKILL_NAMES[b.dataset.s]), mode: 'drill', questions: skillDrill(b.dataset.s, 12), onClose: rerender, again: () => b.click() }));
+    body.querySelectorAll('[data-s]').forEach(b => b.onclick = () => runSession({ title: SKILL_NAMES[b.dataset.s], mode: 'drill', questions: skillDrill(b.dataset.s, 12), onClose: rerender, again: () => b.click() }));
   }
   if (tab === 'words') {
     body.innerHTML = `<div class="row-btns">

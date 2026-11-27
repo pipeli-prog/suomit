@@ -4,6 +4,8 @@ import { icon } from './icons.js';
 import { t, lang, LANGS } from './i18n.js';
 import { lookup } from './lexicon.js';
 import { speak, sfx } from './audio.js';
+/** The built-in list is shown in the learner's language until they rename it (same rule as views/words.js listName). */
+const listLabel = l => l.id === 'mine' && l.name === 'My words' ? t('My words') : l.name;
 import * as store from './store.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -85,7 +87,7 @@ export function wordPopover(word, anchor) {
 }
 function listButtons(id) {
   const lists = store.state().lists;
-  return lists.map(l => `<button class="chip ${store.inList(l.id, id) ? 'on' : ''}" data-tog="${l.id}" data-id="${esc(id)}">${store.inList(l.id, id) ? '✓' : '＋'} ${esc(l.name)}</button>`).join('');
+  return lists.map(l => `<button class="chip ${store.inList(l.id, id) ? 'on' : ''}" data-tog="${l.id}" data-id="${esc(id)}">${store.inList(l.id, id) ? '✓' : '＋'} ${esc(listLabel(l))}</button>`).join('');
 }
 function wirePop(p) {
   p.addEventListener('click', ev => {
@@ -104,7 +106,7 @@ export function addCustomDialog(fi = '', en = '') {
   const m = modal(`<h3>${t('Add a word')}</h3>
     <label class="fld"><span>${t('Finnish')}</span><input id="cfi" value="${esc(fi)}" autocomplete="off" autocapitalize="off"></label>
     <label class="fld"><span>${LANGS[lang()]}</span><input id="cen" value="${esc(en)}" autocomplete="off" placeholder="${esc(t('your translation'))}"></label>
-    <label class="fld"><span>${t('List')}</span><select id="clist">${store.state().lists.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select></label>
+    <label class="fld"><span>${t('List')}</span><select id="clist">${store.state().lists.map(l => `<option value="${l.id}">${esc(listLabel(l))}</option>`).join('')}</select></label>
     <button class="btn wide" id="csave">${t('Save to list')}</button>`);
   const go = () => {
     const f = $('#cfi', m.el).value.trim(), e = $('#cen', m.el).value.trim();

@@ -42,11 +42,19 @@ for (const f of walk(jsDir)) {
 
 // ---- 2. data shown to learners
 const { VOCAB } = await import(R('data/vocab.js'));
+for (const w of VOCAB) if (w.ex?.en) put('words', w.ex.en, `translation of the example sentence "${w.ex.fi}"`);
 for (const w of VOCAB) put('words', w.en, `meaning of the Finnish ${w.pos === 'p' ? 'phrase' : 'word'} "${w.fi}"${w.pos && w.pos !== 'p' ? ` (${{ n: 'noun', v: 'verb', a: 'adjective', adv: 'adverb', q: 'question word', num: 'number' }[w.pos] || w.pos})` : ''}`);
 const { VERBS } = await import(R('data/verbs.js'));
 for (const v of VERBS) put('words', v.en, `meaning of the Finnish verb "${v.inf}"`);
 const { MODULES } = await import(R('data/course.js'));
 for (const m of MODULES) put('ui', m.title, `title of course module ${m.n} ("${m.fi}")`);
+const Gm = await import(R('js/gamify.js')), Ms = await import(R('js/mascots.js'));
+for (const it of [...Gm.COSMETICS, ...Gm.SHOP]) put('ui', it.en, `shop: description of the ${it.kind} "${it.name}"`);
+for (const it of Gm.SHOP) if (it.kind === 'freeze') put('ui', it.name, 'shop: name of the streak-freeze item');
+for (const a of Object.values(Ms.ANIMALS)) put('ui', a.en, `shop: description of the animal "${a.name}" (a ${a.fi})`);
+for (const a of Gm.ACH) if (!a.mod) put('ui', a.en, `achievement description (its Finnish name "${a.name}" stays)`);
+const { TOPICS } = await import(R('data/vocab.js'));
+for (const tp of TOPICS) put('words', tp.title, 'title of a word-list topic');
 const { PRACTICE } = await import(R('data/practice/index.js'));
 const fiLike = s => /[äöÄÖ]/.test(s);
 for (const part of PARTS) for (const [les, sets] of Object.entries((await import(R(`data/practice/${part}.js`))).default)) for (const s of sets) {

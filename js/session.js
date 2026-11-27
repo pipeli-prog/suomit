@@ -88,7 +88,7 @@ export function runSession(opts) {
       speak(w.fi); wireSay(q); return;
     }
     if (q.kind === 'flash') return renderFlash(q);
-    const head = `${q.skill ? `<div class="tag">${esc(tx(q.skillName) || '')}</div>` : ''}${q.prompt}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
+    const head = `${q.skill ? `<div class="tag">${esc(q.skillName || '')}</div>` : ''}${q.prompt}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
     if (q.kind === 'mc') {
       card.innerHTML = head + `<div class="choices ${q.choices.some(c => c.length > 22) ? 'col' : ''}">${q.choices.map((c, k) => `<button class="choice" data-k="${k}"><span class="kn">${k + 1}</span>${q.fiChoices ? fw(c) : esc(c)}</button>`).join('')}</div>`;
       card.querySelectorAll('.choice').forEach(b => b.onclick = e => { if (e.target.closest('.fw') && !b.disabled && b.closest('.answered')) return; answer(q, q.choices[+b.dataset.k], b); });

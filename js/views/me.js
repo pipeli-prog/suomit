@@ -30,7 +30,7 @@ export function renderMe(el) {
     </section>
     <section class="card"><h3>${icon('calendar')} ${t('Streak calendar')}</h3><div id="cal"></div></section>
     <section class="card"><h3>${t('Reviews coming up')}</h3><div class="fc">${fc.map((n, i) => `<div><div class="fcb" style="height:${n / fmax * 100}%"></div><b>${n}</b><span>${i === 0 ? t('now') : i === 1 ? t('tmrw') : '+' + i}</span></div>`).join('')}</div></section>
-    ${skills.length ? `<section class="card"><h3>${t('Grammar skills')}</h3>${skills.map(([k, c]) => `<div class="skrow"><span>${icon(SKILL_ICON[k] || 'puzzle')} ${esc(SKILL_NAMES[k] ? t(SKILL_NAMES[k]) : k)}</span><div class="mini-bar"><div style="width:${Math.round((c.acc || 0) * 100)}%"></div></div><b>${Math.round((c.acc || 0) * 100)}%</b></div>`).join('')}</section>` : ''}
+    ${skills.length ? `<section class="card"><h3>${t('Grammar skills')}</h3>${skills.map(([k, c]) => `<div class="skrow"><span>${icon(SKILL_ICON[k] || 'puzzle')} ${esc(SKILL_NAMES[k] || k)}</span><div class="mini-bar"><div style="width:${Math.round((c.acc || 0) * 100)}%"></div></div><b>${Math.round((c.acc || 0) * 100)}%</b></div>`).join('')}</section>` : ''}
     <section class="card"><h3>${t('Achievements')} · ${Object.keys(S.ach).length}/${ACH.length}</h3><div class="achs">${ACH.map(a => `<div class="ach ${S.ach[a.id] ? 'on' : ''}" title="${esc(achDesc(a))}"><span>${icon(a.icon)}</span><b>${esc(a.name)}</b><small>${esc(achDesc(a))}</small></div>`).join('')}</div></section>
     <div class="grid2"><a class="tile-btn" href="#/shop"><span>${icon('bag')}</span><b>Kauppa</b><small>${t('animals, themes & surprise boxes')}</small></a><a class="tile-btn" href="#/settings"><span>${icon('gear')}</span><b>${t('Settings')}</b><small>${t('goal, voice, sync')}</small></a></div>
     <a class="card story-link" href="#/about"><span>${icon('flask')}</span><div><b>${t('Why SuomiT works')}</b><div class="muted small">${t('The learning science behind the app')}</div></div><span class="arrow">›</span></a>`;
@@ -195,7 +195,7 @@ export function renderSettings(el) {
 }
 async function doImport(code, done) {
   try { const data = await store.decodeCode(code); store.merge(data); applyTheme(); toast(t('Progress merged!'), 'check', 3000); done?.(); rerender(); }
-  catch (e) { toast(t('That code did not work: {error}', { error: tx(e.message) }), 'alert', 4000); }
+  catch (e) { toast(t('That code did not work: {error}', { error: e.message === 'Not a SuomiT sync code' ? t('Not a SuomiT sync code') : e.message }), 'alert', 4000); }
 }
 
 export function renderAbout(el) {
