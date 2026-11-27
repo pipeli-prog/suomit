@@ -1,5 +1,5 @@
 // SuomiT service worker: offline-first app shell. Bump VERSION on every release.
-const VERSION = 'suomit-v12';
+const VERSION = 'suomit-v13';
 // Speech clips (audio/<xx>/<hash>.mp3) are immutable (content-addressed), so they live in their own cache that
 // survives version bumps and fills up as clips are played. They are never precached.
 const AUDIO_CACHE = 'suomit-audio';
@@ -35,6 +35,25 @@ const SHELL = [
   'js/views/path.js',
   'js/views/read.js',
   'js/views/words.js',
+  'js/i18n.js',
+  'i18n/nl/index.js',
+  'i18n/nl/ui.js',
+  'i18n/nl/words.js',
+  'i18n/nl/readings.js',
+  'i18n/nl/course.js',
+  'i18n/nl/practice-m1a.js',
+  'i18n/nl/practice-m1b.js',
+  'i18n/nl/practice-m2.js',
+  'i18n/nl/practice-m34.js',
+  'i18n/es/index.js',
+  'i18n/es/ui.js',
+  'i18n/es/words.js',
+  'i18n/es/readings.js',
+  'i18n/es/course.js',
+  'i18n/es/practice-m1a.js',
+  'i18n/es/practice-m1b.js',
+  'i18n/es/practice-m2.js',
+  'i18n/es/practice-m34.js',
   'data/audio-index.js',
   'data/course.js',
   'data/grammar.js',

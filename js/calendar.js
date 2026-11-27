@@ -1,9 +1,11 @@
 // Streak calendar: one month at a time, flip with arrows. Days: kept (goal met), frozen (Sisu shield), missed.
 import * as store from './store.js';
 import { icon } from './icons.js';
+import { t } from './i18n.js';
 
 const FI_MONTHS = ['tammikuu', 'helmikuu', 'maaliskuu', 'huhtikuu', 'toukokuu', 'kesäkuu', 'heinäkuu', 'elokuu', 'syyskuu', 'lokakuu', 'marraskuu', 'joulukuu'];
-const EN_MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+// the month name in the learner's language (a function, so it is translated when the calendar is drawn)
+const EN_MONTHS = () => [t('January'), t('February'), t('March'), t('April'), t('May'), t('June'), t('July'), t('August'), t('September'), t('October'), t('November'), t('December')];
 const WD = ['ma', 'ti', 'ke', 'to', 'pe', 'la', 'su'];
 
 function dayState(k, todayKey, firstKey) {
@@ -35,11 +37,11 @@ export function renderCalendar(el) {
     }
     const isNow = y === now.getFullYear() && m === now.getMonth();
     el.innerHTML = `
-      <div class="cal-h"><button class="cal-nav" data-d="-1" aria-label="Previous month">${icon('undo')}</button>
-        <div class="cal-t"><b class="fi">${FI_MONTHS[m]} ${y}</b><span class="muted small">${EN_MONTHS[m]}</span></div>
-        <button class="cal-nav next" data-d="1" aria-label="Next month" ${isNow ? 'disabled' : ''}>${icon('undo')}</button></div>
+      <div class="cal-h"><button class="cal-nav" data-d="-1" aria-label="${t('Previous month')}">${icon('undo')}</button>
+        <div class="cal-t"><b class="fi">${FI_MONTHS[m]} ${y}</b><span class="muted small">${EN_MONTHS()[m]}</span></div>
+        <button class="cal-nav next" data-d="1" aria-label="${t('Next month')}" ${isNow ? 'disabled' : ''}>${icon('undo')}</button></div>
       <div class="cal-g">${WD.map(w => `<span class="wd">${w}</span>`).join('')}${cells.join('')}</div>
-      <div class="cal-leg"><span><i class="dot kept"></i>${kept} kept</span><span><i class="dot frozen"></i>${frozen} frozen</span><span><i class="dot missed"></i>${missed} missed</span></div>`;
+      <div class="cal-leg"><span><i class="dot kept"></i>${t('{n} kept', { n: kept })}</span><span><i class="dot frozen"></i>${t('{n} frozen', { n: frozen })}</span><span><i class="dot missed"></i>${t('{n} missed', { n: missed })}</span></div>`;
     el.querySelectorAll('.cal-nav').forEach(b => b.onclick = () => { m += +b.dataset.d; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } draw(); });
   };
   draw();

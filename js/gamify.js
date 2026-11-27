@@ -1,6 +1,7 @@
 // Rewards: daily quests, achievements, chests, shop catalogue, themes.
 import * as store from './store.js';
 import { icon } from './icons.js';
+import { t, lang } from './i18n.js';
 import { toast, confetti, modal, mascotSVG, esc } from './ui.js';
 import { ANIMALS, ACCESSORIES, COLORS } from './mascots.js';
 import { sfx } from './audio.js';
@@ -68,24 +69,27 @@ export const SHOP = [
 ];
 const BY_ID = new Map(SHOP.map(x => [x.id, x]));
 export const shopItem = id => BY_ID.get(id);
+/** Shown name / description of a shop item in the learner's language (cosmetic names are Finnish and stay). */
+export const itemName = it => it.kind === 'freeze' ? t(it.name) : it.name;
+export const itemDesc = it => it.kind === 'animal' ? `${it.fi[0].toUpperCase() + it.fi.slice(1)} · ${t(ANIMALS[it.id.split(':')[1]].en)}` : t(it.en);
 export const owns = id => !!store.state().owned[id] || BY_ID.get(id)?.price === 0;
 export function grant(id, why) {
   const S = store.state(); if (owns(id)) return false;
   S.owned[id] = 1; store.save();
   const it = BY_ID.get(id);
-  if (it && why !== false) toast(`Unlocked: ${it.name}${why ? ' · ' + why : ''}`, 'gift', 3200);
+  if (it && why !== false) toast(t('Unlocked: {item}', { item: itemName(it) }) + (why ? ' · ' + why : ''), 'gift', 3200);
   return true;
 }
 export function buy(it) {
   if (it.kind === 'freeze') {
-    if (store.freezesOwned() >= 3) return toast('You can hold max 3 shields', 'shield'), false;
-    if (!store.spend('freeze:' + Date.now(), it.price)) return toast('Not enough markkaa yet', 'coin'), false;
-    sfx('coin'); toast('Sisu shield ready!', 'shield'); return true;
+    if (store.freezesOwned() >= 3) return toast(t('You can hold max 3 shields'), 'shield'), false;
+    if (!store.spend('freeze:' + Date.now(), it.price)) return toast(t('Not enough markkaa yet'), 'coin'), false;
+    sfx('coin'); toast(t('Sisu shield ready!'), 'shield'); return true;
   }
   if (owns(it.id)) return false;
-  if (it.price == null) return toast('This one is a reward: earn it, or find it in a Yllätyslaatikko', 'lock'), false;
-  if (!store.spend('buy:' + it.id, it.price)) return toast('Not enough markkaa yet', 'coin'), false;
-  store.state().owned[it.id] = 1; store.save(); sfx('coin'); toast(`${it.name} is yours!`, 'bag');
+  if (it.price == null) return toast(t('This one is a reward: earn it, or find it in a Yllätyslaatikko'), 'lock'), false;
+  if (!store.spend('buy:' + it.id, it.price)) return toast(t('Not enough markkaa yet'), 'coin'), false;
+  store.state().owned[it.id] = 1; store.save(); sfx('coin'); toast(t('{item} is yours!', { item: itemName(it) }), 'bag');
   unlock('shopper');
   return true;
 }
@@ -107,7 +111,8 @@ export const isEquipped = it => {
 
 // ------------------------------------------------------------ Yllätyslaatikko (surprise box): uniform random over unowned cosmetics
 export const LOOT_PRICE = 100;
-export const KIND_LABEL = { animal: 'New friend', theme: 'New theme', hat: 'New hat', face: 'New glasses', neck: 'New neckwear', color: 'New colour' };
+/** "New hat" etc. for the surprise-box reveal (built at render time, so it is translated). */
+export const kindLabel = k => ({ animal: t('New friend'), theme: t('New theme'), hat: t('New hat'), face: t('New glasses'), neck: t('New neckwear'), color: t('New colour') })[k] || t('New item');
 /** Cosmetics the player does not own yet: every one has exactly the same chance. */
 export const lootPool = () => COSMETICS.filter(it => !owns(it.id));
 /** A closed box as SVG (uses the theme accent colours). */
@@ -141,8 +146,8 @@ export function themeSwatch(t, size = 78) {
  */
 export function openLootBox({ onClose } = {}) {
   const pool = lootPool();
-  if (!pool.length) { toast('You already own everything. Täydellinen kokoelma!', 'trophy'); return Promise.resolve(null); }
-  if (store.coins() < LOOT_PRICE) { toast(`A surprise box costs ${LOOT_PRICE} markkaa`, 'coin'); return Promise.resolve(null); }
+  if (!pool.length) { toast(t('You already own everything.') + ' Täydellinen kokoelma!', 'trophy'); return Promise.resolve(null); }
+  if (store.coins() < LOOT_PRICE) { toast(t('A surprise box costs {n} markkaa', { n: LOOT_PRICE }), 'coin'); return Promise.resolve(null); }
   if (!store.spend('box:' + Date.now(), LOOT_PRICE)) return Promise.resolve(null);
   const it = pool[Math.floor(Math.random() * pool.length)];
   store.state().owned[it.id] = 1; store.save();
@@ -154,25 +159,25 @@ export function openLootBox({ onClose } = {}) {
       <div class="lb-rays"></div>
       <div class="lb-box">${lootBoxSVG(180)}</div>
       <div class="lb-reveal">
-        <div class="lb-kind">${esc(KIND_LABEL[it.kind] || 'New item')}</div>
+        <div class="lb-kind">${esc(kindLabel(it.kind))}</div>
         <div class="lb-art">${cosmeticPreview(it, 170)}</div>
-        <h2 class="lb-name">${esc(it.name)}</h2>
-        <p class="lb-en">${esc(it.en)}</p>
-        <div class="lb-btns"><button class="btn" data-eq>${icon('check')} Equip now</button><button class="btn ghost" data-close>Close</button></div>
+        <h2 class="lb-name">${esc(itemName(it))}</h2>
+        <p class="lb-en">${esc(itemDesc(it))}</p>
+        <div class="lb-btns"><button class="btn" data-eq>${icon('check')} ${t('Equip now')}</button><button class="btn ghost" data-close>${t('Close')}</button></div>
       </div>
-      <p class="lb-hint">Tap to open</p>
+      <p class="lb-hint">${t('Tap to open')}</p>
     </div>`;
     document.body.appendChild(wrap);
     requestAnimationFrame(() => wrap.classList.add('in'));
     let opened = false, done = false;
     const reveal = () => {
-      if (opened) return; opened = true; clearTimeout(t);
+      if (opened) return; opened = true; clearTimeout(timer);
       wrap.classList.add('open'); sfx('win'); confetti(110);
       setTimeout(() => wrap.querySelector('[data-eq]')?.focus(), 400);
     };
-    const t = setTimeout(reveal, 1300);
+    const timer = setTimeout(reveal, 1300);
     const close = () => {
-      if (done) return; done = true; clearTimeout(t);
+      if (done) return; done = true; clearTimeout(timer);
       wrap.classList.remove('in'); document.removeEventListener('keydown', key);
       setTimeout(() => wrap.remove(), 250); onClose?.(); resolve(it);
     };
@@ -180,7 +185,7 @@ export function openLootBox({ onClose } = {}) {
     document.addEventListener('keydown', key);
     wrap.addEventListener('click', e => {
       if (!opened) return reveal();
-      if (e.target.closest('[data-eq]')) { equip(it); sfx('tap'); toast(`Wearing ${it.name}`, it.kind === 'theme' ? 'palette' : 'shirt'); close(); }
+      if (e.target.closest('[data-eq]')) { equip(it); sfx('tap'); toast(t('Wearing {item}', { item: itemName(it) }), it.kind === 'theme' ? 'palette' : 'shirt'); close(); }
       else if (e.target.closest('[data-close]')) close();
     });
   });
@@ -188,27 +193,28 @@ export function openLootBox({ onClose } = {}) {
 
 // ------------------------------------------------------------ daily quests
 const QUEST_POOL = [
-  { id: 'xp', t: g => `Earn ${g} XP`, target: () => store.state().profile.goal, metric: 'xp', coins: 15 },
-  { id: 'ok15', t: () => 'Answer 15 questions correctly', target: () => 15, metric: 'ok', coins: 10 },
-  { id: 'ok40', t: () => 'Answer 40 questions correctly', target: () => 40, metric: 'ok', coins: 25 },
-  { id: 'rev', t: () => 'Review 20 cards', target: () => 20, metric: 'rev', coins: 15 },
-  { id: 'new', t: () => 'Learn 5 new words', target: () => 5, metric: 'new', coins: 15 },
-  { id: 'listen', t: () => 'Answer 8 listening questions', target: () => 8, metric: 'listen', coins: 15 },
-  { id: 'combo', t: () => 'Get a 10-answer streak', target: () => 10, metric: 'best', coins: 20 },
-  { id: 'read', t: () => 'Read a story', target: () => 1, metric: 'read', coins: 20 },
+  // title() runs when the quests are shown, so it is translated
+  { id: 'xp', title: g => t('Earn {n} XP', { n: g }), target: () => store.state().profile.goal, metric: 'xp', coins: 15 },
+  { id: 'ok15', title: () => t('Answer 15 questions correctly'), target: () => 15, metric: 'ok', coins: 10 },
+  { id: 'ok40', title: () => t('Answer 40 questions correctly'), target: () => 40, metric: 'ok', coins: 25 },
+  { id: 'rev', title: () => t('Review 20 cards'), target: () => 20, metric: 'rev', coins: 15 },
+  { id: 'new', title: () => t('Learn 5 new words'), target: () => 5, metric: 'new', coins: 15 },
+  { id: 'listen', title: () => t('Answer 8 listening questions'), target: () => 8, metric: 'listen', coins: 15 },
+  { id: 'combo', title: () => t('Get a 10-answer streak'), target: () => 10, metric: 'best', coins: 20 },
+  { id: 'read', title: () => t('Read a story'), target: () => 1, metric: 'read', coins: 20 },
 ];
 function seedRand(seed) { let x = 0; for (const c of seed) x = (x * 31 + c.charCodeAt(0)) >>> 0; return () => ((x = (x * 1103515245 + 12345) >>> 0) / 4294967296); }
 export function quests(day = store.today()) {
   const r = seedRand(day), pool = [...QUEST_POOL], out = [pool.shift()]; // XP quest always
   while (out.length < 3) out.push(pool.splice(Math.floor(r() * pool.length), 1)[0]);
   const d = store.state().days[day] || {};
-  return out.map(q => ({ ...q, title: q.t(q.target()), target: q.target(), prog: Math.min(q.target(), d[q.metric] || 0), claimed: !!d.qc?.[q.id] }));
+  return out.map(q => ({ ...q, title: q.title(q.target()), target: q.target(), prog: Math.min(q.target(), d[q.metric] || 0), claimed: !!d.qc?.[q.id] }));
 }
 export function claimQuests() {
   const d = store.dayRec(); let n = 0;
   for (const q of quests()) if (q.prog >= q.target && !q.claimed) {
     d.qc[q.id] = 1; store.addCoins(q.coins); n++;
-    toast(`Quest done: ${q.title} · +${q.coins} ${icon('coin')}`, 'list', 3000);
+    toast(t('Quest done: {quest}', { quest: q.title }) + ` · +${q.coins} ${icon('coin')}`, 'list', 3000);
   }
   if (n) { sfx('coin'); store.save(); if (quests().every(q => q.claimed)) unlock('questmaster'); }
   return n;
@@ -236,13 +242,15 @@ export const ACH = [
   { id: 'shopper', icon: 'bag', name: 'Shoppailija', en: 'Buy something in the shop' },
   { id: 'collector', icon: 'pin', name: 'Keräilijä', en: 'Save 25 words to your lists' },
   { id: 'questmaster', icon: 'list', name: 'Tehtävämestari', en: 'Complete all 3 daily quests' },
-  ...MODULES.map(m => ({ id: 'mod:' + m.id, icon: 'hat', name: `${m.fi}`, en: `Finish every lesson in Module ${m.n}${m.id === 'b' ? ' (bonus)' : ''}` })),
+  ...MODULES.map(m => ({ id: 'mod:' + m.id, icon: 'hat', name: `${m.fi}`, en: `Finish every lesson in Module ${m.n}${m.id === 'b' ? ' (bonus)' : ''}`, mod: m })),
 ];
+/** An achievement's description in the learner's language (the names are Finnish and stay). */
+export const achDesc = a => !a.mod ? t(a.en) : a.mod.id === 'b' ? t('Finish every lesson in Module {n} (bonus)', { n: a.mod.n }) : t('Finish every lesson in Module {n}', { n: a.mod.n });
 export function unlock(id) {
   if (!store.unlockAch(id)) return;
   const a = ACH.find(x => x.id === id); if (!a) return;
-  sfx('win'); toast(`Achievement: ${a.name}`, a.icon, 3500);
-  if (id === 'streak30') grant('neck:mitali', '30-day streak');
+  sfx('win'); toast(t('Achievement: {name}', { name: a.name }), a.icon, 3500);
+  if (id === 'streak30') grant('neck:mitali', t('30-day streak'));
 }
 export function checkAchievements(ctx = {}) {
   const st = store.streak(), learned = store.learnedCount(), S = store.state();
@@ -255,9 +263,9 @@ export function checkAchievements(ctx = {}) {
   for (const m of MODULES) {
     const ls = LESSONS.filter(l => l.mod === m.id);
     if (ls.every(l => (S.lessons[l.id]?.stars || 0) >= 1)) {
-      if (store.unlockAch('mod:' + m.id)) { sfx('win'); toast(`Module ${m.n} complete!`, 'hat', 3500); confetti(); }
+      if (store.unlockAch('mod:' + m.id)) { sfx('win'); toast(t('Module {n} complete!', { n: m.n }), 'hat', 3500); confetti(); }
       const reward = { pipo: 'hat:pipo', aurinkolasit: 'face:aurinkolasit', kukkaseppele: 'hat:kukkaseppele', ylioppilaslakki: 'hat:ylioppilaslakki', kruunu: 'hat:kruunu' }[m.reward];
-      if (reward) grant(reward, `Module ${m.n} reward`);
+      if (reward) grant(reward, t('Module {n} reward', { n: m.n }));
     }
   }
 }
@@ -279,11 +287,11 @@ export function chestModal(coinsWon, streakN) {
   confetti(160); sfx('win');
   const m = modal(`<div class="center chest">
     <div class="chest-ico">${icon('gift')}</div>
-    <h2>Päivän tavoite saavutettu!</h2><p class="muted">Daily goal reached</p>
+    <h2>Päivän tavoite saavutettu!</h2><p class="muted">${t('Daily goal reached')}</p>
     ${mascotSVG(undefined, { size: 110, mood: 'wow' })}
-    <div class="streak-big">${icon('flame')} ${streakN} <span>day streak</span></div>
+    <div class="streak-big">${icon('flame')} ${streakN} <span>${streakN === 1 && lang() !== 'en' ? t('day streak (one day)') : t('day streak')}</span></div>
     <div class="coin-win">+${coinsWon} ${icon('coin')} markkaa</div>
-    <button class="btn wide" data-close>Jatketaan! (Let's go on)</button></div>`, { cls: 'celebrate' });
+    <button class="btn wide" data-close>Jatketaan! (${t("Let's go on")})</button></div>`, { cls: 'celebrate' });
   m.el.querySelector('[data-close]').onclick = m.close;
 }
 export function readingsDone() { return READINGS.filter(r => store.state().reads[r.id] != null).length; }

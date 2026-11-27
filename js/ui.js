@@ -1,8 +1,11 @@
 // UI helpers: escaping, markup, tap-to-translate, popovers, modals, toasts, confetti, mascot.
 import { WORD_RE } from './fi.js';
 import { icon } from './icons.js';
+import { t, lang, LANGS } from './i18n.js';
 import { lookup } from './lexicon.js';
 import { speak, sfx } from './audio.js';
+/** The built-in list is shown in the learner's language until they rename it (same rule as views/words.js listName). */
+const listLabel = l => l.id === 'mine' && l.name === 'My words' ? t('My words') : l.name;
 import * as store from './store.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -49,7 +52,7 @@ export function toast(msg, ic = 'sparkle', ms = 2400) {
 export function modal(html, { cls = '', onClose } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'modal-wrap';
-  wrap.innerHTML = `<div class="modal ${cls}" role="dialog" aria-modal="true"><button class="x" aria-label="Close">✕</button>${html}</div>`;
+  wrap.innerHTML = `<div class="modal ${cls}" role="dialog" aria-modal="true"><button class="x" aria-label="${esc(t('Close'))}">✕</button>${html}</div>`;
   document.body.appendChild(wrap);
   requestAnimationFrame(() => wrap.classList.add('in'));
   const close = () => { wrap.classList.remove('in'); setTimeout(() => wrap.remove(), 250); onClose?.(); };
@@ -65,13 +68,13 @@ export function wordPopover(word, anchor) {
   const e = lookup(word);
   const id = e?.id;
   pop = document.createElement('div'); pop.className = 'pop';
-  const forms = e?.gen ? `<div class="forms"><span>gen <b>${e.gen}</b></span><span>part <b>${e.part}</b></span>${e.pl ? `<span>pl <b>${e.pl}</b></span>` : ''}</div>` : '';
+  const forms = e?.gen ? `<div class="forms"><span>${t('gen')} <b>${e.gen}</b></span><span>${t('part')} <b>${e.part}</b></span>${e.pl ? `<span>${t('pl')} <b>${e.pl}</b></span>` : ''}</div>` : '';
   pop.innerHTML = e ? `
     <div class="pop-h"><button class="spk" data-say="${esc(word)}">${icon('speaker')}</button><div><div class="pop-fi">${esc(word)}${e.fi.toLowerCase() !== word.toLowerCase() ? ` <span class="lemma">← ${esc(e.fi)}</span>` : ''}</div>
     <div class="pop-en">${esc(e.en)}</div>${e.note ? `<div class="pop-note">${esc(e.note)}</div>` : ''}</div></div>${forms}
-    <div class="pop-a">${id ? listButtons(id) : `<button class="btn sm" data-addc="${esc(e.fi)}" data-en="${esc(e.en)}">＋ Add to my words</button>`}</div>`
-    : `<div class="pop-h"><button class="spk" data-say="${esc(word)}">${icon('speaker')}</button><div><div class="pop-fi">${esc(word)}</div><div class="pop-en muted">Not in SuomiT's dictionary yet</div></div></div>
-    <div class="pop-a"><button class="btn sm" data-addc="${esc(word)}">＋ Add with my own translation</button>
+    <div class="pop-a">${id ? listButtons(id) : `<button class="btn sm" data-addc="${esc(e.fi)}" data-en="${esc(e.en)}">＋ ${t('Add to my words')}</button>`}</div>`
+    : `<div class="pop-h"><button class="spk" data-say="${esc(word)}">${icon('speaker')}</button><div><div class="pop-fi">${esc(word)}</div><div class="pop-en muted">${t("Not in SuomiT's dictionary yet")}</div></div></div>
+    <div class="pop-a"><button class="btn sm" data-addc="${esc(word)}">＋ ${t('Add with my own translation')}</button>
     <a class="btn sm ghost" target="_blank" rel="noopener" href="https://en.wiktionary.org/wiki/${encodeURIComponent(word.toLowerCase())}#Finnish">Wiktionary ↗</a></div>`;
   document.body.appendChild(pop);
   const r = anchor.getBoundingClientRect(), pw = Math.min(320, innerWidth - 24);
@@ -84,7 +87,7 @@ export function wordPopover(word, anchor) {
 }
 function listButtons(id) {
   const lists = store.state().lists;
-  return lists.map(l => `<button class="chip ${store.inList(l.id, id) ? 'on' : ''}" data-tog="${l.id}" data-id="${esc(id)}">${store.inList(l.id, id) ? '✓' : '＋'} ${esc(l.name)}</button>`).join('');
+  return lists.map(l => `<button class="chip ${store.inList(l.id, id) ? 'on' : ''}" data-tog="${l.id}" data-id="${esc(id)}">${store.inList(l.id, id) ? '✓' : '＋'} ${esc(listLabel(l))}</button>`).join('');
 }
 function wirePop(p) {
   p.addEventListener('click', ev => {
@@ -93,24 +96,25 @@ function wirePop(p) {
     if (b.dataset.tog) {
       const added = store.toggleList(b.dataset.tog, b.dataset.id);
       b.classList.toggle('on', added); b.textContent = (added ? '✓ ' : '＋ ') + store.state().lists.find(l => l.id === b.dataset.tog).name;
-      sfx('tap'); if (added) toast('Added to your list', 'pin', 1400);
+      sfx('tap'); if (added) toast(t('Added to your list'), 'pin', 1400);
     }
     if (b.dataset.addc != null) { closePop(); addCustomDialog(b.dataset.addc, b.dataset.en || ''); }
   });
 }
 export function addCustomDialog(fi = '', en = '') {
-  const m = modal(`<h3>Add a word</h3>
-    <label class="fld"><span>Finnish</span><input id="cfi" value="${esc(fi)}" autocomplete="off" autocapitalize="off"></label>
-    <label class="fld"><span>English</span><input id="cen" value="${esc(en)}" autocomplete="off" placeholder="your translation"></label>
-    <label class="fld"><span>List</span><select id="clist">${store.state().lists.map(l => `<option value="${l.id}">${esc(l.name)}</option>`).join('')}</select></label>
-    <button class="btn wide" id="csave">Save to list</button>`);
+  // the meaning is typed in the learner's own language, so that field is labelled with the language's name
+  const m = modal(`<h3>${t('Add a word')}</h3>
+    <label class="fld"><span>${t('Finnish')}</span><input id="cfi" value="${esc(fi)}" autocomplete="off" autocapitalize="off"></label>
+    <label class="fld"><span>${LANGS[lang()]}</span><input id="cen" value="${esc(en)}" autocomplete="off" placeholder="${esc(t('your translation'))}"></label>
+    <label class="fld"><span>${t('List')}</span><select id="clist">${store.state().lists.map(l => `<option value="${l.id}">${esc(listLabel(l))}</option>`).join('')}</select></label>
+    <button class="btn wide" id="csave">${t('Save to list')}</button>`);
   const go = () => {
     const f = $('#cfi', m.el).value.trim(), e = $('#cen', m.el).value.trim();
-    if (!f || !e) return toast('Fill in both fields', 'pen');
+    if (!f || !e) return toast(t('Fill in both fields'), 'pen');
     const ex = lookup(f);
     const id = ex?.id && ex.fi.toLowerCase() === f.toLowerCase() ? ex.id : store.addCustom(f, e);
     if (!store.inList($('#clist', m.el).value, id)) store.toggleList($('#clist', m.el).value, id);
-    toast(`“${f}” saved`, 'pin'); m.close();
+    toast(t('“{word}” saved', { word: f }), 'pin'); m.close();
   };
   $('#csave', m.el).onclick = go;
   setTimeout(() => (fi ? $('#cen', m.el) : $('#cfi', m.el)).focus(), 50);
@@ -123,7 +127,7 @@ export function initWordTaps() {
   }, true);
   window.addEventListener('scroll', closePop, { passive: true });
   // select any text → floating "add" button
-  const fab = document.createElement('button'); fab.className = 'sel-fab'; fab.textContent = '＋ Add to my words'; fab.hidden = true;
+  const fab = document.createElement('button'); fab.className = 'sel-fab'; fab.textContent = '＋ ' + t('Add to my words'); fab.hidden = true;
   document.body.appendChild(fab);
   let selText = '';
   document.addEventListener('selectionchange', () => {

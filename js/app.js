@@ -1,5 +1,6 @@
 // SuomiT app shell: router, header, bottom nav, boot.
 import * as store from './store.js';
+import { setLang, t } from './i18n.js';
 import { initViewport } from './viewport.js';
 import { icon } from './icons.js';
 import { applyTheme, claimQuests } from './gamify.js';
@@ -54,22 +55,24 @@ export function renderHeader() {
   document.getElementById('hdr').innerHTML = `
     <a href="#/home" class="logo">Suomi<span>T</span></a>
     <div class="hstats">
-      <a href="#/me" class="hs streak ${todayMet ? 'lit' : ''}" title="Streak">${icon('flame')}<b>${st}</b></a>
+      <a href="#/me" class="hs streak ${todayMet ? 'lit' : ''}" title="${t('Streak')}">${icon('flame')}<b>${st}</b></a>
       <a href="#/shop" class="hs coins" title="Markkaa">${icon('coin')}<b>${store.coins()}</b></a>
-      <a href="#/me" class="hs lvl" title="Level">${icon('star')}<b>${store.level()}</b></a>
+      <a href="#/me" class="hs lvl" title="${t('Level')}">${icon('star')}<b>${store.level()}</b></a>
     </div>`;
 }
-function boot() {
+async function boot() {
+  // the language pack must be loaded before anything renders (strings are translated as they are built)
+  try { await setLang(store.state().profile.lang); } catch (e) { console.error('language pack', e); await setLang('en'); }
   applyTheme();
-  document.getElementById('nav').innerHTML = NAV.map(([t, h, n, i]) => `<a href="${h}" data-tab="${t}"><span>${i}</span><small>${n}</small></a>`).join('');
+  document.getElementById('nav').innerHTML = NAV.map(([tab, h, n, i]) => `<a href="${h}" data-tab="${tab}"><span>${i}</span><small>${n}</small></a>`).join('');
   initWordTaps();
   initViewport();
   const used = store.applyFreezes();
-  if (used) setTimeout(() => toast(`A Sisu shield saved your streak (${used} day${used > 1 ? 's' : ''})`, 'shield', 4000), 600);
+  if (used) setTimeout(() => toast(used > 1 ? t('A Sisu shield saved your streak ({n} days)', { n: used }) : t('A Sisu shield saved your streak ({n} day)', { n: used }), 'shield', 4000), 600);
   claimQuests();
   window.addEventListener('hashchange', () => route());
   store.subscribe(() => renderHeader());
   route();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { });
 }
-boot();
+if (typeof document.getElementById === 'function') boot(); // not when imported by the Node tools

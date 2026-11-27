@@ -1,3 +1,5 @@
 .DS_Store
 node_modules/
 tools/__pycache__/
+i18n/_todo/
+.claude/worktrees/
