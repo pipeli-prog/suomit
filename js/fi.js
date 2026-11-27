@@ -117,14 +117,24 @@ export function numSpoken(n) {
   }
   return [numWord(n)];
 }
+/** Every accepted way to say n (< 100): the written form first, then the spoken ones (kaksi, kaks). */
+export const numForms = n => [...new Set([numWord(n), ...numSpoken(n)])];
 /** Ways to say a price. [0] = canonical written form ("kaksi euroa viisikymmentä senttiä").
+ *  Each word may be written or spoken style on its own: "kaksi euroa kolkyt", "kaks euroo viisikymmentä senttiä".
  *  The short "kaksi viisikymmentä" style is only used for 10+ cents: "kaksi viisi" would be heard as 2,50. */
 export function priceWords(euros, cents) {
-  const e = euros === 1 ? 'yksi euro' : `${numWord(euros)} euroa`;
-  if (!cents) return [e];
-  const c = cents === 1 ? 'yksi sentti' : `${numWord(cents)} senttiä`;
-  const out = [`${e} ${c}`, `${e} ja ${c}`];
-  if (cents >= 10) out.push(`${e} ${numWord(cents)}`, `${numWord(euros)} ${numWord(cents)}`, `${numSpoken(euros)[0]} ${numSpoken(cents)[0]}`); // e.g. "kaks kolkyt"
+  const E = numForms(euros), C = cents ? numForms(cents) : [];
+  const EUR = euros === 1 ? ['euro'] : ['euroa', 'euroo'], CNT = cents === 1 ? ['sentti'] : ['senttiä', 'senttii'];
+  const out = [];
+  const each = (lists, f) => { const go = (i, acc) => i === lists.length ? out.push(f(...acc)) : lists[i].forEach(x => go(i + 1, [...acc, x])); go(0, []); };
+  if (!cents) { each([E, EUR], (e, eu) => `${e} ${eu}`); return [...new Set(out)]; }
+  each([E, EUR, C, CNT], (e, eu, c, ct) => `${e} ${eu} ${c} ${ct}`);
+  each([E, EUR, C, CNT], (e, eu, c, ct) => `${e} ${eu} ja ${c} ${ct}`);
+  if (cents >= 10) {
+    each([E, EUR, C], (e, eu, c) => `${e} ${eu} ${c}`);
+    each([E, C], (e, c) => `${e} ${c}`); // e.g. "kaks kolkyt", "kaksi kolkyt"
+    if (euros === 1) each([C], c => `euro ${c}`); // "euro kolkyt" = 1,30
+  }
   return [...new Set(out)];
 }
 /** The form a Finn would say aloud at the till (spoken style when it is unambiguous). */
