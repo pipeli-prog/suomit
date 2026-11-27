@@ -6,7 +6,7 @@ import { runSession } from '../session.js';
 import { MODULES, LESSONS, LESSON_BY_ID, MODULE_BY_ID } from '../../data/course.js';
 import { LESSON_RESOURCES } from '../../data/resources.js';
 import { READING_BY_ID } from '../../data/readings.js';
-import { lessonLearn, lessonPractice, lessonTest, skillDrill, lessonWords, currentLesson } from '../plan.js';
+import { lessonLearn, lessonPractice, lessonTest, skillDrill, lessonWords, currentLesson, wordsKnown } from '../plan.js';
 import { SKILL_NAMES, SKILL_ICON } from '../exercises.js';
 import { strength, isLearned } from '../srs.js';
 import { checkAchievements } from '../gamify.js';
@@ -15,12 +15,7 @@ import { wordRow, wireWordRows, listName } from './words.js';
 import { setsFor, setCards, wireSetCards, playSet } from '../practice.js';
 import { t, lessonText } from '../i18n.js';
 
-/** How many of a lesson's words you know (practised, and remembered for at least a day). */
-function wordsKnown(l) {
-  const ws = lessonWords(l), cards = store.state().cards;
-  return { known: ws.filter(w => isLearned(cards[w.id])).length, total: ws.length };
-}
-const wordBar = ({ known, total }, cls = '') => total ? `<span class="w-bar ${cls}" title="${esc(t('You know {n} of {total} words', { n: known, total }))}"><i style="width:${known / total * 100}%"></i></span>` : '';
+export const wordBar = ({ known, total }, cls = '') => total ? `<span class="w-bar ${cls}" title="${esc(t('You know {n} of {total} words', { n: known, total }))}"><i style="width:${known / total * 100}%"></i></span>` : '';
 const stars = n => `<span class="stars">${[1, 2, 3].map(i => `<i class="${i <= n ? 'on' : ''}">★</i>`).join('')}</span>`;
 
 export function renderPath(el) {

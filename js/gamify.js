@@ -10,7 +10,7 @@ import { READINGS } from '../data/readings.js';
 
 // ------------------------------------------------------------ themes ("skins" for the whole app)
 export const THEMES = {
-  talviyo: { name: 'Talviyö', en: 'Winter night', price: 0, bg: '#0b1426', bg2: '#13213b', card: '#182a49', ink: '#eaf2ff', mute: '#93a6c4', acc: '#3ddc97', acc2: '#5ab0ff', light: false },
+  talviyo: { name: 'Talviyö', en: 'Winter night', price: 0, bg: '#060b18', bg2: '#0f1d3a', card: '#1a2b4f', ink: '#f3f6fc', mute: '#97a4bf', acc: '#0a84ff', acc2: '#64d2ff', light: false },
   revontulet: { name: 'Revontulet', en: 'Northern lights', price: 150, bg: '#07121c', bg2: '#0f2230', card: '#122d3a', ink: '#e9fff6', mute: '#8fb7ae', acc: '#59f0b0', acc2: '#b388ff', light: false, aurora: true },
   kesayo: { name: 'Kesäyö', en: 'Midsummer night', price: 150, bg: '#fff6ec', bg2: '#ffeedd', card: '#ffffff', ink: '#2b2140', mute: '#7d6f8e', acc: '#ff7a59', acc2: '#5a6cff', light: true },
   mokki: { name: 'Mökki', en: 'Summer cottage', price: 200, bg: '#f6efe4', bg2: '#ece0cd', card: '#fffaf2', ink: '#3b2416', mute: '#8a6c55', acc: '#b5382a', acc2: '#2f6f4e', light: true },

@@ -6,6 +6,7 @@ import { icon } from './icons.js';
 import { applyTheme, claimQuests } from './gamify.js';
 import { initWordTaps, closePop, toast } from './ui.js';
 import { sfx, buzz } from './audio.js';
+import { maybeShowTutorial } from './tutorial.js';
 import { renderHome } from './views/home.js';
 import { renderPath, renderLesson } from './views/path.js';
 import { renderWords } from './views/words.js';
@@ -40,10 +41,14 @@ function route(keepScroll) {
   for (const [re, fn, tab] of routes) {
     const m = path.match(re);
     if (m) {
-      document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+      const tabs = [...document.querySelectorAll('.nav a')];
+      tabs.forEach(a => a.classList.toggle('on', a.dataset.tab === tab));
+      document.querySelector('.nav')?.style.setProperty('--i', Math.max(0, tabs.findIndex(a => a.dataset.tab === tab)));
       const y = scrollY;
       main.innerHTML = '';
       fn(main, ...m.slice(1));
+      // a new screen slides in softly (not on a re-render of the same screen)
+      if (!keepScroll) { main.classList.remove('enter'); void main.offsetWidth; main.classList.add('enter'); }
       if (keepScroll) scrollTo(0, y); else scrollTo(0, 0);
       renderHeader();
       return;
@@ -61,11 +66,17 @@ export function renderHeader() {
       <a href="#/me" class="hs lvl" title="${t('Level')}">${icon('star')}<b>${store.level()}</b></a>
     </div>`;
 }
+/** Weak phones (little memory / few cores, not iPhones) get the "lite" look: same design, no live blur. */
+function markLite() {
+  const n = navigator, ios = /iPhone|iPad|iPod/.test(n.userAgent) || (n.platform === 'MacIntel' && n.maxTouchPoints > 1);
+  if (!ios && ((n.deviceMemory && n.deviceMemory <= 3) || (n.hardwareConcurrency && n.hardwareConcurrency <= 4))) document.documentElement.classList.add('lite');
+}
 async function boot() {
+  markLite();
   // the language pack must be loaded before anything renders (strings are translated as they are built)
   try { await setLang(store.state().profile.lang); } catch (e) { console.error('language pack', e); await setLang('en'); }
   applyTheme();
-  document.getElementById('nav').innerHTML = NAV.map(([tab, h, n, i]) => `<a href="${h}" data-tab="${tab}"><span>${i}</span><small>${n}</small></a>`).join('');
+  document.getElementById('nav').innerHTML = '<span class="nav-lens" aria-hidden="true"></span>' + NAV.map(([tab, h, n, i]) => `<a href="${h}" data-tab="${tab}"><span>${i}</span><small>${n}</small></a>`).join('');
   initWordTaps();
   // every button and link answers a tap with a soft click (+ a light haptic tick). Answer buttons are left out:
   // they get the right/wrong sound instead.
@@ -81,6 +92,7 @@ async function boot() {
   window.addEventListener('hashchange', () => route());
   store.subscribe(() => renderHeader());
   route();
+  maybeShowTutorial();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // the app is served from the offline cache; when a new version has been downloaded, switch to it, but never in
     // the middle of a practice session (then it happens the next time the app opens)

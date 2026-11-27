@@ -120,6 +120,7 @@ export function renderSettings(el) {
     <section class="card set">
       <h3>${icon('chat')} ${t('Your language')}</h3><p class="muted small">${t('Explanations, meanings and exercises in your language. The Finnish stays the same.')}</p>
       <div class="chips">${Object.entries(LANGS).map(([k, n]) => `<button class="chip ${(p.lang || 'en') === k ? 'on' : ''}" data-lang="${k}">${n}</button>`).join('')}</div>
+      <button class="btn sm ghost" id="tut-again" style="margin-top:12px">${t('Show the tutorial again')}</button>
     </section>
     <section class="card set">
       <h3>${t('Daily goal')}</h3><div class="chips">${[[20, t('Chill')], [50, t('Regular')], [100, t('Serious')], [150, t('Intense')], [250, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
@@ -154,6 +155,7 @@ export function renderSettings(el) {
     </section>
     <section class="card set danger-zone"><h3>${t('Danger zone')}</h3><button class="btn sm danger" id="reset">${t('Reset all progress')}</button></section>
     <p class="muted small center">${t('SuomiT · made with sisu · data stays on your device')}</p>`;
+  el.querySelector('#tut-again').onclick = () => import('../tutorial.js').then(m => m.showTutorial());
   // a new language reloads the app, so every screen and cached list is built in that language
   el.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { if (b.dataset.lang === (p.lang || 'en')) return; store.setProfile({ lang: b.dataset.lang }); store.flush(); location.reload(); });
   el.querySelectorAll('[data-goal]').forEach(b => b.onclick = () => { store.setProfile({ goal: +b.dataset.goal }); rerender(); });
