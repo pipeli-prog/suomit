@@ -4,11 +4,14 @@ import { VOCAB, VOCAB_BY_ID, TOPIC_BY_ID } from '../data/vocab.js';
 import { LESSONS, LESSON_BY_ID } from '../data/course.js';
 import { vocabQ, flashQ, skillQs, topicWords, SKILL_NAMES } from './exercises.js';
 import { isLeech, retrievability } from './srs.js';
+import { t } from './i18n.js';
 
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const tagSkill = qs => qs.map(q => ({ ...q, skillName: SKILL_NAMES[q.skill] || '' }));
 export const lessonWords = l => topicWords(l.topics);
 export const itemWord = id => VOCAB_BY_ID[id] || (store.state().custom[id] && { id, ...store.state().custom[id], pos: 'custom', topics: [] });
+/** A word's meaning in the learner's language (your own words keep the translation you typed). */
+export const meaning = w => w.pos === 'custom' ? w.en : t(w.en);
 
 /** First lesson that isn't complete: the "you are here" marker. */
 export function currentLesson() {
@@ -128,6 +131,6 @@ export function trainerQuestions(words, mode, n = 20) {
 }
 function customQ(w, mode) {
   if (mode === 'flashFi' || mode === 'flashEn') return flashQ(w, mode === 'flashEn' ? 'en' : 'fi');
-  if (mode === 'listen') return { kind: 'type', listen: true, item: w.id, say: w.fi, prompt: '<div class="big"><svg class="ic xl" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg></div>', sub: 'Type what you hear', answer: w.fi, reveal: w.en };
-  return { kind: 'type', item: w.id, say: w.fi, prompt: `<div class="big">${w.en.replace(/</g, '&lt;')}</div>`, sub: 'In Finnish', answer: w.fi };
+  if (mode === 'listen') return { kind: 'type', listen: true, item: w.id, say: w.fi, prompt: '<div class="big"><svg class="ic xl" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></svg></div>', sub: t('Type what you hear'), answer: w.fi, reveal: w.en };
+  return { kind: 'type', item: w.id, say: w.fi, prompt: `<div class="big">${w.en.replace(/</g, '&lt;')}</div>`, sub: t('In Finnish'), answer: w.fi };
 }
