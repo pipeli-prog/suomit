@@ -1,4 +1,5 @@
 import * as store from '../store.js';
+import { t, LANGS } from '../i18n.js';
 import { icon } from '../icons.js';
 import { esc, modal, toast, mascotSVG, fmtNum } from '../ui.js';
 import { finnishVoices, speak, sfx } from '../audio.js';
@@ -114,7 +115,11 @@ export function renderShop(el, tab) {
 
 export function renderSettings(el) {
   const S = store.state(), p = S.profile, voices = finnishVoices();
-  el.innerHTML = `<a class="back" href="#/me">‹ Minä</a><h1 class="pg">Settings</h1>
+  el.innerHTML = `<a class="back" href="#/me">‹ Minä</a><h1 class="pg">${t('Settings')}</h1>
+    <section class="card set">
+      <h3>${icon('chat')} ${t('Your language')}</h3><p class="muted small">${t('Explanations, meanings and exercises in your language. The Finnish stays the same.')}</p>
+      <div class="chips">${Object.entries(LANGS).map(([k, n]) => `<button class="chip ${(p.lang || 'en') === k ? 'on' : ''}" data-lang="${k}">${n}</button>`).join('')}</div>
+    </section>
     <section class="card set">
       <h3>Daily goal</h3><div class="chips">${[[5, 'Chill'], [12, 'Regular'], [25, 'Serious'], [40, 'Intense'], [60, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
       <p class="muted small">12 XP ≈ 10–15 minutes. Consistency beats intensity.</p>
@@ -148,6 +153,8 @@ export function renderSettings(el) {
     </section>
     <section class="card set danger-zone"><h3>Danger zone</h3><button class="btn sm danger" id="reset">Reset all progress</button></section>
     <p class="muted small center">SuomiT · made with sisu · data stays on your device</p>`;
+  // a new language reloads the app, so every screen and cached list is built in that language
+  el.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => { if (b.dataset.lang === (p.lang || 'en')) return; store.setProfile({ lang: b.dataset.lang }); store.flush(); location.reload(); });
   el.querySelectorAll('[data-goal]').forEach(b => b.onclick = () => { store.setProfile({ goal: +b.dataset.goal }); rerender(); });
   el.querySelectorAll('[data-p]').forEach(i => i.onchange = () => store.setProfile({ [i.dataset.p]: i.checked }));
   el.querySelector('#voice').onchange = e => store.setProfile({ voice: e.target.value });

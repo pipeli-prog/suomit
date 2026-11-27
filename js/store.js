@@ -8,9 +8,11 @@ export const today = (d = new Date()) => {
 };
 export const dayOffset = (k, n) => { const [y, m, d] = k.split('-').map(Number); return today(new Date(y, m - 1, d + n)); };
 
+/** New installs start in the phone's language when we have it (Dutch / Spanish), else English. */
+const browserLang = () => { try { const l = (navigator.language || '').slice(0, 2).toLowerCase(); return ['nl', 'es'].includes(l) ? l : 'en'; } catch { return 'en'; } };
 const fresh = () => ({
   v: 2, created: Date.now(), updated: Date.now(), // v2: XP is a quarter of v1 XP (see migrateXp)
-  profile: { name: '', goal: 12, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
+  profile: { name: '', lang: browserLang(), goal: 12, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
   mascot: { hat: null, face: null, neck: null, color: 'grey' },
   days: {},      // 'YYYY-MM-DD' → { xp, coins, ans, ok, new, rev, listen, best, q: {questId: progress}, qc: {questId:1}, read }
   frozen: {},    // days saved by a streak freeze
@@ -45,6 +47,7 @@ function hydrate(raw) {
   raw = migrateXp(raw);
   const f = fresh(), out = Object.assign(f, raw);
   for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
+  if (raw && !raw.profile?.lang) out.profile.lang = 'en'; // saves from before languages existed stay English
   for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (!Array.isArray(out.lists) || !out.lists.length) out.lists = fresh().lists;
   renameItems(out);

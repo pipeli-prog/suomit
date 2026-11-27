@@ -1,5 +1,6 @@
 // SuomiT app shell: router, header, bottom nav, boot.
 import * as store from './store.js';
+import { setLang } from './i18n.js';
 import { initViewport } from './viewport.js';
 import { icon } from './icons.js';
 import { applyTheme, claimQuests } from './gamify.js';
@@ -59,7 +60,9 @@ export function renderHeader() {
       <a href="#/me" class="hs lvl" title="Level">${icon('star')}<b>${store.level()}</b></a>
     </div>`;
 }
-function boot() {
+async function boot() {
+  // the language pack must be loaded before anything renders (strings are translated as they are built)
+  try { await setLang(store.state().profile.lang); } catch (e) { console.error('language pack', e); await setLang('en'); }
   applyTheme();
   document.getElementById('nav').innerHTML = NAV.map(([t, h, n, i]) => `<a href="${h}" data-tab="${t}"><span>${i}</span><small>${n}</small></a>`).join('');
   initWordTaps();
@@ -72,4 +75,4 @@ function boot() {
   route();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { });
 }
-boot();
+if (typeof document.getElementById === 'function') boot(); // not when imported by the Node tools
