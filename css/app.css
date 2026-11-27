@@ -218,6 +218,9 @@ textarea.code{min-height:120px;font-family:ui-monospace,monospace;font-size:.75r
 .en-big{font-size:1.25rem;color:var(--mute);font-weight:700}
 .sub{color:var(--mute);font-weight:700;margin:4px 0 14px}
 .listen{display:flex;gap:10px;margin:8px 0 14px}
+.say-big{cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .12s}
+.say-big:active{transform:scale(.92)}
+.say-big .ic{color:var(--acc2)}
 .say{width:64px;height:64px;border-radius:20px;background:var(--acc2);font-size:1.7rem;box-shadow:0 4px 0 color-mix(in srgb,var(--acc2) 55%,#000)}
 .say.slow{width:52px;height:52px;font-size:1.3rem;align-self:flex-end;background:var(--soft);box-shadow:0 3px 0 var(--line)}
 .say:active{transform:translateY(3px);box-shadow:none}

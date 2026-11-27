@@ -79,22 +79,56 @@ function tts(text, rate, onend) {
   speechSynthesis.speak(u);
 }
 
+// ---------- clip plans: a whole clip, or recorded pieces (sentences → comma groups → words) played back to back.
+// Random drill sentences (phone numbers, forecasts, big numbers) have no clip of their own, but their parts do.
+const strip = t => t.replace(/[.,!?…:;]+$/, '');
+const findClip = t => clipFor(t) || clipFor(strip(t)) || clipFor(strip(t).toLowerCase());
+const LEVELS = [[/(?<=[.!?])\s+/, 260], [/(?<=,)\s+/, 160], [/\s+/, 30]]; // split pattern, pause after each piece (ms)
+const plans = new Map();
+/** [[src, pauseAfterMs], …] covering `text`, or null when some part has no recording. */
+export function clipPlan(text) {
+  const k = norm(text);
+  if (plans.has(k)) return plans.get(k);
+  const out = [];
+  const cover = (t, lv) => {
+    const c = findClip(t);
+    if (c) { out.push([c, 0]); return true; }
+    if (lv >= LEVELS.length) return false;
+    const [re, pause] = LEVELS[lv], parts = t.split(re).filter(Boolean);
+    if (parts.length < 2) return cover(t, lv + 1);
+    return parts.every((p, i) => { if (!cover(p, lv + 1)) return false; if (i < parts.length - 1) out[out.length - 1][1] = Math.max(out[out.length - 1][1], pause); return true; });
+  };
+  const plan = k && cover(k, 0) ? out : null;
+  plans.set(k, plan);
+  return plan;
+}
+
 export function speak(text, { rate, onend } = {}) {
   stopClip();
   if (!text) { onend?.(); return; }
   const r = rate || state().profile.rate || 0.9;
-  const src = el && clipFor(text);
-  if (!src) return tts(text, r, onend);
+  const plan = el && clipPlan(text);
+  if (!plan) return tts(text, r, onend);
   window.speechSynthesis?.cancel();
   const id = playId, live = () => id === playId;
   const fallback = () => { if (!live()) return; playId++; tts(text, r, onend); }; // offline + not cached, blocked, etc.
-  el.onended = () => { if (live()) { playId++; onend?.(); } };
-  el.onerror = fallback;
-  el.src = src;
   // Clips are recorded at the voice's natural pace; the device-voice rate 0.9 = 1×. Gentler than linear: 0.55 → ~0.7×.
-  el.playbackRate = el.defaultPlaybackRate = Math.min(2, Math.max(0.5, 1 + (r - 0.9) * 0.85));
-  el.preservesPitch = el.webkitPreservesPitch = el.mozPreservesPitch = true;
-  el.play().catch(e => { if (e?.name !== 'AbortError') fallback(); });
+  const speed = Math.min(2, Math.max(0.5, 1 + (r - 0.9) * 0.85));
+  let i = 0;
+  const play = () => {
+    el.src = plan[i][0];
+    el.playbackRate = el.defaultPlaybackRate = speed;
+    el.preservesPitch = el.webkitPreservesPitch = el.mozPreservesPitch = true;
+    el.play().catch(e => { if (e?.name !== 'AbortError') fallback(); });
+  };
+  el.onended = () => {
+    if (!live()) return;
+    const pause = plan[i][1] / speed;
+    if (++i >= plan.length) { playId++; onend?.(); return; }
+    setTimeout(() => { if (live()) play(); }, pause);
+  };
+  el.onerror = fallback;
+  play(); // the first piece starts synchronously, inside the tap's gesture (iOS)
 }
 export const stopSpeaking = () => { stopClip(); window.speechSynthesis?.cancel(); };
 

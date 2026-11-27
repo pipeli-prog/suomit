@@ -37,7 +37,7 @@ const GEN_RUNS = 400;
 export const key = t => String(t).trim().replace(/\s+/g, ' ');
 // Priority order: when the size cap bites, later categories are dropped first (generator samples
 // are ordered by how often sampling hit them, so the rare ones go first).
-const PRIORITY = ['vocab', 'readings', 'practice', 'phrases', 'numbers', 'learn', 'verb-drills', 'verbs', 'grammar', 'generators', 'tap-words', 'vocab-forms', 'answers'];
+const PRIORITY = ['vocab', 'readings', 'practice', 'listening', 'phrases', 'numbers', 'learn', 'verb-drills', 'verbs', 'grammar', 'generators', 'tap-words', 'vocab-forms', 'answers'];
 const BY = Object.fromEntries(PRIORITY.map(c => [c, new Map()])); // category → key → hits
 function add(category, t) {
   if (t == null) return;
@@ -104,6 +104,18 @@ if (EX) for (let i = 0; i < 300; i++) add('phrases', EX.SKILLS.phrases().say);
 
 // 5. numbers 0..100
 for (let n = 0; n <= 100; n++) { add('numbers', F.numWord(n)); each('numbers', F.numSpoken(n)); }
+
+// 5b. listening drills: every sentence they can say, or the recorded pieces js/audio.js joins (clipPlan)
+if (EX) {
+  for (let h = 1; h <= 12; h++) for (const m of new Set(EX.CLOCK_MINS)) add('listening', `Kello on ${F.clockWords(h, m)[0]}.`);
+  for (let e = 1; e <= 20; e++) for (const c of EX.PRICE_CENTS) add('listening', `Se maksaa ${F.priceSay(e, c)}.`);
+  for (const city of EX.FORECAST_CITIES()) for (const [cond] of EX.WEATHER) add('listening', `${F.local(city).missa} ${cond}.`);
+  for (let t = -20; t <= 30; t++) add('listening', `Lämpötila on ${EX.tempWords(t)}.`);
+  each('listening', [...EX.DIGIT_WRITTEN, ...EX.DIGIT_SPOKEN]);
+}
+// number pieces for F.numSay (sata, kaksisataa, …, tuhat, kaksituhatta, …): 0..99 are whole clips already
+for (let n = 1; n <= 9; n++) { add('listening', F.numWord(n * 100)); add('listening', F.numWord(n * 1000)); }
+for (let n = 1000; n <= 9000; n += 1000) add('listening', F.numSay(n));
 
 // 6. learn cards: *finnish* (not **bold**), as md() in js/ui.js renders them (per line / table cell)
 const stripTags = s => s.replace(/<[^>]+>/g, '');

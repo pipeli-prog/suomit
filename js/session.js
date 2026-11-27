@@ -100,7 +100,11 @@ export function runSession(opts) {
       foot.querySelector('.skip').onclick = () => answer(q, '');
     }
     wireSay(q);
-    if (q.listen) setTimeout(() => speak(q.say), 250);
+    if (q.listen) { // the big speaker / phone / cloud picture in the prompt plays the sound too
+      const big = card.querySelector('.big');
+      if (big) { big.classList.add('say-big'); big.setAttribute('role', 'button'); big.setAttribute('aria-label', 'Play again'); big.onclick = () => speak(q.say); }
+      setTimeout(() => speak(q.say), 250);
+    }
     else if (q.autoSay && store.state().profile.autoSpeak) setTimeout(() => speak(q.say), 200);
   }
   function wireSay(q) { root.querySelectorAll('.say').forEach(b => b.onclick = () => speak(q.say, { rate: +b.dataset.r === 1 ? undefined : +b.dataset.r })); }

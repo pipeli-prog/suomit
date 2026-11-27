@@ -137,9 +137,9 @@ const digitsAns = n => uniq([String(n), String(n).replace(/\B(?=(\d{3})+$)/, ' '
 S.numbers = () => {
   const n = pick([randInt(0, 10), randInt(11, 19), randInt(20, 99), randInt(20, 99), randInt(100, 999), randInt(1000, 2030)]);
   const r = Math.random();
-  if (r < .4) return type(`<div class="big num">${n}</div>`, F.numWords(n), { sub: 'Write the number in Finnish', say: F.numWord(n), strictDots: true });
-  if (r < .7) return type(`<div class="big">${icon('speaker', 'xl')}</div>`, digitsAns(n), { listen: true, say: F.numWord(n), sub: 'Listen and write the number in digits', reveal: F.numWord(n), numeric: true });
-  return type(P(F.numWord(n)), digitsAns(n), { sub: 'Write it in digits', say: F.numWord(n), numeric: true });
+  if (r < .4) return type(`<div class="big num">${n}</div>`, F.numWords(n), { sub: 'Write the number in Finnish', say: F.numSay(n), strictDots: true });
+  if (r < .7) return type(`<div class="big">${icon('speaker', 'xl')}</div>`, digitsAns(n), { listen: true, say: F.numSay(n), sub: 'Listen and write the number in digits', reveal: F.numWord(n), numeric: true });
+  return type(P(F.numWord(n)), digitsAns(n), { sub: 'Write it in digits', say: F.numSay(n), numeric: true });
 };
 S.numbersSpoken = () => {
   const n = randInt(1, 99), spoken = F.numSpoken(n);
@@ -149,11 +149,14 @@ S.numbersSpoken = () => {
   }
   return type(P(spoken[0]), String(n), { sub: 'Spoken number → digits', say: spoken[0], numeric: true });
 };
+export const PRICE_CENTS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
 const priceStr = (e, c) => `${e},${String(c).padStart(2, '0')} €`.replace(',00', '');
 S.prices = () => {
-  const e = randInt(1, 20), c = pick([0, 10, 20, 30, 50, 90, randInt(1, 99)]);
+  const listen = Math.random() >= .5;
+  // listening prices use whole tens of cents: every one of those sentences has a recorded clip (PRICE_CENTS)
+  const e = randInt(1, 20), c = listen ? pick(PRICE_CENTS) : pick([0, 10, 20, 30, 50, 90, randInt(1, 99)]);
   const price = priceStr(e, c), words = F.priceWords(e, c), said = F.priceSay(e, c);
-  if (Math.random() < .5) return type(`<div class="big num">${price}</div>`, words, { sub: 'Say the price in Finnish (written or spoken style)', say: words[0], strictDots: true });
+  if (!listen) return type(`<div class="big num">${price}</div>`, words, { sub: 'Say the price in Finnish (written or spoken style)', say: words[0], strictDots: true });
   const others = []; while (others.length < 3) { const o = priceStr(randInt(1, 20), pick([0, 10, 20, 50, 90])); if (o !== price && !others.includes(o)) others.push(o); }
   return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, price, others, { listen: true, say: `Se maksaa ${said}.`, sub: 'Listen: what does it cost?', reveal: `Se maksaa ${said}.` });
 };
@@ -393,7 +396,7 @@ S.local = () => {
   const enTxt = LOCAL_EN[p.fi]?.[k] || `${k === 'missa' && name ? 'in' : en} ${name ? '' : 'the '}${p.en}`;
   return type(P(`${q} (${p.fi})`), l[k], { sub: `${enTxt}${p.o ? ' (an outer-case place!)' : ''}`, say: l[k], strictDots: true, explain: `${p.fi}: <b>${l.missa}</b> · <b>${l.mista}</b> · <b>${l.mihin}</b>${p.o ? '<br>This place uses the outer cases -lla / -lta / -lle.' : ''}` });
 };
-const CLOCK_MINS = [0, 0, 15, 30, 30, 45, 5, 10, 20, 40, 50, 55];
+export const CLOCK_MINS = [0, 0, 15, 30, 30, 45, 5, 10, 20, 40, 50, 55];
 S.clock = () => {
   const h = randInt(1, 12), m = pick(CLOCK_MINS), words = F.clockWords(h, m);
   const t = `${h}:${String(m).padStart(2, '0')}`;
@@ -435,8 +438,8 @@ S.phrases = () => {
   return mc(`<div class="big">${esc(s)}</div>`, a, SIT.map(x => x[1]).filter(x => !also.includes(x)), { sub: 'What do you say?', say: a, fiChoices: true });
 };
 // ------------------------------------------------------------ new drills (COVERAGE.md specs A–F)
-const DIGIT_WRITTEN = ['nolla', 'yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän'];
-const DIGIT_SPOKEN = ['nolla', 'yks', 'kaks', 'kolme', 'neljä', 'viis', 'kuus', 'seittemän', 'kasi', 'ysi'];
+export const DIGIT_WRITTEN = ['nolla', 'yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän'];
+export const DIGIT_SPOKEN = ['nolla', 'yks', 'kaks', 'kolme', 'neljä', 'viis', 'kuus', 'seittemän', 'kasi', 'ysi'];
 S.phone = () => {
   const num = '0' + pick(['40', '44', '45', '50']) + Array.from({ length: 7 }, () => randInt(0, 9)).join('');
   const names = Math.random() < .5 ? DIGIT_WRITTEN : DIGIT_SPOKEN;
@@ -444,14 +447,15 @@ S.phone = () => {
   const said = groups.map(g => [...g].map(d => names[+d]).join(' ')).join(', ');
   return type(`<div class="big">${icon('phone', 'xl')}</div>`, num, { listen: true, numeric: true, say: said, sub: 'Listen: write the phone number in digits', reveal: said });
 };
-const WEATHER = [['aurinko paistaa', 'sunny'], ['sataa', 'raining'], ['sataa lunta', 'snowing'], ['tuulee', 'windy'], ['on sumuista', 'foggy'], ['on pilvistä', 'cloudy']];
+export const WEATHER = [['aurinko paistaa', 'sunny'], ['sataa', 'raining'], ['sataa lunta', 'snowing'], ['tuulee', 'windy'], ['on sumuista', 'foggy'], ['on pilvistä', 'cloudy']];
 /** "Lämpötila on miinus viisi astetta." (1 takes the singular: yksi aste) */
 export function tempWords(t) {
   const n = Math.abs(t), w = `${t < 0 ? 'miinus ' : ''}${F.numWord(n)} ${n === 1 ? 'aste' : 'astetta'}`;
   return w;
 }
+export const FORECAST_CITIES = () => PLACES.filter(p => p.fi[0] !== p.fi[0].toLowerCase());
 S.forecast = () => {
-  const city = pick(PLACES.filter(p => p.fi[0] !== p.fi[0].toLowerCase())), [cond, en] = pick(WEATHER), t = randInt(-20, 30);
+  const city = pick(FORECAST_CITIES()), [cond, en] = pick(WEATHER), t = randInt(-20, 30);
   const said = `${F.local(city).missa} ${cond}. Lämpötila on ${tempWords(t)}.`;
   if (Math.random() < .5) return mc(`<div class="big">${icon('cloud', 'xl')}</div>`, en, WEATHER.map(x => x[1]), { listen: true, say: said, sub: `Listen: what is the weather like in ${city.en}?`, reveal: said });
   const ans = (t < 0 ? [`-${-t}`, `−${-t}`, `miinus ${-t}`] : t > 0 ? [String(t), `+${t}`, `plus ${t}`] : ['0', 'nolla']).flatMap(a => [a, `${a} astetta`]);

@@ -103,4 +103,4 @@ node tools/harvest.mjs && ~/.venvs/edge-tts/bin/python tools/gen_audio.py
 
 ## Offline
 
-After the first visit everything works offline: lessons, drills, stories, the 352 practice sets, the shop and your progress. Voice clips are cached as you hear them; **Minä → Settings → Offline → Download all audio** saves all 11,385 clips (~110 MB) so every pronunciation works without internet. Embedded videos and outside links still need a connection.
+After the first visit everything works offline: lessons, drills, stories, the 352 practice sets, the shop and your progress. Voice clips are cached as you hear them; **Minä → Settings → Offline → Download all audio** saves all 11,820 clips (~120 MB) so every pronunciation works without internet. Embedded videos and outside links still need a connection.

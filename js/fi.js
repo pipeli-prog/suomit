@@ -85,6 +85,14 @@ export function numWord(n) {
   if (n < 1000000) { const k = Math.floor(n / 1000), r = n % 1000; return (k === 1 ? 'tuhat' : numWord(k) + 'tuhatta') + (r ? numWord(r) : ''); }
   return String(n);
 }
+/** numWord split after its thousands and hundreds ("tuhat kolmesataa kuusi"): read aloud it sounds the same,
+ *  and the audio player can piece it together from recorded parts. */
+export function numSay(n) {
+  if (n < 100) return numWord(n);
+  if (n < 1000) { const h = Math.floor(n / 100), r = n % 100; return (h === 1 ? 'sata' : ONES[h] + 'sataa') + (r ? ' ' + numWord(r) : ''); }
+  if (n < 1000000) { const k = Math.floor(n / 1000), r = n % 1000; return (k === 1 ? 'tuhat' : numWord(k) + 'tuhatta') + (r ? ' ' + numSay(r) : ''); }
+  return String(n);
+}
 /** Accepted written variants: compound numerals are written as one word, but Kielitoimisto allows a
  *  space after the thousands for readability (kaksituhatta kaksikymmentä). */
 export function numWords(n) {
