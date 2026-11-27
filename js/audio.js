@@ -133,7 +133,18 @@ export function speak(text, { rate, onend } = {}) {
 export const stopSpeaking = () => { stopClip(); window.speechSynthesis?.cancel(); };
 
 // ---------- sfx
+// iPhone: Web Audio is muted by the silent switch and can get cut off when a voice clip starts. The 'playback'
+// audio session (Safari 17+) makes the sounds behave like the voice clips: they play like media does.
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
 let ctx;
+const wake = () => {
+  try {
+    ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state !== 'running') ctx.resume();
+  } catch (e) { }
+};
+// (re)start the sound engine inside a real tap, the only time iOS allows it (it suspends it in the background)
+if (typeof document !== 'undefined') document.addEventListener('pointerdown', () => { if (state().profile.sound) wake(); }, { capture: true, passive: true });
 function tone(freq, t0, dur, type = 'sine', gain = 0.12) {
   const c = ctx, o = c.createOscillator(), g = c.createGain();
   o.type = type; o.frequency.setValueAtTime(freq, c.currentTime + t0);
@@ -143,9 +154,9 @@ function tone(freq, t0, dur, type = 'sine', gain = 0.12) {
   o.connect(g).connect(c.destination); o.start(c.currentTime + t0); o.stop(c.currentTime + t0 + dur + 0.02);
 }
 const SFX = {
-  ok: () => { tone(660, 0, 0.12, 'triangle'); tone(990, 0.08, 0.18, 'triangle'); },
+  ok: () => { tone(660, 0, 0.12, 'triangle', 0.16); tone(990, 0.08, 0.2, 'triangle', 0.16); },
   combo: () => { tone(660, 0, 0.1, 'triangle'); tone(880, 0.07, 0.1, 'triangle'); tone(1320, 0.14, 0.22, 'triangle'); },
-  bad: () => { tone(220, 0, 0.18, 'sawtooth', 0.06); tone(180, 0.1, 0.22, 'sawtooth', 0.05); },
+  bad: () => { tone(240, 0, 0.16, 'square', 0.07); tone(170, 0.12, 0.26, 'square', 0.07); },
   tap: () => tone(520, 0, 0.05, 'sine', 0.05),
   win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.11, 0.3, 'triangle', 0.1)),
   coin: () => { tone(988, 0, 0.08, 'square', 0.05); tone(1319, 0.07, 0.25, 'square', 0.05); },
@@ -153,10 +164,6 @@ const SFX = {
 };
 export function sfx(name) {
   if (!state().profile.sound) return;
-  try {
-    ctx ||= new (window.AudioContext || window.webkitAudioContext)();
-    if (ctx.state === 'suspended') ctx.resume();
-    SFX[name]?.();
-  } catch (e) { }
+  try { wake(); SFX[name]?.(); } catch (e) { }
 }
 export function buzz(ms = 15) { if (state().profile.haptics) navigator.vibrate?.(ms); }

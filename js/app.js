@@ -1,5 +1,6 @@
 // SuomiT app shell: router, header, bottom nav, boot.
 import * as store from './store.js';
+import { initViewport } from './viewport.js';
 import { icon } from './icons.js';
 import { applyTheme, claimQuests } from './gamify.js';
 import { initWordTaps, closePop, toast } from './ui.js';
@@ -60,6 +61,7 @@ function boot() {
   applyTheme();
   document.getElementById('nav').innerHTML = NAV.map(([t, h, n, i]) => `<a href="${h}" data-tab="${t}"><span>${i}</span><small>${n}</small></a>`).join('');
   initWordTaps();
+  initViewport();
   const used = store.applyFreezes();
   if (used) setTimeout(() => toast(`A Sisu shield saved your streak (${used} day${used > 1 ? 's' : ''})`, 'shield', 4000), 600);
   claimQuests();

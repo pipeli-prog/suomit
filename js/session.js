@@ -7,10 +7,21 @@ import { speak, sfx, buzz, stopSpeaking } from './audio.js';
 import { esc, fw, toast, confetti, mascotSVG, shuffle } from './ui.js';
 import { vocabQ } from './exercises.js';
 import { VOCAB_BY_ID } from '../data/vocab.js';
+import { itemWord } from './plan.js';
 import * as G from './gamify.js';
 
 const PRAISE = ['Oikein!', 'Hienoa!', 'Mahtavaa!', 'Loistavaa!', 'Upeaa!', 'Hyvä!', 'Täydellistä!', 'Juuri niin!', 'Erinomaista!', 'Nappiin!'];
 const pickP = a => a[Math.floor(Math.random() * a.length)];
+/** After a wrong answer you type the Finnish word yourself before moving on. null = nothing sensible to type
+ *  (digits, English answers, whole sentences). */
+export function copyTarget(q) {
+  const w = q.item && itemWord(q.item);
+  let t = w ? w.fi : q.kind === 'mc' && q.fiChoices ? q.answer : q.kind === 'type' && !q.numeric ? (Array.isArray(q.answer) ? q.answer[0] : q.answer) : null;
+  if (!t) return null;
+  t = String(t).replace(/[.!?]+$/, '').trim();
+  if (!/[a-zåäö]/i.test(t) || /\d|€/.test(t) || /^type /i.test(t) || t.split(/\s+/).length > 6) return null;
+  return t;
+}
 
 /**
  * opts: { title, questions, mode: 'learn'|'review'|'drill'|'speed'|'flash', seconds, onFinish(result), xpPer }
@@ -173,7 +184,8 @@ export function runSession(opts) {
       store.grade(q.item, g);
     }
     if (!good && !q._retry && opts.mode !== 'speed') {
-      const again = q.item && VOCAB_BY_ID[q.item] ? vocabQ(VOCAB_BY_ID[q.item], { force: q.kind === 'mc' ? 'mcEnFi' : q.kind === 'type' ? 'typeEnFi' : undefined }) : { ...q };
+      // a missed word comes back as a typing question: you have to produce it, not just recognise it
+      const again = q.item && VOCAB_BY_ID[q.item] ? vocabQ(VOCAB_BY_ID[q.item], { force: 'typeEnFi' }) : { ...q };
       queue.splice(Math.min(queue.length, i + 3 + Math.floor(Math.random() * 3)), 0, { ...again, skill: q.skill, skillName: q.skillName, _retry: true });
     }
     done++; progress();
@@ -184,17 +196,35 @@ export function runSession(opts) {
       : res.grade === 'typo' ? `<div class="warn">Small typo, the correct spelling is <b>${esc(res.best)}</b></div>`
         : res.grade === 'length' ? `<div class="warn">Watch the length! Double letters change the meaning in Finnish.</div>`
           : res.alt ? `<div class="warn">Also correct! The word we were practising: <b>${esc(ansShown)}</b></div>` : '';
+    const target = good ? null : copyTarget(q);
     foot.className = 's-foot fb ' + (good ? 'good' : 'bad');
     foot.innerHTML = `<div class="fb-txt">
         <div class="fb-h">${good ? '✓ ' + pickP(PRAISE) : '✗ Oikea vastaus:'}</div>
         ${!good || q.reveal ? `<div class="fb-a ${/[a-zäö]/i.test(ansShown) ? 'fi' : ''}">${good ? '' : fw(ansShown)}${q.reveal ? `<div class="muted">${fw(q.reveal)}</div>` : ''}</div>` : ''}
         ${note}${q.explain && (!good || res.grade !== 'exact') ? `<div class="explain">${q.explain}</div>` : ''}
       </div>
-      <div class="fb-btns">${q.say ? `<button class="say-a" aria-label="Listen">${icon('speaker')}</button>` : ''}<button class="btn go">${good ? 'Continue' : 'Got it'}</button></div>`;
-    if (q.say && !q.listen) speak(q.say); else if (q.listen && !good) speak(q.say);
+      ${target ? `<div class="copy"><label class="copy-l">Type it to continue: <b class="fi">${esc(target)}</b></label>
+        <div class="copy-row"><input class="ans copy-in" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" placeholder="Kirjoita…">
+        <div class="dots"><button data-ch="ä">ä</button><button data-ch="ö">ö</button></div></div></div>` : ''}
+      <div class="fb-btns">${q.say ? `<button class="say-a" aria-label="Listen">${icon('speaker')}</button>` : ''}<button class="btn go" ${target ? 'disabled' : ''}>${good ? 'Continue' : target ? 'Type it first' : 'Got it'}</button></div>`;
+    // the right/wrong sound first, then the voice (on iPhone a starting voice clip can cut the sound off)
+    const qi = i;
+    if ((q.say && !q.listen) || (q.listen && !good)) setTimeout(() => { if (i === qi && !finished) speak(q.say); }, 380);
     foot.querySelector('.say-a')?.addEventListener('click', () => speak(q.say));
-    const go = foot.querySelector('.go'); go.onclick = () => { i++; next(); };
-    setTimeout(() => go.focus({ preventScroll: true }), 30);
+    const go = foot.querySelector('.go'); go.onclick = () => { if (!go.disabled) { i++; next(); } };
+    if (target) {
+      const inp = foot.querySelector('.copy-in');
+      const matches = () => gradeAnswer({ kind: 'type', answer: target }, inp.value, { strictDots: true }).grade === 'exact';
+      const update = () => { const m = matches(); if (m && go.disabled) sfx('tap'); go.disabled = !m; go.textContent = m ? 'Continue' : 'Type it first'; inp.classList.toggle('right', m); };
+      inp.addEventListener('input', update);
+      foot.querySelectorAll('[data-ch]').forEach(b => b.onpointerdown = e => { e.preventDefault(); const p = inp.selectionStart ?? inp.value.length; inp.value = inp.value.slice(0, p) + b.dataset.ch + inp.value.slice(inp.selectionEnd ?? p); inp.setSelectionRange(p + 1, p + 1); update(); });
+      inp.onkeydown = e => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault(); e.stopPropagation();
+        if (matches()) go.click(); else { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); sfx('bad'); buzz(30); }
+      };
+      inp.focus({ preventScroll: true }); // synchronous: still inside the tap, so iOS opens the keyboard
+    } else setTimeout(() => go.focus({ preventScroll: true }), 30);
   }
 
   function onKey(e) {

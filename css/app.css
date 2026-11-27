@@ -2,7 +2,8 @@
   --font:'Nunito',ui-rounded,'SF Pro Rounded',system-ui,-apple-system,'Segoe UI',sans-serif;color-scheme:dark}
 :root[data-light="1"]{color-scheme:light;--accInk:#fff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{background:var(--bg)}
+html{background:var(--bg);-webkit-text-size-adjust:100%;text-size-adjust:100%}
+*{touch-action:manipulation}
 body{margin:0;font-family:var(--font);background:radial-gradient(1200px 600px at 50% -200px,var(--bg2),var(--bg));background-attachment:fixed;color:var(--ink);font-size:16px;line-height:1.45;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 :root[data-aurora="1"] body::before{content:"";position:fixed;inset:-20% -10% auto;height:70vh;background:conic-gradient(from 200deg at 50% 0,transparent,#59f0b055,#b388ff44,#59f0b033,transparent 60%);filter:blur(50px);animation:aur 14s ease-in-out infinite alternate;pointer-events:none;z-index:0}
 @keyframes aur{to{transform:translateX(8%) skewX(-8deg);opacity:.7}}
@@ -250,6 +251,11 @@ textarea.code{min-height:120px;font-family:ui-monospace,monospace;font-size:.75r
 .fb-a{font-size:1.15rem;margin:2px 0 4px}
 .warn{margin:6px 0;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--warn) 18%,transparent);font-size:.9rem}
 .explain{margin:6px 0;font-size:.88rem;color:var(--mute);line-height:1.5}.explain b{color:var(--ink)}
+.copy{margin-top:10px!important}.copy-l{display:block;font-weight:700;color:var(--mute);margin-bottom:6px}.copy-l b{color:var(--ink)}
+.copy-row{display:flex;gap:8px;align-items:center}.copy-row .ans{flex:1;min-width:0;padding:12px 14px;font-size:1.15rem}.copy-row .dots button{width:44px}
+/* keyboard open (iPhone): the session is pinned to the visible area, so tighten it */
+.kb-open #session{padding-bottom:0}.kb-open .s-top{padding-top:6px;padding-bottom:6px}.kb-open .s-body{padding-bottom:6px}
+.kb-open .s-card{margin:0}.kb-open .s-foot{padding-bottom:10px;padding-top:10px}.kb-open .s-foot.fb{max-height:72%;overflow-y:auto}
 .fb-btns{display:flex;gap:10px;margin-top:8px!important}.fb-btns .btn{flex:1}
 .say-a{width:52px;height:50px;border-radius:14px;background:var(--soft);font-size:1.3rem}
 .good .go{background:var(--good)}.bad .go{background:var(--bad);color:#fff;box-shadow:0 4px 0 #a02535}
