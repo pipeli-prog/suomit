@@ -156,7 +156,7 @@ S.prices = () => {
   // listening prices use whole tens of cents: every one of those sentences has a recorded clip (PRICE_CENTS)
   const e = randInt(1, 20), c = listen ? pick(PRICE_CENTS) : pick([0, 10, 20, 30, 50, 90, randInt(1, 99)]);
   const price = priceStr(e, c), words = F.priceWords(e, c), said = F.priceSay(e, c);
-  if (!listen) return type(`<div class="big num">${price}</div>`, words, { sub: 'Say the price in Finnish (written or spoken style)', say: words[0], strictDots: true });
+  if (!listen) return type(`<div class="big num">${price}</div>`, words, { sub: 'Write the price in Finnish (written or spoken words, mixed as you like)', say: words[0], strictDots: true });
   const others = []; while (others.length < 3) { const o = priceStr(randInt(1, 20), pick([0, 10, 20, 50, 90])); if (o !== price && !others.includes(o)) others.push(o); }
   return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, price, others, { listen: true, say: `Se maksaa ${said}.`, sub: 'Listen: what does it cost?', reveal: `Se maksaa ${said}.` });
 };

@@ -102,6 +102,13 @@ section('fi.js');
   ok(!F.priceWords(9, 7).includes('yhdeksän seitsemän'), '9,07 € must not be "yhdeksän seitsemän" (sounds like 9,70)');
   eq(F.priceSay(9, 7), 'yhdeksän euroa seitsemän senttiä', 'ambiguous cents are said in full');
   eq(F.priceWords(1, 1)[0], 'yksi euro yksi sentti', 'singular euro/cent');
+  // written and spoken style mix word by word
+  for (const mixed of ['kaksi euroa kolkyt', 'kaks euroa viisikymmentä senttiä', 'kaksi euroo viiskyt senttii', 'kaks viisikymmentä', 'kaksi viiskyt', 'kaks euroa ja viiskyt senttiä'])
+    ok(F.priceWords(2, 50).includes(mixed.replace('kolkyt', 'viiskyt')), `price mixes written/spoken per word: ${mixed}`);
+  ok(F.priceWords(1, 30).includes('euro kolkyt') && F.priceWords(1, 30).includes('yks euro kolmekymmentä'), '1,30 € mixed + "euro kolkyt"');
+  ok(F.priceWords(17, 90).includes('seittemäntoista euroa ysikyt') && F.priceWords(17, 90).includes('seitsemäntoista yheksänkyt'), '17,90 € mixed');
+  ok(!F.priceWords(9, 7).some(w => /^\S+ \S+$/.test(w)), 'no two-word short form for 1–9 cents');
+  ok(F.priceWords(5, 0).includes('viis euroa') && F.priceWords(5, 0).includes('viisi euroo'), '5 € both styles');
   eq(F.clockWords(12, 30)[0], 'puoli yksi', '12:30 → puoli yksi (rollover)');
   eq(F.clockWords(12, 45)[0], 'varttia vaille yksi', '12:45 rollover');
   eq(F.clockWords(11, 30)[0], 'puoli kaksitoista', '11:30');
@@ -237,6 +244,7 @@ const many = (sk, n = 400) => Array.from({ length: n }, () => E.SKILLS[sk]());
   // harmony MC: the right ending matches the engine
   for (const q of many('harmony')) ok(q.choices.length === 2, 'harmony: two choices');
   // prices: listening uses an unambiguous spoken form
+  for (const q of many('prices')) if (q.kind === 'type') for (const a of q.answer) ok(F.gradeAnswer(q, a, { strictDots: true }).ok, `prices accepts "${a}"`);
   for (const q of many('prices')) if (q.kind === 'mc') { const [e, c = '0'] = q.answer.replace(' €', '').split(','); ok(q.say === `Se maksaa ${F.priceSay(+e, +c)}.`, `prices say ${q.say}`); }
   // clock: 12-hour words
   for (const q of many('clock')) if (q.kind === 'type') { const [h, m] = strip(q.prompt).split(':').map(Number); eq(answers(q)[0], F.clockWords(h, m)[0], 'clock canonical'); }
