@@ -424,6 +424,20 @@ section('course');
   for (const l of LESSONS) ok(plan.lessonWords(l).every(Boolean), `lesson ${l.id}: all topic words exist`);
 }
 
+// ======================================================================= 9. Listening audio
+// A listening question shows no text, so it must never depend on the device voice: every `say` has to be
+// a recorded clip or a chain of recorded pieces (js/audio.js clipPlan).
+section('listening audio');
+{
+  const A = await import(root + 'js/audio.js');
+  const { PRACTICE } = await import(root + 'data/practice/index.js');
+  const has = (q, where) => ok(!!A.clipPlan(q.say), `${where}: no recorded audio for "${q.say}"`);
+  for (const k of Object.keys(E.SKILLS)) if (typeof E.SKILLS[k] === "function") for (let i = 0; i < 1500; i++) { const q = E.SKILLS[k](); if (q.listen) has(q, `skill ${k}`); }
+  for (const w of VOCAB) for (const f of ['listenMc', 'listenType']) has(E.vocabQ(w, { force: f }), `vocab ${f}`);
+  for (const sets of Object.values(PRACTICE)) for (const s of sets) if (s.kind === 'listen') for (const q of s.items) has({ say: q.fi }, `practice ${s.src}`);
+  for (const n of [0, 7, 100, 101, 999, 1000, 1001, 1999, 2030]) eq(F.numSay(n).replace(/ /g, ''), F.numWord(n), `numSay(${n}) reads as numWord`);
+}
+
 // ======================================================================= report
 console.log(`\n${pass} passed, ${fail} failed`);
 if (fail) { console.log('\nFailures:'); for (const f of failures) console.log(' - ' + f); process.exit(1); }

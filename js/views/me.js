@@ -135,7 +135,7 @@ export function renderSettings(el) {
     </section>
     <section class="card set" id="offline">
       <h3>${icon('download')} Offline</h3>
-      <p class="small">The app, all lessons, drills, stories and practice sets work offline once SuomiT has been opened. Voice clips are saved as you hear them; download them all to have every pronunciation offline (about 110 MB). Videos and outside links always need internet.</p>
+      <p class="small">The app, all lessons, drills, stories and practice sets work offline once SuomiT has been opened. Voice clips are saved as you hear them; download them all to have every pronunciation offline (about 120 MB). Videos and outside links always need internet.</p>
       <div class="off-stat small muted">Checking…</div>
       <div class="off-bar mini-bar" hidden><div style="width:0"></div></div>
       <div class="row-btns"><button class="btn sm" id="off-dl">${icon('download')} Download all audio</button><button class="btn sm ghost" id="off-rm">Remove downloaded audio</button></div>
