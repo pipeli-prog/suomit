@@ -37,7 +37,7 @@ export function renderMe(el) {
   el.querySelector('.name-in').onchange = e => { store.setProfile({ name: e.target.value.trim() }); toast('Hei ' + (e.target.value.trim() || 'sinä') + '!', 'wave'); };
 }
 
-/** "Pip · sadekonna" for the current mascot. */
+/** "Pip · sammakko" for the current mascot. */
 function petLabel() { const a = ANIMALS[animalOf(store.state().mascot)]; return `${a.name} · ${a.fi}`; }
 
 // ------------------------------------------------------------ shop
