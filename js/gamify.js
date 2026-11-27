@@ -1,7 +1,7 @@
 // Rewards: daily quests, achievements, chests, shop catalogue, themes.
 import * as store from './store.js';
 import { icon } from './icons.js';
-import { t } from './i18n.js';
+import { t, lang } from './i18n.js';
 import { toast, confetti, modal, mascotSVG, esc } from './ui.js';
 import { ANIMALS, ACCESSORIES, COLORS } from './mascots.js';
 import { sfx } from './audio.js';
@@ -289,7 +289,7 @@ export function chestModal(coinsWon, streakN) {
     <div class="chest-ico">${icon('gift')}</div>
     <h2>Päivän tavoite saavutettu!</h2><p class="muted">${t('Daily goal reached')}</p>
     ${mascotSVG(undefined, { size: 110, mood: 'wow' })}
-    <div class="streak-big">${icon('flame')} ${streakN} <span>${t('day streak')}</span></div>
+    <div class="streak-big">${icon('flame')} ${streakN} <span>${streakN === 1 && lang() !== 'en' ? t('day streak (one day)') : t('day streak')}</span></div>
     <div class="coin-win">+${coinsWon} ${icon('coin')} markkaa</div>
     <button class="btn wide" data-close>Jatketaan! (${t("Let's go on")})</button></div>`, { cls: 'celebrate' });
   m.el.querySelector('[data-close]').onclick = m.close;

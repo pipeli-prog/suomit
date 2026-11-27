@@ -12,7 +12,7 @@ import { t, tx, lang, lessonText } from './i18n.js';   // '../i18n.js' from js/v
 
 t('Daily goal')                                          // fixed UI text: the English string IS the key
 t('You have practised {n} of {total} words here', { n, total })   // values go in {placeholders}, never ${}
-t(n === 1 ? '{n} day' : '{n} days', { n })               // plurals: one key per form
+n === 1 ? t('{n} day', { n }) : t('{n} days', { n })     // plurals: one literal t() per form (the catalog finds literals only)
 t(w.en)                                                   // data strings (word meanings, sentence translations)
 tx(q.en)                                                  // same, but passes through undefined / non-strings
 lessonText(lesson)                                        // { title, goals, learn } rewritten for that language

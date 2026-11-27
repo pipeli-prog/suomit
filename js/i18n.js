@@ -33,7 +33,7 @@ export function t(en, vars) {
   let s = en;
   if (dict && typeof en === 'string' && en) {
     const x = dict[en];
-    if (x != null) s = x; else miss.add(en);
+    if (x != null) s = x; else if (/[A-Za-z]/.test(en)) miss.add(en); // numbers and lone ä/ö are never English
   }
   return vars ? fill(String(s), vars) : s;
 }

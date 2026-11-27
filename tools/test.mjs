@@ -393,6 +393,35 @@ section('store');
   globalThis.localStorage = realLS;
 }
 
+// ======================================================================= i18n packs: nothing left in English
+section('i18n packs');
+{
+  const I = await import(root + 'js/i18n.js');
+  const P = await import(root + 'js/practice.js');
+  const { PRACTICE } = await import(root + 'data/practice/index.js');
+  const { LESSONS } = await import(root + 'data/course.js');
+  for (const l of ['nl', 'es']) {
+    const pack = await import(root + `i18n/${l}/index.js`);
+    const ph = s => (String(s).match(/\{\w+\}/g) || []).sort().join();
+    const badPh = Object.entries(pack.DICT).filter(([en, x]) => ph(en) !== ph(x));
+    eq(badPh.slice(0, 3), [], `${l}: every translation keeps its {placeholders}`);
+    I.usePack(l, pack); I.clearMissing();
+    for (const sk of Object.keys(E.SKILL_NAMES_EN)) for (let i = 0; i < 60; i++) {
+      const q = E.SKILLS[sk]();
+      if (q.kind === 'mc') ok(new Set(q.choices).size === q.choices.length && q.choices.filter(c => c === q.answer).length === 1, `${l} ${sk}: distinct choices, answer once`);
+    }
+    for (const w of VOCAB) for (const m of ['mcFiEn', 'mcEnFi', 'listenMc', 'typeEnFi', 'tiles', 'intro']) {
+      const q = E.vocabQ(w, { force: m });
+      if (q.kind === 'mc') ok(new Set(q.choices).size === q.choices.length && q.choices.includes(q.answer), `${l} vocab ${m} ${w.fi}: distinct choices with the answer`);
+    }
+    for (const sets of Object.values(PRACTICE)) for (const s of sets) for (const q of P.setQuestions(s)) if (q.kind === 'mc') ok(new Set(q.choices).size === q.choices.length && q.choices.includes(q.answer), `${l} practice ${s.title}: distinct choices with the answer`);
+    for (const ls of LESSONS) { const x = I.lessonText(ls); ok(x.title && x.learn?.length && x.title !== ls.title, `${l}: lesson ${ls.id} rewritten`); }
+    const miss = I.missing();
+    eq(miss.slice(0, 10), [], `${l}: nothing asked for is missing from the pack (${miss.length} missing)`);
+  }
+  I.usePack('en', null);
+}
+
 // ======================================================================= 6. FSRS
 section('srs');
 {
