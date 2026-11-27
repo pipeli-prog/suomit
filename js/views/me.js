@@ -19,12 +19,12 @@ export function renderMe(el) {
       <a href="#/shop" class="me-m" title="${esc(petLabel())}">${mascotSVG(undefined, { size: 120 })}<span class="dress">${icon('shirt')} Dress up</span></a>
       <div><input class="name-in" placeholder="Your name" value="${esc(S.profile.name)}" maxlength="24">
         <div class="rank">${esc(store.rank(lv))}</div><div class="pet-name">${icon('heart')} ${esc(petLabel())}</div>
-        <div class="lvl-bar"><div style="width:${(xp - lo) / (hi - lo) * 100}%"></div><span>Level ${lv} · ${xp - lo}/${hi - lo} XP</span></div></div>
+        <div class="lvl-bar"><div style="width:${(xp - lo) / (hi - lo) * 100}%"></div><span>Level ${lv} · ${store.fmtXp(xp - lo)}/${hi - lo} XP</span></div></div>
     </section>
     <section class="stats4">
       <div><b>${icon('flame')} ${store.streak()}</b><span>streak</span></div><div><b>${icon('trophy')} ${store.bestStreak()}</b><span>best streak</span></div>
       <div><b>${icon('book')} ${store.learnedCount()}</b><span>words learned</span></div><div><b>${icon('sprout')} ${store.matureCount()}</b><span>long-term</span></div>
-      <div><b>${icon('star')} ${fmtNum(xp)}</b><span>total XP</span></div><div><b>${icon('target')} ${ans ? Math.round(okN / ans * 100) : 0}%</b><span>accuracy</span></div>
+      <div><b>${icon('star')} ${fmtNum(store.fmtXp(xp))}</b><span>total XP</span></div><div><b>${icon('target')} ${ans ? Math.round(okN / ans * 100) : 0}%</b><span>accuracy</span></div>
       <div><b>${icon('shield')} ${store.freezesOwned()}</b><span>Sisu shields</span></div><div><b>${icon('coin')} ${store.coins()}</b><span>markkaa</span></div>
     </section>
     <section class="card"><h3>${icon('calendar')} Streak calendar</h3><div id="cal"></div></section>
@@ -116,8 +116,8 @@ export function renderSettings(el) {
   const S = store.state(), p = S.profile, voices = finnishVoices();
   el.innerHTML = `<a class="back" href="#/me">‹ Minä</a><h1 class="pg">Settings</h1>
     <section class="card set">
-      <h3>Daily goal</h3><div class="chips">${[[20, 'Chill'], [50, 'Regular'], [100, 'Serious'], [150, 'Intense'], [250, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
-      <p class="muted small">50 XP ≈ 10–15 minutes. Consistency beats intensity.</p>
+      <h3>Daily goal</h3><div class="chips">${[[5, 'Chill'], [12, 'Regular'], [25, 'Serious'], [40, 'Intense'], [60, 'Sisu']].map(([g, n]) => `<button class="chip ${p.goal === g ? 'on' : ''}" data-goal="${g}">${n} · ${g} XP</button>`).join('')}</div>
+      <p class="muted small">12 XP ≈ 10–15 minutes. Consistency beats intensity.</p>
     </section>
     <section class="card set">
       <h3>Sound & voice</h3><p class="muted small">SuomiT plays recorded neural Finnish audio (voice: Noora). Anything without a recording uses your device's Finnish voice below.</p>

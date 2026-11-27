@@ -154,7 +154,7 @@ export function runSession(opts) {
   function flashGrade(q, g) {
     store.grade(q.item, g);
     const good = g >= 2;
-    if (good) { ok++; combo++; addXp(5); } else { bad++; combo = 0; if (!q._retry) queue.push({ ...q, _retry: true }); }
+    if (good) { ok++; combo++; addXp(1.25); } else { bad++; combo = 0; if (!q._retry) queue.push({ ...q, _retry: true }); }
     track(good, q); done++; i++; next();
   }
 
@@ -183,8 +183,8 @@ export function runSession(opts) {
     // scoring
     if (good) {
       ok++; combo++;
-      addXp(opts.mode === 'speed' ? 5 : first ? 10 : 5);
-      if (combo > 0 && combo % 5 === 0) { addXp(5); sfx('combo'); buzz(30); $('.s-combo').classList.add('burst'); setTimeout(() => $('.s-combo')?.classList.remove('burst'), 600); }
+      addXp(opts.mode === 'speed' ? 1.25 : first ? 2.5 : 1.25);
+      if (combo > 0 && combo % 5 === 0) { addXp(1.25); sfx('combo'); buzz(30); $('.s-combo').classList.add('burst'); setTimeout(() => $('.s-combo')?.classList.remove('burst'), 600); }
       else sfx('ok');
     } else { bad++; combo = 0; sfx('bad'); buzz(60); card.classList.add('shake'); }
     track(good, q);
@@ -281,7 +281,7 @@ export function runSession(opts) {
         <div><b>${r.bestCombo}</b><span>best combo</span></div>
         ${opts.mode === 'speed' ? `<div><b>${r.ok}</b><span>points</span></div>` : `<div><b>${Math.floor(r.secs / 60)}:${String(r.secs % 60).padStart(2, '0')}</b><span>time</span></div>`}
       </div>
-      <div class="goal-bar"><div style="width:${pct * 100}%"></div><span>${dxp} / ${goal} XP today</span></div>
+      <div class="goal-bar"><div style="width:${pct * 100}%"></div><span>${store.fmtXp(dxp)} / ${goal} XP today</span></div>
       ${opts.endExtra?.(r) || ''}
       <div class="end-btns"><button class="btn ghost again">↻ Again</button><button class="btn go">Continue</button></div>
     </div>`;

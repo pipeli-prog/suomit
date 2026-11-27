@@ -35,7 +35,7 @@ export function renderTwisters(el) {
     card.querySelector('[data-said]').onclick = () => {
       const T = (store.state().twisters ||= {}), first = !T[card.dataset.i];
       T[card.dataset.i] = Date.now();
-      if (first) store.addXp(5);
+      if (first) store.addXp(1.25);
       store.save(); rerender();
     };
   });

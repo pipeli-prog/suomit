@@ -9,8 +9,8 @@ export const today = (d = new Date()) => {
 export const dayOffset = (k, n) => { const [y, m, d] = k.split('-').map(Number); return today(new Date(y, m - 1, d + n)); };
 
 const fresh = () => ({
-  v: 1, created: Date.now(), updated: Date.now(),
-  profile: { name: '', goal: 50, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
+  v: 2, created: Date.now(), updated: Date.now(), // v2: XP is a quarter of v1 XP (see migrateXp)
+  profile: { name: '', goal: 12, sound: true, haptics: true, rate: 0.9, voice: '', strictDots: false, theme: 'talviyo', autoSpeak: true, updated: 0 },
   mascot: { hat: null, face: null, neck: null, color: 'grey' },
   days: {},      // 'YYYY-MM-DD' → { xp, coins, ans, ok, new, rev, listen, best, q: {questId: progress}, qc: {questId:1}, read }
   frozen: {},    // days saved by a streak freeze
@@ -31,7 +31,18 @@ const fresh = () => ({
 let S = load();
 const subs = new Set();
 /** Fill in defaults, including NESTED ones (an old save without profile.goal must not break the streak). */
+/** v1 saves used 4× bigger XP numbers. Same effort, coins, streaks and levels; only the XP numbers shrink. */
+const OLD_GOALS = { 20: 5, 50: 12, 100: 25, 150: 40, 250: 60 };
+function migrateXp(o) {
+  if (!o || typeof o !== 'object' || o.v >= 2) return o;
+  const days = {};
+  for (const [k, d] of Object.entries(o.days || {})) days[k] = d && typeof d === 'object' ? { ...d, xp: (d.xp || 0) / 4 } : d;
+  const out = { ...o, days, v: 2 };
+  if (o.profile && o.profile.goal != null) out.profile = { ...o.profile, goal: OLD_GOALS[o.profile.goal] ?? Math.max(1, Math.round(o.profile.goal / 4)) };
+  return out;
+}
 function hydrate(raw) {
+  raw = migrateXp(raw);
   const f = fresh(), out = Object.assign(f, raw);
   for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
   for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
@@ -76,11 +87,14 @@ export function resetAll() { S = fresh(); save(); }
 
 // ------------------------------------------------------------ day log
 export function dayRec(k = today()) { return (S.days[k] ||= { xp: 0, coins: 0, ans: 0, ok: 0, new: 0, rev: 0, listen: 0, best: 0, q: {}, qc: {} }); }
+export const COIN_XP = 2.5;
+/** XP as shown to people (amounts can be quarters internally). */
+export const fmtXp = n => Math.round(n || 0);
 export function addXp(n) {
   const d = dayRec(); const before = d.xp;
   d.xp += n;
-  // 1 coin ("markka") per 10 XP
-  d.coins += Math.floor(d.xp / 10) - Math.floor(before / 10);
+  // 1 coin ("markka") per 2.5 XP (XP values are multiples of 0.25, so this is exact)
+  d.coins += Math.floor(d.xp / COIN_XP) - Math.floor(before / COIN_XP);
   // remember that the goal was met that day, so raising the goal later does not break an existing streak
   if (d.xp >= S.profile.goal) d.met = 1;
   save();
@@ -89,8 +103,8 @@ export function addCoins(n) { dayRec().coins += n; save(); }
 export const totalXp = () => Object.values(S.days).reduce((a, d) => a + (d.xp || 0), 0);
 export const coins = () => Object.values(S.days).reduce((a, d) => a + (d.coins || 0), 0) - Object.values(S.spent).reduce((a, b) => a + b, 0);
 export function spend(id, price) { if (coins() < price) return false; S.spent[id] = price; save(); return true; }
-export const level = (xp = totalXp()) => Math.floor(1 + Math.sqrt(xp / 60));
-export const levelXp = l => 60 * (l - 1) ** 2;
+export const level = (xp = totalXp()) => Math.floor(1 + Math.sqrt(xp / 15));
+export const levelXp = l => 15 * (l - 1) ** 2;
 export const RANKS = ['Aloittelija', 'Turisti', 'Kielikurssilainen', 'Kahvinjuoja', 'Saunoja', 'Mökkeilijä', 'Sisu-soturi', 'Revontuli', 'Kalevan sankari', 'Suomen mestari'];
 export const rank = (l = level()) => RANKS[Math.min(RANKS.length - 1, Math.floor((l - 1) / 3))];
 
@@ -204,6 +218,7 @@ export async function decodeCode(code) {
 /** Merge another device's state into this one. Nothing is lost: union of history, newest card state wins. */
 export function merge(o) {
   const a = S;
+  o = migrateXp(o);
   o = { ...o, cards: { ...(o.cards || {}) }, lists: (o.lists || []).map(l => ({ ...l })) }; renameItems(o);
   const maxDay = (x = {}, y = {}) => {
     const r = { ...x };

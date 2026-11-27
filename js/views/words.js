@@ -180,10 +180,10 @@ export function startMatch(words) {
     clearInterval(timer);
     const secs = Math.round((Date.now() - t0) / 1000) + penalty, S = store.state(), best = S.best.match;
     if (!best || secs < best) S.best.match = secs;
-    store.addXp(pool.length * 3); if (secs < 30) unlock('match');
+    store.addXp(pool.length * .75); if (secs < 30) unlock('match');
     confetti(); sfx('win');
     root.innerHTML = `<div class="end">${mascotSVG(undefined, { size: 120, mood: 'wow' })}<h2>${secs} s${!best || secs < best ? ' · New record!' : ''}</h2>
-      <div class="end-stats"><div><b>+${pool.length * 3}</b><span>XP</span></div><div><b>${penalty}</b><span>penalty s</span></div><div><b>${S.best.match}s</b><span>best</span></div></div>
+      <div class="end-stats"><div><b>+${store.fmtXp(pool.length * .75)}</b><span>XP</span></div><div><b>${penalty}</b><span>penalty s</span></div><div><b>${S.best.match}s</b><span>best</span></div></div>
       <div class="end-btns"><button class="btn ghost again">↻ Again</button><button class="btn go">Continue</button></div></div>`;
     root.querySelector('.go').onclick = close;
     root.querySelector('.again').onclick = () => { root.innerHTML = ''; startMatch(words); };

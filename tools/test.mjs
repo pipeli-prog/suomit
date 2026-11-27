@@ -332,15 +332,15 @@ section('store');
   store.addXp(60); eq(store.streak(), 2, 'midnight: next day met → 2');
   // goal raised later must not break history
   store.setProfile({ goal: 200 }); eq(store.streak(), 2, 'raising the goal keeps past days');
-  store.setProfile({ goal: 50 });
+  store.setProfile({ goal: 12 });
   // coins
   store.resetAll(); setNow(2026, 3, 10, 12);
-  store.addXp(25); eq(store.coins(), 2, 'coins: 25 XP → 2');
-  store.addXp(5); eq(store.coins(), 3, 'coins: 30 XP → 3');
+  store.addXp(6.25); eq(store.coins(), 2, 'coins: 6.25 XP → 2 (1 per 2.5 XP)');
+  store.addXp(1.25); eq(store.coins(), 3, 'coins: 7.5 XP → 3');
   store.addCoins(10); eq(store.coins(), 13, 'coins: bonus');
   ok(store.spend('hat:x', 13) && store.coins() === 0, 'coins: spend');
   ok(!store.spend('hat:y', 1), 'coins: cannot overspend');
-  eq(store.totalXp(), 30, 'xp total');
+  eq(store.totalXp(), 7.5, 'xp total');
   // bestStreak
   store.resetAll(); [-10, -9, -8, -5, -4].forEach(o => meet(day(o))); eq(store.bestStreak(), 3, 'bestStreak');
   // merge idempotence
@@ -362,13 +362,22 @@ section('store');
   ok(S().cards['w:kissa'], 'merge: new cards added');
   eq(S().lists[0].items, ['w:talo', 'w:kissa'], 'merge: list union, no duplicates');
   eq(S().lists.length, 2, 'merge: new list added once');
-  eq(S().profile.goal, 50, 'merge: partial profile keeps defaults');
+  eq(S().profile.goal, 12, 'merge: partial profile keeps defaults');
   eq(S().profile.name, 'x', 'merge: newer profile wins');
   other.lists[1].items.push('w:x'); ok(!S().lists[1].items.includes('w:x'), 'merge: lists are copied, not shared');
   // hydrate
   store.replace({ profile: { name: 'old' }, days: {} });
-  eq(S().profile.goal, 50, 'old save without goal → default goal');
+  eq(S().profile.goal, 12, 'old save without goal → default goal');
   ok(Array.isArray(S().lists) && S().lists.length, 'old save without lists → default list');
+  // XP v2 = a quarter of v1: old saves are converted once; coins, level and met days stay the same
+  setNow(2026, 3, 10, 12);
+  store.replace({ v: 1, profile: { goal: 50 }, days: { [day(-1)]: { xp: 100, coins: 10, met: 1 }, [day(0)]: { xp: 40, coins: 4 } } });
+  eq(S().profile.goal, 12, 'v1 goal 50 → 12'); eq(S().days[day(-1)].xp, 25, 'v1 day xp 100 → 25'); eq(store.coins(), 14, 'coins unchanged');
+  eq(store.level(), Math.floor(1 + Math.sqrt(140 / 60)), 'level unchanged'); eq(store.streak(), 1, 'yesterday still met');
+  store.addXp(2.5); eq(store.coins(), 15, 'next coin after 2.5 XP (old 10)');
+  store.replace(JSON.parse(JSON.stringify(S()))); eq(S().days[day(-1)].xp, 25, 'v2 save is not converted again');
+  store.merge({ days: { [day(-1)]: { xp: 200, coins: 20 } } }); eq(S().days[day(-1)].xp, 50, 'old-format sync code is converted on merge');
+  for (const [o, n] of [[20, 5], [100, 25], [150, 40], [250, 60], [70, 18]]) { store.replace({ v: 1, profile: { goal: o }, days: {} }); eq(S().profile.goal, n, `v1 goal ${o} → ${n}`); }
 }
 
 // ======================================================================= 6. FSRS
