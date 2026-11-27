@@ -1,19 +1,13 @@
 // Practice sets for lessons m1-1 … m1-6, rebuilt from the lessons' external resources. See SCHEMA.md.
 // Wording is original; word lists follow what each source drills.
 
+import { TWISTERS } from '../twisters.js';
+
 const Q = 'https://quizlet.com';
 const WW = 'https://wordwall.net/fi/resource/';
 
 // ---------- shared item lists (used by resources that appear under two URLs)
-const KIELISOLMUT = [
-  { fi: 'Vesihiisi sihisi hississä.', en: 'The water sprite hissed in the lift.' },
-  { fi: 'Mustan kissan paksut posket.', en: "The black cat's chubby cheeks." },
-  { fi: 'Kokko, kokoo koko kokko kokoon!', en: 'Kokko, gather the whole bonfire together!' },
-  { fi: 'Appilan pappilan apupapin papupata pankolla kiehuu ja kuohuu.', en: "The curate's bean pot boils over on the stove bench." },
-  { fi: 'Käki kukkuu kuusessa.', en: 'The cuckoo calls in the spruce.' },
-  { fi: 'Tuli ja tuuli tulivat tulliin.', en: 'Fire and wind came to customs.' },
-  { fi: 'Kissa kiipesi kuuseen.', en: 'The cat climbed up the spruce.' },
-];
+const KIELISOLMUT = TWISTERS.map(({ fi, en }) => ({ fi, en }));
 const CONSONANT_GAP = [
   { s: 'ki___a', a: ['ss'], en: 'cat' },
   { s: 'ku___a', a: ['k'], en: 'who' },

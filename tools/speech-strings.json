@@ -1,8 +1,8 @@
 {
  "counts": {
-  "vocab": 851,
-  "readings": 375,
-  "practice": 2951,
+  "vocab": 849,
+  "readings": 384,
+  "practice": 2946,
   "listening": 432,
   "phrases": 1,
   "numbers": 186,
@@ -11,15 +11,15 @@
   "verbs": 1966,
   "grammar": 292,
   "generators": 3323,
-  "tap-words": 1056,
+  "tap-words": 1080,
   "vocab-forms": 849,
-  "answers": 2275
+  "answers": 6681
  },
  "dropped": {
-  "generators": 808,
-  "tap-words": 1056,
+  "generators": 810,
+  "tap-words": 1080,
   "vocab-forms": 849,
-  "answers": 2275
+  "answers": 6681
  },
  "estimatedMB": 118,
  "strings": [
@@ -60,8 +60,6 @@
   "pitkä vokaali",
   "kaksoiskonsonantti",
   "diftongi",
-  "Vesihiisi sihisi hississä.",
-  "Mustan kissan paksut posket.",
   "nolla",
   "yksi",
   "kaksi",
@@ -1249,6 +1247,15 @@
   "Hän hiihtää.",
   "Hän laulaa kuorossa.",
   "Hän pelaa jääkiekkoa.",
+  "Vesihiisi sihisi hississä.",
+  "Mustan kissan paksut posket.",
+  "Kokko, kokoo koko kokko kokoon!",
+  "Käki kukkuu kuusessa.",
+  "Tuli ja tuuli tulivat tulliin.",
+  "Kissa kiipesi kuuseen.",
+  "Uuno ui uudessa uima-altaassa.",
+  "Yksikseskös yskiskelet vai yhdessäkös yskiskellään?",
+  "Appilan pappilan apupapin papupata pankolla kiehuu ja kuohuu.",
   "grilli",
   "poliisi",
   "raha",
@@ -1294,11 +1301,6 @@
   "Aake",
   "Susanna",
   "Nanna",
-  "Kokko, kokoo koko kokko kokoon!",
-  "Appilan pappilan apupapin papupata pankolla kiehuu ja kuohuu.",
-  "Käki kukkuu kuusessa.",
-  "Tuli ja tuuli tulivat tulliin.",
-  "Kissa kiipesi kuuseen.",
   "suo",
   "laulu",
   "jää",
@@ -11840,8 +11842,6 @@
   "nolla viisi nolla, nolla yhdeksän viisi, kaksi kaksi nolla yksi",
   "nolla neljä viis, seittemän kolme ysi, kaks viis kolme viis",
   "nolla neljä nolla, seittemän ysi neljä, yks viis kasi kasi",
-  "nolla neljä viis, ysi ysi neljä, kasi neljä neljä yks",
-  "nolla neljä nolla, kaksi kaksi nolla, nolla kaksi yksi kolme",
-  "Te ette syö suklaata"
+  "nolla neljä viis, ysi ysi neljä, kasi neljä neljä yks"
  ]
 }

@@ -41,8 +41,6 @@ Kaunis nimi!|What a beautiful name!|p
 pitkä vokaali|long vowel|n
 kaksoiskonsonantti|double consonant|n|kaksoiskonsonantin kaksoiskonsonanttia kaksoiskonsonantit
 diftongi|diphthong (vowel pair)|n|diftongin diftongia diftongit
-Vesihiisi sihisi hississä.|The water sprite hissed in the lift. (tongue twister)|p
-Mustan kissan paksut posket.|The black cat's fat cheeks. (tongue twister)|p
 
 ## numbers | m1-2 | Numbers & prices | hash
 nolla|zero|num
