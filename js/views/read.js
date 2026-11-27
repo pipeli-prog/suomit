@@ -84,10 +84,10 @@ export function renderStory(el, id) {
   el.querySelector('#done').onclick = () => {
     const score = Object.values(answers).filter(Boolean).length, first = S.reads[r.id] == null;
     S.reads[r.id] = Math.max(S.reads[r.id] || 0, score);
-    const xp = first ? 20 + score * 5 : score * 3;
+    const xp = (first ? 20 + score * 5 : score * 3) / 4;
     store.addXp(xp); const d = store.dayRec(); d.read = (d.read || 0) + 1; store.save();
     if (score === r.q.length) confetti(80);
-    toast(`${score}/${r.q.length} correct · +${xp} XP`, 'read', 2600);
+    toast(`${score}/${r.q.length} correct · +${store.fmtXp(xp)} XP`, 'read', 2600);
     claimQuests(); checkAchievements(); go('#/read');
   };
 }

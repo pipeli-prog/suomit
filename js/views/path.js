@@ -110,7 +110,7 @@ export function renderLesson(el, id, tab = 'learn') {
   if (tab === 'res') {
     const groups = [['video', icon('film') + ' Watch'], ['game', icon('game') + ' Practise & test yourself'], ['read', icon('file') + ' Read'], ['listen', icon('headphones') + ' Listen']];
     const doneN = res.filter(r => S.res[r.u]).length;
-    body.innerHTML = res.length ? `<p class="muted small">The free resources linked from your course for this lesson. Tick them off for +5 XP each. ${doneN}/${res.length} done.</p>` + groups.map(([t, h]) => {
+    body.innerHTML = res.length ? `<p class="muted small">The free resources linked from your course for this lesson. Tick them off for +1 XP each. ${doneN}/${res.length} done.</p>` + groups.map(([t, h]) => {
       const items = res.filter(r => r.t === t); if (!items.length) return '';
       return `<h3 class="sec">${h}</h3>` + items.map(r => `<div class="res ${S.res[r.u] ? 'done' : ''}">
         <button class="chk" data-u="${esc(r.u)}" aria-label="Mark done">${S.res[r.u] ? '✓' : ''}</button>
@@ -126,7 +126,7 @@ export function renderLesson(el, id, tab = 'learn') {
     });
     body.querySelectorAll('.chk').forEach(b => b.onclick = () => {
       const u = b.dataset.u;
-      if (S.res[u]) delete S.res[u]; else { S.res[u] = Date.now(); store.addXp(5); toast('+5 XP', 'check', 1200); }
+      if (S.res[u]) delete S.res[u]; else { S.res[u] = Date.now(); store.addXp(1.25); toast('+1 XP', 'check', 1200); }
       store.save(); rerender();
     });
     body.querySelectorAll('.res-a[data-t=video]').forEach(a => a.addEventListener('click', e => {

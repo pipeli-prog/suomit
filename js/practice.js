@@ -52,7 +52,7 @@ export function setQuestions(set) {
 function markDone(lesson, set, r) {
   if (!r || r.quit) return;
   const S = store.state();
-  if (r.acc >= .6 && !S.res[set.src]) { S.res[set.src] = Date.now(); store.addXp(5); }
+  if (r.acc >= .6 && !S.res[set.src]) { S.res[set.src] = Date.now(); store.addXp(1.25); }
   store.save();
 }
 
@@ -116,10 +116,10 @@ export function renderSet(el, lesson, idx) {
   btn.onclick = () => {
     stopSpeaking();
     const score = Object.values(answers).filter(Boolean).length, S = store.state(), first = !S.res[set.src];
-    const xp = (first ? 15 : 3) + score * 5;
+    const xp = ((first ? 15 : 3) + score * 5) / 4;
     S.res[set.src] = S.res[set.src] || Date.now(); store.addXp(xp); const d = store.dayRec(); d.read = (d.read || 0) + 1; store.save();
     if (nq && score === nq) confetti(80);
-    toast(nq ? `${score}/${nq} correct · +${xp} XP` : `+${xp} XP`, 'read', 2400);
+    toast(nq ? `${score}/${nq} correct · +${store.fmtXp(xp)} XP` : `+${store.fmtXp(xp)} XP`, 'read', 2400);
     location.hash = '#/lesson/' + lesson + '/res';
   };
 }

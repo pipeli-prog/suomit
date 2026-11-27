@@ -31,7 +31,7 @@ export function renderCalendar(el) {
       const k = store.today(new Date(y, m, d)), st = dayState(k, todayKey, firstKey);
       if (st === 'kept') kept++; else if (st === 'frozen') frozen++; else if (st === 'missed' || st === 'partial') missed++;
       const mark = st === 'kept' ? icon('flame') : st === 'frozen' ? icon('shield') : '';
-      cells.push(`<i class="cd ${st}" title="${k}: ${S.days[k]?.xp || 0} XP">${mark}<b>${d}</b></i>`);
+      cells.push(`<i class="cd ${st}" title="${k}: ${Math.round(S.days[k]?.xp || 0)} XP">${mark}<b>${d}</b></i>`);
     }
     const isNow = y === now.getFullYear() && m === now.getMonth();
     el.innerHTML = `

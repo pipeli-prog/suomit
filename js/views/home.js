@@ -39,7 +39,7 @@ export function renderHome(el) {
 
   <section class="card mix">
     <div class="ring"><svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="${R}" class="rbg"/><circle cx="60" cy="60" r="${R}" class="rfg" style="stroke-dasharray:${C};stroke-dashoffset:${C * (1 - pct)}"/></svg>
-      <div class="ring-t"><b>${dxp}</b><span>/ ${goal} XP</span></div></div>
+      <div class="ring-t"><b>${store.fmtXp(dxp)}</b><span>/ ${goal} XP</span></div></div>
     <div class="mix-r">
       <h2>Päivän treeni</h2><p class="muted">Today's smart mix</p>
       <div class="mix-chips">${mix.due ? `<span class="chip">${icon('repeat')} ${mix.due} review${mix.due > 1 ? 's' : ''}</span>` : ''}${mix.fresh ? `<span class="chip">${icon('sprout')} ${mix.fresh} new</span>` : ''}<span class="chip">${icon('puzzle')} grammar</span></div>
@@ -56,7 +56,7 @@ export function renderHome(el) {
   <section class="card">
     <div class="row-h"><h3>${icon('list')} Daily quests</h3><span class="muted small">reset at midnight</span></div>
     ${qs.map(q => `<div class="quest ${q.claimed ? 'done' : ''}"><div class="q-t">${q.claimed ? icon('check') : icon('dots')} ${esc(q.title)}</div>
-      <div class="q-bar"><div style="width:${q.prog / q.target * 100}%"></div></div><div class="q-r">${q.prog}/${q.target} · ${icon('coin')}${q.coins}</div></div>`).join('')}
+      <div class="q-bar"><div style="width:${q.prog / q.target * 100}%"></div></div><div class="q-r">${Math.floor(q.prog)}/${q.target} · ${icon('coin')}${q.coins}</div></div>`).join('')}
   </section>
 
   ${lootPool().length ? `<button class="card loot-home" id="loot"><span class="lh-ico">${icon('gift')}</span><div><b>Yllätyslaatikko</b><div class="muted small">Surprise box: a random cosmetic you don't own · ${lootPool().length} left</div></div><span class="lh-p">${icon('coin')} ${LOOT_PRICE}</span></button>` : ''}

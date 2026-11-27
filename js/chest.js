@@ -13,7 +13,7 @@ const CHEST = `<svg class="chest-svg" viewBox="0 0 120 100" aria-hidden="true">
 
 /** HTML for the chest block. r = session result {xp, coins}. */
 export function chestHTML(r) {
-  return `<div class="reward-chest" data-xp="${r.xp || 0}" data-coins="${r.coins || 0}">
+  return `<div class="reward-chest" data-xp="${Math.round(r.xp || 0)}" data-coins="${r.coins || 0}">
     <button class="rc-box" aria-label="Open chest">${CHEST}<span class="rc-tap">Tap to open</span></button>
     <div class="rc-loot"><div class="rc-item xp"><b>+<span class="n">0</span></b><small>XP</small></div><div class="rc-item coins"><b>+<span class="n">0</span></b><small>markkaa</small></div></div>
   </div>`;
