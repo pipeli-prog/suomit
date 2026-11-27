@@ -5,6 +5,7 @@ import { initViewport } from './viewport.js';
 import { icon } from './icons.js';
 import { applyTheme, claimQuests } from './gamify.js';
 import { initWordTaps, closePop, toast } from './ui.js';
+import { sfx, buzz } from './audio.js';
 import { renderHome } from './views/home.js';
 import { renderPath, renderLesson } from './views/path.js';
 import { renderWords } from './views/words.js';
@@ -66,6 +67,13 @@ async function boot() {
   applyTheme();
   document.getElementById('nav').innerHTML = NAV.map(([tab, h, n, i]) => `<a href="${h}" data-tab="${tab}"><span>${i}</span><small>${n}</small></a>`).join('');
   initWordTaps();
+  // every button and link answers a tap with a soft click (+ a light haptic tick). Answer buttons are left out:
+  // they get the right/wrong sound instead.
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button, a, .chip, label.tog, [role="button"]');
+    if (!b || b.disabled || b.closest('.choice, [data-quiet]')) return;
+    sfx('tap'); buzz('light');
+  }, { capture: true });
   initViewport();
   const used = store.applyFreezes();
   if (used) setTimeout(() => toast(used > 1 ? t('A Sisu shield saved your streak ({n} days)', { n: used }) : t('A Sisu shield saved your streak ({n} day)', { n: used }), 'shield', 4000), 600);
@@ -73,6 +81,16 @@ async function boot() {
   window.addEventListener('hashchange', () => route());
   store.subscribe(() => renderHeader());
   route();
-  if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => { });
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    // the app is served from the offline cache; when a new version has been downloaded, switch to it, but never in
+    // the middle of a practice session (then it happens the next time the app opens)
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController || reloaded || !document.getElementById('session').hidden) return;
+      reloaded = true; store.flush(); location.reload();
+    });
+    navigator.serviceWorker.register('sw.js').then(r => r.update?.()).catch(() => { });
+  }
 }
 if (typeof document.getElementById === 'function') boot(); // not when imported by the Node tools

@@ -95,7 +95,7 @@ export function runSession(opts) {
     } else if (q.kind === 'type') {
       card.innerHTML = head + `<div class="type-wrap"><input class="ans" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="${q.numeric ? '123' : 'Kirjoita…'}" ${q.numeric ? 'inputmode="numeric"' : ''}>
         ${q.numeric ? '' : `<div class="dots"><button data-ch="ä">ä</button><button data-ch="ö">ö</button></div>`}</div>`;
-      foot.innerHTML = `<button class="btn ghost skip">${t("I don't know")}</button><button class="btn go">${t('Check')}</button>`;
+      foot.innerHTML = `<button class="btn ghost skip" data-quiet>${t("I don't know")}</button><button class="btn go" data-quiet>${t('Check')}</button>`;
       const inp = card.querySelector('.ans');
       card.querySelectorAll('[data-ch]').forEach(b => b.onpointerdown = e => { e.preventDefault(); const s = inp.selectionStart; inp.value = inp.value.slice(0, s) + b.dataset.ch + inp.value.slice(inp.selectionEnd); inp.setSelectionRange(s + 1, s + 1); });
       inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); if (inp.value.trim()) answer(q, inp.value); } };
@@ -116,7 +116,7 @@ export function runSession(opts) {
         const b = e.target.closest('.tile'); if (!b || locked()) return;
         const src = bank.querySelector(`[data-k="${b.dataset.src}"]`); src.classList.remove('used'); src.disabled = false; b.remove();
       };
-      foot.innerHTML = `<button class="btn ghost skip">${t("I don't know")}</button><button class="btn go">${t('Check')}</button>`;
+      foot.innerHTML = `<button class="btn ghost skip" data-quiet>${t("I don't know")}</button><button class="btn go" data-quiet>${t('Check')}</button>`;
       foot.querySelector('.go').onclick = () => {
         if (!ans.children.length) { ans.classList.remove('shake'); void ans.offsetWidth; ans.classList.add('shake'); return; }
         answer(q, [...ans.children].map(x => x.textContent).join(' '));
@@ -185,9 +185,9 @@ export function runSession(opts) {
     if (good) {
       ok++; combo++;
       addXp(opts.mode === 'speed' ? 1.25 : first ? 2.5 : 1.25);
-      if (combo > 0 && combo % 5 === 0) { addXp(1.25); sfx('combo'); buzz(30); $('.s-combo').classList.add('burst'); setTimeout(() => $('.s-combo')?.classList.remove('burst'), 600); }
-      else sfx('ok');
-    } else { bad++; combo = 0; sfx('bad'); buzz(60); card.classList.add('shake'); }
+      if (combo > 0 && combo % 5 === 0) { addXp(1.25); sfx('combo'); buzz('ok'); $('.s-combo').classList.add('burst'); setTimeout(() => $('.s-combo')?.classList.remove('burst'), 600); }
+      else { sfx('ok'); buzz('ok'); }
+    } else { bad++; combo = 0; sfx('bad'); buzz('bad'); card.classList.add('shake'); }
     track(good, q);
     // spaced repetition
     if (q.item && !graded.has(q.item)) {
@@ -235,7 +235,7 @@ export function runSession(opts) {
       inp.onkeydown = e => {
         if (e.key !== 'Enter') return;
         e.preventDefault(); e.stopPropagation();
-        if (matches()) go.click(); else { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); sfx('bad'); buzz(30); }
+        if (matches()) go.click(); else { inp.classList.remove('shake'); void inp.offsetWidth; inp.classList.add('shake'); sfx('bad'); buzz('bad'); }
       };
       inp.focus({ preventScroll: true }); // synchronous: still inside the tap, so iOS opens the keyboard
     } else setTimeout(() => go.focus({ preventScroll: true }), 30);

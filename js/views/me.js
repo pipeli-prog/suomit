@@ -127,8 +127,8 @@ export function renderSettings(el) {
     </section>
     <section class="card set">
       <h3>${t('Sound & voice')}</h3><p class="muted small">${t("SuomiT plays recorded neural Finnish audio (voice: Noora). Anything without a recording uses your device's Finnish voice below.")}</p>
-      <label class="tog"><span>${t('Sound effects')}</span><input type="checkbox" data-p="sound" ${p.sound ? 'checked' : ''}></label>
-      <label class="tog"><span>${t('Vibration (Android)')}</span><input type="checkbox" data-p="haptics" ${p.haptics ? 'checked' : ''}></label>
+      <label class="tog"><span>${t('Sounds (taps, right / wrong)')}</span><input type="checkbox" data-p="sound" ${p.sound ? 'checked' : ''}></label>
+      <label class="tog"><span>${t('Haptic feedback')}</span><input type="checkbox" data-p="haptics" ${p.haptics ? 'checked' : ''}></label>
       <label class="tog"><span>${t('Speak words automatically')}</span><input type="checkbox" data-p="autoSpeak" ${p.autoSpeak ? 'checked' : ''}></label>
       <label class="fld"><span>${t('Device voice (fallback)')}</span><select id="voice">${voices.length ? voices.map(v => `<option ${v.name === p.voice ? 'selected' : ''}>${esc(v.name)}</option>`).join('') : `<option>${t('No Finnish voice installed')}</option>`}</select></label>
       <label class="fld"><span>${t('Speaking speed')} · <b id="rv">${p.rate}</b></span><input type="range" min="0.5" max="1.2" step="0.05" value="${p.rate}" id="rate"></label>
