@@ -380,6 +380,19 @@ section('store');
   for (const [o, n] of [[20, 5], [100, 25], [150, 40], [250, 60], [70, 18]]) { store.replace({ v: 1, profile: { goal: o }, days: {} }); eq(S().profile.goal, n, `v1 goal ${o} → ${n}`); }
 }
 
+// loading a real save in a FRESH module instance (the store reads localStorage at import time; a const declared
+// after `let S = load()` once made every existing save load as empty)
+{
+  const saved = { v: 1, profile: { name: 'Saved', goal: 50 }, days: { '2026-11-20': { xp: 100, coins: 10 } }, cards: { 'w:talo': { s: 3, last: 1, due: 1 } }, lists: [{ id: 'mine', name: 'My words', items: ['w:paljonko kello on?'] }] };
+  const realLS = globalThis.localStorage;
+  globalThis.localStorage = { getItem: k => k === 'suomit.v1' ? JSON.stringify(saved) : null, setItem() { } };
+  const fresh = await import(root + 'js/store.js?fresh-load');
+  eq(fresh.state().profile.name, 'Saved', 'a saved state loads at startup');
+  ok(fresh.state().cards['w:talo'], 'saved cards load at startup');
+  eq(fresh.state().days['2026-11-20']?.xp, 25, 'saved v1 XP converted at startup');
+  globalThis.localStorage = realLS;
+}
+
 // ======================================================================= 6. FSRS
 section('srs');
 {

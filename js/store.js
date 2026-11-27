@@ -30,8 +30,6 @@ const fresh = () => ({
   best: { combo: 0, speed: 0, match: 0 },
 });
 
-let S = load();
-const subs = new Set();
 /** Fill in defaults, including NESTED ones (an old save without profile.goal must not break the streak). */
 /** v1 saves used 4× bigger XP numbers. Same effort, coins, streaks and levels; only the XP numbers shrink. */
 const OLD_GOALS = { 20: 5, 50: 12, 100: 25, 150: 40, 250: 60 };
@@ -63,12 +61,19 @@ function renameItems(o) {
   }
 }
 function load() {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return hydrate(JSON.parse(raw));
-  } catch (e) { /* private mode etc. */ }
-  return fresh();
+  let raw = null;
+  try { raw = localStorage.getItem(KEY); } catch (e) { return fresh(); } // private mode etc.
+  if (!raw) return fresh();
+  try { return hydrate(JSON.parse(raw)); } catch (e) {
+    // never start over silently: keep the save that could not be read, so a fix can bring it back
+    console.error('SuomiT: could not read the saved progress', e);
+    try { if (!localStorage.getItem(KEY + '.rescue')) localStorage.setItem(KEY + '.rescue', raw); } catch { }
+    return fresh();
+  }
 }
+// declared after everything hydrate() uses (consts are not hoisted: loading earlier threw and started from scratch)
+let S = load();
+const subs = new Set();
 let saveT = null;
 const write = () => { saveT = null; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { } };
 export function save() {
