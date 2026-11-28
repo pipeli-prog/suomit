@@ -103,6 +103,8 @@ async function boot() {
       reloaded = true; store.flush(); location.reload();
     });
     navigator.serviceWorker.register('sw.js').then(r => r.update?.()).catch(() => { });
+    // voice clips saved by older versions move out of Cache Storage (they made every cold start slow on iPhone)
+    setTimeout(() => import('./offline.js').then(m => m.migrateAudioCache()).catch(() => { }), 2500);
   }
 }
 if (typeof document.getElementById === 'function') boot(); // not when imported by the Node tools

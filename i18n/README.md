@@ -71,3 +71,12 @@ i18n/<lang>/course.js          the lesson explanations, REWRITTEN for speakers o
   - Format: same mini-markdown as `data/course.js` (`*fi*` italics for Finnish, `**bold**`, `> tip`, `|table|rows|`,
     blank-line paragraphs). The Finnish examples stay; the explanations around them are new.
   - Shape: `'m1-1': { title, goals: [...], learn: [{ h, body }, ...] }` for every lesson id in `data/course.js`.
+
+## Dictionary and answer meanings
+
+- Every Finnish word the app shows must be found by tap-to-translate (`js/lexicon.js`). Forms the rules cannot work out
+  go in `data/glossary.js` (`form → [basic form, English meaning, note, part of speech]`); the meanings and notes are
+  English keys in the `words` group. The `dictionary` test lists anything missing.
+- After every answer the app shows the whole Finnish answer and what it means. Generators set `full` and `tr`;
+  practice answers without a translation of their own get one from `data/practice/tr.js`.
+- To add translations without touching existing ones: `node tools/i18n-merge.mjs <lang> <group> <file.json>`.

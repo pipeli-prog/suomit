@@ -1,6 +1,8 @@
 // Exercise generators. Each skill returns fresh questions every time, so drills never run out.
 // Every generator returns {kind: mc|type|tiles, prompt, sub, answer (string or array: [0] = canonical,
-// the rest are other answers a learner may correctly give), choices, say, explain, reveal}.
+// the rest are other answers a learner may correctly give), choices, say, explain, reveal, full, tr}.
+// full = the complete Finnish answer (a whole sentence where there is one); tr = what it means, in the learner's
+// language. The feedback after every answer shows both (tools/test.mjs checks every skill has them).
 // Correctness rules enforced here (and checked by tools/test.mjs):
 //  - an MC question never offers two correct options (synonyms, shared meanings and alternative answers are removed);
 //  - typed answers accept every reasonable correct variant (pronoun drop, word order, spoken/written where allowed);
@@ -25,7 +27,7 @@ const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { cons
 const pick = a => a[Math.floor(Math.random() * a.length)];
 const sample = (a, n) => shuffle(a).slice(0, n);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fw = text => esc(text).replace(F.WORD_RE, m => `<span class="fw">${m}</span>`);
+import { fw } from './lexicon.js';
 /** Escape for element text where the English had raw apostrophes ("doesn't", "the cat's"): & < > only. */
 const escH = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 /** Spanish contracts de + el → del, a + el → al in sentences assembled from translated pieces. */
@@ -117,8 +119,8 @@ export function vocabQ(w, { force } = {}) {
   };
   const isPhrase = w.pos === 'p' || w.fi.includes(' ');
   const mode = force || (!c ? 'intro' : c.s < 2 ? pick(['mcFiEn', 'mcEnFi', 'listenMc']) : c.s < 6 ? pick(['typeEnFi', 'mcEnFi', 'listenMc', 'typeEnFi']) : pick(['typeEnFi', 'listenType', 'typeEnFi']));
-  const base = { item: w.id, say: w.fi };
   const mean = t(w.en);
+  const base = { item: w.id, say: w.fi, full: w.fi, tr: mean };
   switch (mode) {
     case 'intro': return { ...base, kind: 'intro', word: w };
     case 'mcFiEn': return { ...base, kind: 'mc', prompt: `<div class="big fi">${fw(w.fi)}</div>`, sub: t('What does this mean?'), answer: mean, choices: shuffle([mean, ...pickD('en')]), autoSay: true };
@@ -156,38 +158,41 @@ const mc = (prompt, answer, choices, o = {}) => {
 /** Finnish prompt with an optional meaning hint (a data string: translated here). */
 const P = (fi, en) => { const h = tx(en); return `<div class="big fi">${fw(fi)}</div>${h ? `<div class="en-hint">${esc(h)}</div>` : ''}`; };
 
+const SPELL_WORDS = { kissa: 'cat', talo: 'house', äiti: 'mother', kukka: 'flower', sauna: 'sauna', kylä: 'village', tyttö: 'girl', pöytä: 'table', Suomi: 'Finland', kahvi: 'coffee' };
 S.letters = () => {
   if (Math.random() < .5) {
     const [l, name] = pick(LETTERS);
-    return mc(`<div class="big">“${esc(name)}”</div>`, l.toUpperCase(), LETTERS.map(x => x[0].toUpperCase()), { sub: t('Which letter has this name?'), say: name });
+    return mc(`<div class="big">“${esc(name)}”</div>`, l.toUpperCase(), LETTERS.map(x => x[0].toUpperCase()), { sub: t('Which letter has this name?'), say: name, full: name, tr: t('the letter {letter}', { letter: l.toUpperCase() }) });
   }
   const w = pick(['kissa', 'talo', 'äiti', 'kukka', 'Liisa', 'Pekka', 'sauna', 'kylä', 'tyttö', 'pöytä', 'Suomi', 'kahvi']);
   const spelled = [...w.toLowerCase()].map(ch => LETTERS.find(x => x[0] === ch)?.[1]).join(' – ');
-  return type(`<div class="big">${esc(spelled)}</div>`, w, { sub: t('Write the word that is spelled out'), say: spelled.replace(/ – /g, ', '), strictDots: true });
+  const sw = SPELL_WORDS[w];
+  return type(`<div class="big">${esc(spelled)}</div>`, w, { sub: t('Write the word that is spelled out'), say: spelled.replace(/ – /g, ', '), strictDots: true, full: w, tr: sw ? t(sw) : t('a first name') });
 };
 S.length = () => {
   const [a, ae, b, be] = pick(MINIMAL_PAIRS);
   const [w, e] = Math.random() < .5 ? [a, ae] : [b, be];
-  if (Math.random() < .55) return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, w, [a, b], { listen: true, say: w, sub: t('Long or short? Which word do you hear?'), fiChoices: true, reveal: `${w} = ${t(e)}` });
+  if (Math.random() < .55) return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, w, [a, b], { listen: true, say: w, sub: t('Long or short? Which word do you hear?'), fiChoices: true, full: w, tr: t(e) });
   // distractor meanings never belong to the same spelling (tuli = fire appears in two pairs)
   const other = MINIMAL_PAIRS.flatMap(p => [[p[0], p[1]], [p[2], p[3]]]).filter(([f, m]) => f !== w && m !== e).map(x => t(x[1]));
-  return mc(P(w), t(e), [t(w === a ? be : ae), ...sample(other, 4)], { say: w, sub: t('What does it mean? Watch the length!') });
+  return mc(P(w), t(e), [t(w === a ? be : ae), ...sample(other, 4)], { say: w, sub: t('What does it mean? Watch the length!'), full: w, tr: t(e) });
 };
 const digitsAns = n => uniq([String(n), String(n).replace(/\B(?=(\d{3})+$)/, ' ')]);
 S.numbers = () => {
   const n = pick([randInt(0, 10), randInt(11, 19), randInt(20, 99), randInt(20, 99), randInt(100, 999), randInt(1000, 2030)]);
   const r = Math.random();
-  if (r < .4) return type(`<div class="big num">${n}</div>`, F.numWords(n), { sub: t('Write the number in Finnish'), say: F.numSay(n), strictDots: true });
-  if (r < .7) return type(`<div class="big">${icon('speaker', 'xl')}</div>`, digitsAns(n), { listen: true, say: F.numSay(n), sub: t('Listen and write the number in digits'), reveal: F.numWord(n), numeric: true });
-  return type(P(F.numWord(n)), digitsAns(n), { sub: t('Write it in digits'), say: F.numSay(n), numeric: true });
+  const o = { full: F.numWord(n), tr: String(n) };
+  if (r < .4) return type(`<div class="big num">${n}</div>`, F.numWords(n), { sub: t('Write the number in Finnish'), say: F.numSay(n), strictDots: true, ...o });
+  if (r < .7) return type(`<div class="big">${icon('speaker', 'xl')}</div>`, digitsAns(n), { listen: true, say: F.numSay(n), sub: t('Listen and write the number in digits'), numeric: true, ...o });
+  return type(P(F.numWord(n)), digitsAns(n), { sub: t('Write it in digits'), say: F.numSay(n), numeric: true, ...o });
 };
 S.numbersSpoken = () => {
   const n = randInt(1, 99), spoken = F.numSpoken(n);
   if (Math.random() < .5) {
     const others = []; while (others.length < 6) { const x = randInt(1, 99); if (x !== n) others.push(F.numSpoken(x)[0]); }
-    return mc(`<div class="big num">${n}</div>`, spoken[0], others, { sub: t('How do Finns say it in spoken language?'), say: spoken[0], fiChoices: true, reveal: spoken.length > 1 ? t('Also: {forms}', { forms: spoken.slice(1).join(', ') }) : undefined });
+    return mc(`<div class="big num">${n}</div>`, spoken[0], others, { sub: t('How do Finns say it in spoken language?'), say: spoken[0], fiChoices: true, reveal: spoken.length > 1 ? t('Also: {forms}', { forms: spoken.slice(1).join(', ') }) : undefined, full: spoken[0], tr: `${n} · ${t('written')}: ${F.numWord(n)}` });
   }
-  return type(P(spoken[0]), String(n), { sub: t('Spoken number → digits'), say: spoken[0], numeric: true });
+  return type(P(spoken[0]), String(n), { sub: t('Spoken number → digits'), say: spoken[0], numeric: true, full: spoken[0], tr: `${n} · ${t('written')}: ${F.numWord(n)}` });
 };
 export const PRICE_CENTS = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90];
 const priceStr = (e, c) => `${e},${String(c).padStart(2, '0')} €`.replace(',00', '');
@@ -196,9 +201,9 @@ S.prices = () => {
   // listening prices use whole tens of cents: every one of those sentences has a recorded clip (PRICE_CENTS)
   const e = randInt(1, 20), c = listen ? pick(PRICE_CENTS) : pick([0, 10, 20, 30, 50, 90, randInt(1, 99)]);
   const price = priceStr(e, c), words = F.priceWords(e, c), said = F.priceSay(e, c);
-  if (!listen) return type(`<div class="big num">${price}</div>`, words, { sub: t('Write the price in Finnish (written or spoken words, mixed as you like)'), say: words[0], strictDots: true });
+  if (!listen) return type(`<div class="big num">${price}</div>`, words, { sub: t('Write the price in Finnish (written or spoken words, mixed as you like)'), say: words[0], strictDots: true, full: words[0], tr: price });
   const others = []; while (others.length < 3) { const o = priceStr(randInt(1, 20), pick([0, 10, 20, 50, 90])); if (o !== price && !others.includes(o)) others.push(o); }
-  return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, price, others, { listen: true, say: `Se maksaa ${said}.`, sub: t('Listen: what does it cost?'), reveal: `Se maksaa ${said}.` });
+  return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, price, others, { listen: true, say: `Se maksaa ${said}.`, sub: t('Listen: what does it cost?'), full: `Se maksaa ${said}.`, tr: t('It costs {price}.', { price }) });
 };
 const OLLA = { inf: 'olla' };
 /** "he/she is" in the learner's language (one key per person: Dutch/Spanish conjugate "to be" themselves). */
@@ -206,38 +211,48 @@ const ollaEn = p => [t('I am'), t('you are'), t('he/she is'), t('we are'), t('yo
 S.olla = () => {
   const p = randInt(0, 5), f = F.present(OLLA)[p];
   return Math.random() < .6
-    ? type(P(`${F.PERSONS[p]} ___`), [f, `${F.PERSONS[p]} ${f}`], { sub: `olla → ${ollaEn(p)}`, say: `${F.PERSONS[p]} ${f}` })
-    : mc(P(`${cap(F.PERSONS[p])} ___ kotona.`), f, F.present(OLLA), { sub: t('Choose the right form of olla'), say: `${cap(F.PERSONS[p])} ${f} kotona.` });
+    ? type(P(`${F.PERSONS[p]} ___`), [f, `${F.PERSONS[p]} ${f}`], { sub: `olla → ${ollaEn(p)}`, say: `${F.PERSONS[p]} ${f}`, full: `${F.PERSONS[p]} ${f}`, tr: ollaEn(p) })
+    : mc(P(`${cap(F.PERSONS[p])} ___ kotona.`), f, F.present(OLLA), { sub: t('Choose the right form of olla'), say: `${cap(F.PERSONS[p])} ${f} kotona.`, full: `${cap(F.PERSONS[p])} ${f} kotona.`, tr: t(ollaKey(p, 0, 'pos')) });
 };
 const OLLA_CTX = ['kotona', 'väsynyt', 'suomalainen', 'opettaja', 'iloinen', 'myöhässä', 'töissä'];
 const OLLA_CTX_PL = ['kotona', 'väsyneitä', 'suomalaisia', 'opettajia', 'iloisia', 'myöhässä', 'töissä'];
+// "They are not teachers.": one key per person × context × form (pos / neg / q)
+const OLLA_CTX_EN = ['at home', 'tired', 'Finnish', 'a teacher', 'happy', 'late', 'at work'], OLLA_CTX_EN_PL = { 3: 'teachers' };
+const BE = ['I am', 'you are', 'he/she is', 'we are', 'you (pl.) are', 'they are'], BE_NOT = ["I'm not", "you aren't", "he/she isn't", "we aren't", "you (pl.) aren't", "they aren't"];
+const BE_Q = ['Am I', 'Are you', 'Is he/she', 'Are we', 'Are you (pl.)', 'Are they'];
+function ollaKey(p, i, form) {
+  const x = p >= 3 && OLLA_CTX_EN_PL[i] ? OLLA_CTX_EN_PL[i] : OLLA_CTX_EN[i];
+  return form === 'q' ? `${BE_Q[p]} ${x}?` : `${cap(form === 'neg' ? BE_NOT[p] : BE[p])} ${x}.`;
+}
 S.ollaNeg = () => {
   const p = randInt(0, 5), i = randInt(0, OLLA_CTX.length - 1), x = p >= 3 ? OLLA_CTX_PL[i] : OLLA_CTX[i];
   const pos = `${cap(F.PERSONS[p])} ${F.present(OLLA)[p]} ${x}.`, neg = `${cap(F.PERSONS[p])} ${F.negative(OLLA)[p]} ${x}`;
   const ans = [neg]; if (dropPron(p)) ans.push(`${cap(F.negative(OLLA)[p])} ${x}`);
-  return type(P(pos), ans, { sub: t('Make it negative'), say: neg, strictDots: true });
+  return type(P(pos), ans, { sub: t('Make it negative'), say: neg, strictDots: true, full: neg + '.', tr: t(ollaKey(p, i, 'neg')), hint: t(ollaKey(p, i, 'pos')) });
 };
 S.ollaQ = () => {
   const p = pick([1, 2, 4, 5]), i = randInt(0, OLLA_CTX.length - 1), x = p >= 3 ? OLLA_CTX_PL[i] : OLLA_CTX[i];
   const f = F.present(OLLA)[p], q = cap(f) + 'ko';
   const ans = [`${q} ${F.PERSONS[p]} ${x}`]; if (dropPron(p)) ans.push(`${q} ${x}`); // "Onko kotona?" without hän is not about him/her
-  return type(P(`${cap(F.PERSONS[p])} ${f} ${x}.`), ans, { sub: t('Turn it into a yes/no question'), say: `${q} ${F.PERSONS[p]} ${x}?`, strictDots: true });
+  return type(P(`${cap(F.PERSONS[p])} ${f} ${x}.`), ans, { sub: t('Turn it into a yes/no question'), say: `${q} ${F.PERSONS[p]} ${x}?`, strictDots: true, full: `${q} ${F.PERSONS[p]} ${x}?`, tr: t(ollaKey(p, i, 'q')), hint: t(ollaKey(p, i, 'pos')) });
 };
 S.ollaSpoken = () => {
   const p = randInt(0, 5), neg = Math.random() < .4;
   const w = neg ? F.negative(OLLA)[p] : F.present(OLLA)[p], s = (neg ? F.OLLA_SPOKEN_NEG : F.OLLA_SPOKEN)[p];
-  return mc(P(`${F.PERSONS[p]} ${w}`), s, neg ? F.OLLA_SPOKEN_NEG : F.OLLA_SPOKEN, { sub: t('How does it sound in spoken Finnish?'), say: s, fiChoices: true });
+  return mc(P(`${F.PERSONS[p]} ${w}`), s, neg ? F.OLLA_SPOKEN_NEG : F.OLLA_SPOKEN, { sub: t('How does it sound in spoken Finnish?'), say: s, fiChoices: true, full: s, tr: neg ? t(BE_NOT[p]) : ollaEn(p) });
 };
 // Composed keys (i18nKeys() lists them all): "on Monday", "in May", "in spring"
 const onDayKey = en => `on ${en}`, inKey = en => `in ${en}`;
 S.days = () => {
   const r = Math.random();
-  if (r < .4) { const [, na, en] = pick(DAYS); return type(`<div class="big">${esc(t(onDayKey(en)))}</div>`, na, { sub: t('Milloin? (when) → add -na/-nä'), say: na, strictDots: true }); }
-  if (r < .7) { const [d, , en] = pick(DAYS); return mc(`<div class="big">${esc(t(en))}</div>`, d, DAYS.map(x => x[0]), { sub: t('Choose the Finnish day'), say: d, fiChoices: true }); }
+  if (r < .4) { const [, na, en] = pick(DAYS); return type(`<div class="big">${esc(t(onDayKey(en)))}</div>`, na, { sub: t('Milloin? (when) → add -na/-nä'), say: na, strictDots: true, full: na, tr: t(onDayKey(en)) }); }
+  if (r < .7) { const [d, , en] = pick(DAYS); return mc(`<div class="big">${esc(t(en))}</div>`, d, DAYS.map(x => x[0]), { sub: t('Choose the Finnish day'), say: d, fiChoices: true, full: d, tr: t(en) }); }
   const td = randInt(0, 6), [rel, off, en] = pick(RELDAYS.filter(x => x[1] !== 0)), target = DAYS[(td + off + 7) % 7][0];
   const verb = off < 0 ? 'oli' : 'on'; // Mikä päivä OLI eilen? (past days take the past tense)
   const q = `Tänään on ${DAYS[td][0]}. Mikä päivä ${verb} ${rel}?`;
-  return mc(P(q), target, DAYS.map(x => x[0]).filter(d => d !== DAYS[td][0]), { sub: `${rel} = ${t(en)}`, fiChoices: true, say: q });
+  const tDay = t(DAYS[(td + off + 7) % 7][2]);
+  return mc(P(q), target, DAYS.map(x => x[0]).filter(d => d !== DAYS[td][0]), { sub: `${rel} = ${t(en)}`, fiChoices: true, say: q,
+    full: `${cap(rel)} ${verb} ${target}.`, tr: off < 0 ? t('{when} was {day}.', { when: cap(t(en)), day: tDay }) : t('{when} is {day}.', { when: cap(t(en)), day: tDay }) });
 };
 /** What the case ending means, in the learner's language. */
 const caseEn = suf => ({ ssa: t('in'), sta: t('out of / from'), lla: t('on / at') })[suf];
@@ -245,11 +260,11 @@ S.harmony = () => {
   if (Math.random() < .5) {
     const w = pick(nouns()), stem = w.gen.slice(0, -1), suf = pick(['ssa', 'sta', 'lla']);
     const right = F.hv(suf, w.fi), wrong = right.includes('a') ? right.replace(/a/g, 'ä') : right.replace(/ä/g, 'a');
-    return mc(P(`${stem}___`), right, [wrong], { sub: t('{word} ({meaning}) + {ending} (“{case}”): which vowel?', { word: w.fi, meaning: gloss(t(w.en)), ending: `-${suf}/-${F.hv(suf, 'ä')}`, case: caseEn(suf) }), say: stem + right, fiChoices: true, explain: harmonyExplain(w.fi) });
+    return mc(P(`${stem}___`), right, [wrong], { sub: t('{word} ({meaning}) + {ending} (“{case}”): which vowel?', { word: w.fi, meaning: gloss(t(w.en)), ending: `-${suf}/-${F.hv(suf, 'ä')}`, case: caseEn(suf) }), say: stem + right, fiChoices: true, explain: harmonyExplain(w.fi), full: stem + right, tr: `${gloss(t(w.en))} + “${caseEn(suf)}”` });
   }
-  const v = pick(VERBS.filter(v => v.type && v.type <= 5)), p = pick([1, 2, 4, 5]), f = F.present(v)[p];
+  const v = pick(verbPool(conjVerb)), p = pick(Q_PERS), f = F.present(v)[p];
   const right = F.hv('ko', v.inf);
-  return mc(P(`${cap(f)}___ ${F.PERSONS[p]}?`), right, ['ko', 'kö'], { sub: t('{verb}: {meaning}. Question ending?', { verb: v.inf, meaning: t(v.en) }), say: `${cap(f)}${right} ${F.PERSONS[p]}?`, fiChoices: true, explain: harmonyExplain(v.inf) });
+  return mc(P(`${cap(f)}___ ${F.PERSONS[p]}?`), right, ['ko', 'kö'], { sub: t('{verb}: {meaning}. Question ending?', { verb: v.inf, meaning: t(v.en) }), say: `${cap(f)}${right} ${F.PERSONS[p]}?`, fiChoices: true, explain: harmonyExplain(v.inf), full: `${cap(f)}${right} ${F.PERSONS[p]}?`, tr: t(enQuestion(v, p)) });
 };
 export function harmonyExplain(word) {
   const h = F.harmony(word), w = word.toLowerCase();
@@ -263,16 +278,16 @@ export function harmonyExplain(word) {
 S.tplural = () => {
   const w = pick(nouns());
   const regular = w.pl === w.gen.slice(0, -1) + 't';
-  return type(P(w.fi, w.en), w.pl, { sub: t('Make it plural (t-plural)'), say: w.pl, strictDots: true, explain: regular ? t('Genitive {gen} → swap -n for -t → {pl}', { gen: `<b>${w.gen}</b>`, pl: `<b>${w.pl}</b>` }) : t('{word} → plural {pl}', { word: `<b>${w.fi}</b>`, pl: `<b>${w.pl}</b>` }) });
+  return type(P(w.fi, w.en), w.pl, { sub: t('Make it plural (t-plural)'), say: w.pl, strictDots: true, full: w.pl, tr: `${gloss(t(w.en))} → ${t('plural')}`, explain: regular ? t('Genitive {gen} → swap -n for -t → {pl}', { gen: `<b>${w.gen}</b>`, pl: `<b>${w.pl}</b>` }) : t('{word} → plural {pl}', { word: `<b>${w.fi}</b>`, pl: `<b>${w.pl}</b>` }) });
 };
 // "I speak Finnish." is one key per language (i18nKeys): Spanish/Dutch language names change with the sentence.
 const speakKey = c => `I speak ${c.langEn}.`;
 S.countries = () => {
   const c = pick(COUNTRIES), r = Math.random(), country = t(c.en);
-  if (r < .3) return type(P(`Olen kotoisin ___. (${c.fi})`), [c.from, `Olen kotoisin ${c.from}`], { sub: t("I'm from {country}", { country }), say: `Olen kotoisin ${c.from}.`, strictDots: true });
-  if (r < .55) return type(P(`Puhun ___. (${c.lang})`), [c.langPart, `Puhun ${c.langPart}`], { sub: `${t(speakKey(c))} ${t('Languages after puhua take the partitive')}`, say: `Puhun ${c.langPart}.`, strictDots: true });
-  if (r < .8) return mc(P(c.fi), c.nat, COUNTRIES.map(x => x.nat), { sub: t('{country}: what is the nationality?', { country }), say: c.nat, fiChoices: true });
-  return mc(`<div class="big">${esc(country)}</div>`, c.fi, COUNTRIES.map(x => x.fi), { sub: t('Which country?'), say: c.fi, fiChoices: true });
+  if (r < .3) return type(P(`Olen kotoisin ___. (${c.fi})`), [c.from, `Olen kotoisin ${c.from}`], { sub: t("I'm from {country}", { country }), say: `Olen kotoisin ${c.from}.`, strictDots: true, full: `Olen kotoisin ${c.from}.`, tr: t("I'm from {country}", { country }) });
+  if (r < .55) return type(P(`Puhun ___. (${c.lang})`), [c.langPart, `Puhun ${c.langPart}`], { sub: `${t(speakKey(c))} ${t('Languages after puhua take the partitive')}`, say: `Puhun ${c.langPart}.`, strictDots: true, full: `Puhun ${c.langPart}.`, tr: t(speakKey(c)) });
+  if (r < .8) return mc(P(c.fi), c.nat, COUNTRIES.map(x => x.nat), { sub: t('{country}: what is the nationality?', { country }), say: c.nat, fiChoices: true, full: c.nat, tr: t('{country} (person/nationality)', { country }) });
+  return mc(`<div class="big">${esc(country)}</div>`, c.fi, COUNTRIES.map(x => x.fi), { sub: t('Which country?'), say: c.fi, fiChoices: true, full: c.fi, tr: country });
 };
 
 // ------------------------------------------------------------ verbs
@@ -289,6 +304,27 @@ export function en3(base) {
 }
 // "he/she speaks", "I don't speak": composed English, translated as one key each (i18nKeys lists every verb × person)
 const enPresent = (v, p) => `${PERS_EN[p]} ${p === 2 ? en3(enBase(v)) : enBase(v)}`;
+/** "Do you speak?", "Does he/she speak?", "Can they?": the yes/no question for -ko/-kö drills (persons Q_PERS). */
+const Q_PERS = [1, 2, 4, 5];
+// English needs an object where Finnish can leave it out ("Ostin eilen." = "I bought (something) yesterday.")
+const NEEDS_OBJ = new Set(['buy', 'love', 'take', 'give', 'tell', 'fetch', 'use', 'ask for', 'bring', 'sell', 'do', 'get', 'choose', 'need', 'want', 'fix', 'open', 'mean', 'disturb', 'like', 'visit', 'say', 'look for', 'pay']);
+const obj = b => NEEDS_OBJ.has(b) ? ' (something)' : '';
+const enQuestion = (v, p) => {
+  const b = enBase(v), who = PERS_EN[p];
+  return b === 'can' ? `Can ${who}?` : `${p === 2 ? 'Does' : 'Do'} ${who} ${b}${obj(b)}?`;
+};
+const EN_PAST = { speak: 'spoke', say: 'said', buy: 'bought', pay: 'paid', sit: 'sat', sing: 'sang', drive: 'drove', take: 'took', write: 'wrote', know: 'knew',
+  read: 'read', sleep: 'slept', leave: 'left', give: 'gave', understand: 'understood', begin: 'began', tell: 'told', draw: 'drew', fly: 'flew', do: 'did',
+  see: 'saw', eat: 'ate', drink: 'drank', get: 'got', sell: 'sold', bring: 'brought', swim: 'swam', come: 'came', go: 'went', think: 'thought', meet: 'met',
+  lie: 'lay', can: 'could', choose: 'chose', mean: 'meant', wake: 'woke', chat: 'chatted', travel: 'travelled', ski: 'skied' };
+/** English simple past of a verb phrase: "look for" → "looked for", "get up" → "got up". */
+export function enPastOf(base) {
+  const [h, ...rest] = base.split(' ');
+  const f = EN_PAST[h] || (/e$/.test(h) ? h + 'd' : /[^aeiou]y$/.test(h) ? h.slice(0, -1) + 'ied' : h + 'ed');
+  return [f, ...rest].join(' ');
+}
+/** "I spoke yesterday." (the past-tense drill's full sentence is "Eilen minä puhuin.") */
+const enPast = (v, p) => `${cap(PERS_EN[p])} ${enPastOf(enBase(v))}${obj(enBase(v))} yesterday.`;
 const enNegative = (v, p) => enBase(v) === 'can' ? `${PERS_EN[p]} can't` : `${PERS_EN[p]} ${p === 2 ? "doesn't" : "don't"} ${enBase(v)}`;
 /** The verb's meaning as one word in the learner's language ("speak" / "spreken" / "hablar"), from the word pack. */
 const EN_VERB_KEY = { maksaa: 'to pay', voida: 'can', pitää: 'to like', olla: 'to be' };
@@ -301,18 +337,18 @@ function conjQ(v, kind = 'pos') {
   const p = randInt(0, 5);
   if (kind === 'neg') {
     const f = F.negative(v)[p];
-    return type(P(`${F.PERSONS[p]} + ei + ${v.inf}`), withPron(p, f), { sub: t(enNegative(v, p)), say: `${F.PERSONS[p]} ${f}`, strictDots: true, explain: t('Negative = {neg} + the minä-form without -n: {example}', { neg: `<b>${F.NEG.join(' / ')}</b>`, example: `minä <b>${F.present(v)[0]}</b> → <b>en ${v.a}</b>` }) });
+    return type(P(`${F.PERSONS[p]} + ei + ${v.inf}`), withPron(p, f), { sub: t(enNegative(v, p)), say: `${F.PERSONS[p]} ${f}`, strictDots: true, full: `${F.PERSONS[p]} ${f}`, tr: t(enNegative(v, p)), explain: t('Negative = {neg} + the minä-form without -n: {example}', { neg: `<b>${F.NEG.join(' / ')}</b>`, example: `minä <b>${F.present(v)[0]}</b> → <b>en ${v.a}</b>` }) });
   }
   if (kind === 'q') {
-    const qp = pick([1, 2, 4]), f = F.present(v)[qp] + F.qSuffix(v.inf);
-    return type(P(`${F.PERSONS[qp]} ${F.present(v)[qp]} → ?`), [f, `${f} ${F.PERSONS[qp]}`], { sub: t('Make a yes/no question with -ko/-kö (just the verb)'), say: `${cap(f)} ${F.PERSONS[qp]}?`, strictDots: true, explain: harmonyExplain(v.inf) });
+    const qp = pick(Q_PERS), f = F.present(v)[qp] + F.qSuffix(v.inf);
+    return type(P(`${F.PERSONS[qp]} ${F.present(v)[qp]} → ?`), [f, `${f} ${F.PERSONS[qp]}`], { sub: t('Make a yes/no question with -ko/-kö (just the verb)'), say: `${cap(f)} ${F.PERSONS[qp]}?`, strictDots: true, explain: harmonyExplain(v.inf), full: `${cap(f)} ${F.PERSONS[qp]}?`, tr: t(enQuestion(v, qp)), hint: t(enPresent(v, qp)) });
   }
   if (kind === 'past') {
     const f = F.past(v)[p];
-    return type(P(`${F.PERSONS[p]} + ${v.inf} (eilen)`), withPron(p, f), { sub: pastEn(p, verbWord(v)), say: `Eilen ${F.PERSONS[p]} ${f}.`, strictDots: true, explain: `minä <b>${v.p1}</b> · hän <b>${v.p3}</b>` });
+    return type(P(`${F.PERSONS[p]} + ${v.inf} (eilen)`), withPron(p, f), { sub: pastEn(p, verbWord(v)), say: `Eilen ${F.PERSONS[p]} ${f}.`, strictDots: true, full: `Eilen ${F.PERSONS[p]} ${f}.`, tr: t(enPast(v, p)), explain: `minä <b>${v.p1}</b> · hän <b>${v.p3}</b>` });
   }
   const f = F.present(v)[p];
-  return type(P(`${F.PERSONS[p]} + ${v.inf}`), withPron(p, f), { sub: t(enPresent(v, p)), say: `${F.PERSONS[p]} ${f}`, strictDots: true, explain: verbExplain(v) });
+  return type(P(`${F.PERSONS[p]} + ${v.inf}`), withPron(p, f), { sub: t(enPresent(v, p)), say: `${F.PERSONS[p]} ${f}`, strictDots: true, explain: verbExplain(v), full: `${F.PERSONS[p]} ${f}`, tr: t(enPresent(v, p)) });
 }
 function verbExplain(v) {
   const pr = F.present(v);
@@ -329,31 +365,45 @@ S.past = () => conjQ(pick(verbPool(v => v.p1)), 'past');
 S.verbtype = () => {
   const v = pick(VERBS.filter(v => v.type >= 1 && v.type <= 6));
   const label = n => t('type {n}', { n });
-  return mc(P(v.inf, v.en), label(v.type), [1, 2, 3, 4, 5, 6].map(label), { sub: t('Which verb type?'), say: v.inf, explain: verbExplain(v) });
+  return mc(P(v.inf, v.en), label(v.type), [1, 2, 3, 4, 5, 6].map(label), { sub: t('Which verb type?'), say: v.inf, explain: verbExplain(v), full: v.inf, tr: t(v.en) });
 };
 // [question, answer, right word, other words that would ALSO be correct (never offered as distractors)]
 const QW = [
-  ['___ sinä asut?', 'Asun Helsingissä.', 'missä'], ['___ sinä olet kotoisin?', 'Olen kotoisin Ruotsista.', 'mistä'], ['___ sinä menet?', 'Menen kotiin.', 'mihin'],
-  ['___ hän on?', 'Hän on Pekka.', 'kuka'], ['___ tämä on?', 'Tämä on kirja.', 'mikä', ['mitä']], ['___ sinä teet?', 'Minä luen.', 'mitä'],
-  ['___ sinä tulet?', 'Huomenna.', 'milloin'], ['___ sinä olet väsynyt?', 'Koska nukuin huonosti.', 'miksi'], ['___ sanotaan "thank you" suomeksi?', 'Kiitos.', 'miten', ['kuinka']],
-  ['___ sää on?', 'Sää on kaunis.', 'millainen', ['miten', 'kuinka']], ['___ auto tämä on?', 'Se on Pekan auto.', 'kenen'], ['___ vanha sinä olet?', 'Olen 30 vuotta vanha.', 'kuinka', ['miten']],
-  ['___ kello on?', 'Kello on kolme.', 'mitä', ['paljonko']], ['___ sinä syöt?', 'Syön leipää.', 'mitä'], ['___ sinun nimesi on?', 'Minun nimeni on Tom.', 'mikä'],
-  ['___ kieliä sinä puhut?', 'Puhun suomea.', 'mitä'], ['___ monta lasta sinulla on?', 'Minulla on kaksi lasta.', 'kuinka'], ['___ juna lähtee?', 'Kello kahdeksalta.', 'milloin'],
+  ['___ sinä asut?', 'Asun Helsingissä.', 'missä', [], 'Where do you live?', 'I live in Helsinki.'],
+  ['___ sinä olet kotoisin?', 'Olen kotoisin Ruotsista.', 'mistä', [], 'Where are you from?', "I'm from Sweden."],
+  ['___ sinä menet?', 'Menen kotiin.', 'mihin', [], 'Where are you going?', "I'm going home."],
+  ['___ hän on?', 'Hän on Pekka.', 'kuka', [], 'Who is he?', 'He is Pekka.'],
+  ['___ tämä on?', 'Tämä on kirja.', 'mikä', ['mitä'], 'What is this?', 'This is a book.'],
+  ['___ sinä teet?', 'Minä luen.', 'mitä', [], 'What are you doing?', "I'm reading."],
+  ['___ sinä tulet?', 'Huomenna.', 'milloin', [], 'When are you coming?', 'Tomorrow.'],
+  ['___ sinä olet väsynyt?', 'Koska nukuin huonosti.', 'miksi', [], 'Why are you tired?', 'Because I slept badly.'],
+  ['___ sanotaan "thank you" suomeksi?', 'Kiitos.', 'miten', ['kuinka'], 'How do you say "thank you" in Finnish?', 'Kiitos.'],
+  ['___ sää on?', 'Sää on kaunis.', 'millainen', ['miten', 'kuinka'], "What's the weather like?", 'The weather is beautiful.'],
+  ['___ auto tämä on?', 'Se on Pekan auto.', 'kenen', [], 'Whose car is this?', "It's Pekka's car."],
+  ['___ vanha sinä olet?', 'Olen 30 vuotta vanha.', 'kuinka', ['miten'], 'How old are you?', "I'm 30 years old."],
+  ['___ kello on?', 'Kello on kolme.', 'mitä', ['paljonko'], 'What time is it?', "It's three o'clock."],
+  ['___ sinä syöt?', 'Syön leipää.', 'mitä', [], 'What are you eating?', "I'm eating bread."],
+  ['___ sinun nimesi on?', 'Minun nimeni on Tom.', 'mikä', [], 'What is your name?', 'My name is Tom.'],
+  ['___ kieliä sinä puhut?', 'Puhun suomea.', 'mitä', [], 'What languages do you speak?', 'I speak Finnish.'],
+  ['___ monta lasta sinulla on?', 'Minulla on kaksi lasta.', 'kuinka', [], 'How many children do you have?', 'I have two children.'],
+  ['___ juna lähtee?', 'Kello kahdeksalta.', 'milloin', [], 'When does the train leave?', "At eight o'clock."],
 ];
 const QWORDS = ['Missä', 'Mistä', 'Mihin', 'Kuka', 'Mikä', 'Mitä', 'Milloin', 'Miksi', 'Miten', 'Millainen', 'Kenen', 'Kuinka', 'Paljonko'];
 S.qwords = () => {
-  const [q, a, w, also = []] = pick(QW);
-  const bad = new Set([w, ...also].map(cap));
-  // "How do you say 'thank you' in Finnish?": the quoted phrase is in the learner's language
-  return mc(P(q.replace('"thank you"', `"${t('thank you')}"`)), cap(w), QWORDS.filter(x => !bad.has(x)), { sub: t('Answer: “{answer}” Which question word?', { answer: a }), say: q.replace('___', cap(w)), fiChoices: true });
+  const [q, a, w, also, qEn, aEn] = pick(QW);
+  const bad = new Set([w, ...also].map(cap)), full = q.replace('___', cap(w));
+  // "How do you say 'thank you' in Finnish?": the quoted phrase is in the learner's language (fw keeps it plain)
+  return mc(P(q.replace('"thank you"', `"${t('thank you')}"`)), cap(w), QWORDS.filter(x => !bad.has(x)), { sub: t('Answer: “{answer}” Which question word?', { answer: a }), say: full, fiChoices: true,
+    full: `${full.replace('"thank you"', `"${t('thank you')}"`)} ${a}`, tr: `${t(qEn)} ${t(aEn)}` });
 };
-const HOLIDAYS = [['Milloin on joulu?', 'joulukuussa'], ['Milloin on juhannus?', 'kesäkuussa'], ['Milloin on vappu?', 'toukokuussa'], ['Milloin uusi vuosi alkaa?', 'tammikuussa'], ['Milloin koulu alkaa Suomessa?', 'elokuussa'], ['Milloin on itsenäisyyspäivä?', 'joulukuussa']];
+const HOLIDAYS = [['Milloin on joulu?', 'joulukuussa', 'When is Christmas?', 'December'], ['Milloin on juhannus?', 'kesäkuussa', 'When is Midsummer?', 'June'], ['Milloin on vappu?', 'toukokuussa', 'When is Vappu (May Day)?', 'May'],
+  ['Milloin uusi vuosi alkaa?', 'tammikuussa', 'When does the new year begin?', 'January'], ['Milloin koulu alkaa Suomessa?', 'elokuussa', 'When does school start in Finland?', 'August'], ['Milloin on itsenäisyyspäivä?', 'joulukuussa', 'When is Independence Day?', 'December']];
 S.months = () => {
   const r = Math.random();
-  if (r < .4) { const [, ssa, en] = pick(MONTHS); return type(`<div class="big">${esc(t(inKey(en)))}</div>`, ssa, { sub: 'Missä kuussa? → -ssa', say: ssa, strictDots: true }); }
-  if (r < .7) { const [, lla, en] = pick(SEASONS); return type(`<div class="big">${esc(t(inKey(en)))}</div>`, lla, { sub: t('Milloin? Seasons take -lla/-llä'), say: lla, strictDots: true }); }
-  const [q, a] = pick(HOLIDAYS);
-  return mc(P(q), a, MONTHS.map(m => m[1]), { sub: t('Choose the month'), say: q, fiChoices: true });
+  if (r < .4) { const [, ssa, en] = pick(MONTHS); return type(`<div class="big">${esc(t(inKey(en)))}</div>`, ssa, { sub: 'Missä kuussa? → -ssa', say: ssa, strictDots: true, full: ssa, tr: t(inKey(en)) }); }
+  if (r < .7) { const [, lla, en] = pick(SEASONS); return type(`<div class="big">${esc(t(inKey(en)))}</div>`, lla, { sub: t('Milloin? Seasons take -lla/-llä'), say: lla, strictDots: true, full: lla, tr: t(inKey(en)) }); }
+  const [q, a, qEn, mEn] = pick(HOLIDAYS);
+  return mc(P(q), a, MONTHS.map(m => m[1]), { sub: t('Choose the month'), say: q, fiChoices: true, full: `${q} ${cap(a)}.`, tr: `${t(qEn)} ${cap(t(inKey(mEn)))}.` });
 };
 // only things you wear "päällä" (a hat is päässä, shoes jalassa, a scarf kaulassa, a bag is not worn)
 const CLOTHES_SG = ['paita', 'takki', 'mekko', 'hame', 'villapaita', 'huppari', 't-paita'];
@@ -368,7 +418,7 @@ S.clothes = () => {
   // both orders are natural Finnish: "Minulla on päällä musta paita" / "Minulla on musta paita päällä"
   const answer = [`Minulla on päällä ${adj} ${noun.fi}`, `Minulla on ${adj} ${noun.fi} päällä`];
   const wrongAdj = plural ? col.fi : col.pl;
-  return { kind: 'tiles', prompt: `<div class="big">${esc(t(wearKey(col, noun, plural)))}</div>`, sub: plural ? t('Plural clothes → plural adjective!') : t('Build the sentence'), answer, tiles: shuffle(['Minulla', 'on', 'päällä', adj, noun.fi, wrongAdj, pick(['minä', 'olen'])]), say: answer[0] };
+  return { kind: 'tiles', prompt: `<div class="big">${esc(t(wearKey(col, noun, plural)))}</div>`, sub: plural ? t('Plural clothes → plural adjective!') : t('Build the sentence'), answer, tiles: shuffle(['Minulla', 'on', 'päällä', adj, noun.fi, wrongAdj, pick(['minä', 'olen'])]), say: answer[0], full: answer[0] + '.', tr: t(wearKey(col, noun, plural)) };
 };
 const HAVE_THINGS = ['koira', 'kissa', 'auto', 'pyörä', 'hevonen', 'puhelin', 'avain', 'sateenvarjo', 'kynä', 'porkkana'];
 // "I have a dog" / "he/she doesn't have a dog" / "{name} has a dog": one key per person × thing
@@ -380,10 +430,10 @@ const nameHasKey = w => `{name} has ${aAn(gloss(w.en))}`;
 const partNote = w => t('{word} → partitive {part}', { word: w.fi, part: `<b>${w.part}</b>` });
 S.have = () => {
   const w = W(pick(HAVE_THINGS)), r = Math.random();
-  if (r < .35) { const p = randInt(0, 5); const a = `${cap(F.ADESSIVE_PRON[p])} on ${w.fi}`; return type(`<div class="big">${esc(t(haveKey(p, w)))}</div>`, a, { sub: t('Person + -lla/-llä + on'), say: a, strictDots: true }); }
-  if (r < .65) { const p = randInt(0, 5); const a = `${cap(F.ADESSIVE_PRON[p])} ei ole ${w.part}`; return type(`<div class="big">${escH(t(haveNotKey(p, w)))}</div>`, a, { sub: t('Negative → the thing goes into the partitive'), say: a, strictDots: true, explain: partNote(w) }); }
+  if (r < .35) { const p = randInt(0, 5); const a = `${cap(F.ADESSIVE_PRON[p])} on ${w.fi}`; return type(`<div class="big">${esc(t(haveKey(p, w)))}</div>`, a, { sub: t('Person + -lla/-llä + on'), say: a, strictDots: true, full: a + '.', tr: t(haveKey(p, w)) }); }
+  if (r < .65) { const p = randInt(0, 5); const a = `${cap(F.ADESSIVE_PRON[p])} ei ole ${w.part}`; return type(`<div class="big">${escH(t(haveNotKey(p, w)))}</div>`, a, { sub: t('Negative → the thing goes into the partitive'), say: a, strictDots: true, explain: partNote(w), full: a + '.', tr: t(haveNotKey(p, w)) }); }
   const n = pick(NAMES), a = `${n.ade} on ${w.fi}`;
-  return type(`<div class="big">${esc(t(nameHasKey(w), { name: n.fi }))}</div>`, a, { sub: t('Names take -lla/-llä too (watch kpt!)'), say: a, strictDots: true, explain: `${n.fi} → <b>${n.ade}</b>` });
+  return type(`<div class="big">${esc(t(nameHasKey(w), { name: n.fi }))}</div>`, a, { sub: t('Names take -lla/-llä too (watch kpt!)'), say: a, strictDots: true, explain: `${n.fi} → <b>${n.ade}</b>`, full: a + '.', tr: t(nameHasKey(w), { name: n.fi }) });
 };
 // Near-synonyms in some contexts: never offer one as a "wrong" opposite when the other is right.
 const OPP_SYN = [['tumma', 'pimeä'], ['vaalea', 'valoisa'], ['kova', 'vaikea'], ['kova', 'äänekäs'], ['raskas', 'vaikea'], ['kevyt', 'helppo'], ['hauska', 'iloinen'], ['tylsä', 'surullinen']];
@@ -395,17 +445,17 @@ S.opposites = () => {
   const opp = w => OPPOSITES.filter(p => p.includes(w)).map(p => p[0] === w ? p[1] : p[0]);
   const ok = new Set();
   for (const s of syn(x)) { ok.add(s); for (const o of opp(s)) syn(o).forEach(z => ok.add(z)); }
-  return mc(P(x, W(x)?.en), y, OPPOSITES.flat().filter(w => !ok.has(w)), { sub: t('Choose the opposite'), say: y, fiChoices: true });
+  return mc(P(x, W(x)?.en), y, OPPOSITES.flat().filter(w => !ok.has(w)), { sub: t('Choose the opposite'), say: y, fiChoices: true, full: `${x} ↔ ${y}`, tr: `${gloss(t(W(x)?.en || x))} ↔ ${gloss(t(W(y)?.en || y))}` });
 };
 const OWNERS = ['opettaja', 'lääkäri', 'naapuri', 'äiti', 'isä', 'tyttö', 'poika', 'ystävä', 'nainen', 'mies'], OWNED = ['auto', 'kirja', 'koira', 'talo', 'puhelin', 'laukku', 'avain', 'kissa'];
 // "the teacher's car": one key per owner × thing (Dutch "de auto van de leraar", Spanish "el coche del profesor")
 const ownerKey = (owner, thing) => `the ${gloss(owner.en)}'s ${gloss(thing.en)}`;
 S.genitive = () => {
   const r = Math.random();
-  if (r < .5) { const w = pick(nouns()); return type(P(w.fi, w.en), w.gen, { sub: t('Genitive (kenen? minkä?) → -n'), say: w.gen, strictDots: true }); }
+  if (r < .5) { const w = pick(nouns()); return type(P(w.fi, w.en), w.gen, { sub: t('Genitive (kenen? minkä?) → -n'), say: w.gen, strictDots: true, full: w.gen, tr: `${gloss(t(w.en))} → ${t('genitive')}` }); }
   const owner = W(pick(OWNERS)), thing = W(pick(OWNED));
   const a = `${owner.gen} ${thing.fi}`;
-  return type(`<div class="big">${escH(t(ownerKey(owner, thing)))}</div>`, a, { sub: t('Owner in the genitive comes first'), say: a, strictDots: true });
+  return type(`<div class="big">${escH(t(ownerKey(owner, thing)))}</div>`, a, { sub: t('Owner in the genitive comes first'), say: a, strictDots: true, full: a, tr: t(ownerKey(owner, thing)) });
 };
 // Stem for the possessive suffix (vowel stem, strong grade): äiti → äitini, nimi → nimeni, puhelin → puhelimeni
 const POSS_STEM = { kirja: 'kirja', auto: 'auto', koira: 'koira', äiti: 'äiti', talo: 'talo', nimi: 'nime', puhelin: 'puhelime' };
@@ -417,17 +467,17 @@ S.genitivePron = () => {
   const everyday = `${F.GENITIVE_PRON[p]} ${fi}`;
   const ans = [everyday, standard]; if (dropPron(p)) ans.push(`${POSS_STEM[fi]}${suf}`);
   return type(`<div class="big">${esc(t(possKey(p, thing)))}</div>`, ans,
-    { sub: t('Kenen? → genitive pronoun'), say: everyday, strictDots: true, reveal: t('Everyday Finnish: {everyday}. Written standard adds a possessive suffix: {standard}', { everyday, standard }) });
+    { sub: t('Kenen? → genitive pronoun'), say: everyday, strictDots: true, full: everyday, tr: t(possKey(p, thing)), reveal: t('Everyday Finnish: {everyday}. Written standard adds a possessive suffix: {standard}', { everyday, standard }) });
 };
 const DRINKS = ['kahvi', 'tee', 'maito', 'vesi', 'mehu', 'olut', 'viini'], FOODS = ['leipä', 'juusto', 'liha', 'kala', 'riisi', 'keitto', 'salaatti', 'jäätelö', 'puuro', 'suklaa'];
 const drinkKey = w => `I drink ${gloss(w.en)}`, eatKey = w => `I eat ${gloss(w.en)}`;
 S.partitive = () => {
   const r = Math.random();
-  if (r < .3) { const w = pick(nouns()), n = randInt(2, 9); return type(P(`${F.numWord(n)} ___ (${w.fi})`), [w.part, `${F.numWord(n)} ${w.part}`], { sub: t('{n} × {thing}: after numbers → partitive', { n, thing: gloss(t(w.en)) }), say: `${F.numWord(n)} ${w.part}`, strictDots: true, explain: partExplain(w) }); }
-  if (r < .55) { const w = W(pick(DRINKS)); return type(P(`Minä juon ___ (${w.fi}).`), [w.part, `Minä juon ${w.part}`, `Juon ${w.part}`], { sub: t(drinkKey(w)), say: `Minä juon ${w.part}.`, strictDots: true, explain: partExplain(w) }); }
-  if (r < .75) { const w = W(pick(FOODS)); return type(P(`Minä syön ___ (${w.fi}).`), [w.part, `Minä syön ${w.part}`, `Syön ${w.part}`], { sub: t(eatKey(w)), say: `Minä syön ${w.part}.`, strictDots: true, explain: partExplain(w) }); }
+  if (r < .3) { const w = pick(nouns()), n = randInt(2, 9); return type(P(`${F.numWord(n)} ___ (${w.fi})`), [w.part, `${F.numWord(n)} ${w.part}`], { sub: t('{n} × {thing}: after numbers → partitive', { n, thing: gloss(t(w.en)) }), say: `${F.numWord(n)} ${w.part}`, strictDots: true, explain: partExplain(w), full: `${F.numWord(n)} ${w.part}`, tr: `${n} × ${gloss(t(w.en))}` }); }
+  if (r < .55) { const w = W(pick(DRINKS)); return type(P(`Minä juon ___ (${w.fi}).`), [w.part, `Minä juon ${w.part}`, `Juon ${w.part}`], { sub: t(drinkKey(w)), say: `Minä juon ${w.part}.`, strictDots: true, explain: partExplain(w), full: `Minä juon ${w.part}.`, tr: t(drinkKey(w)) }); }
+  if (r < .75) { const w = W(pick(FOODS)); return type(P(`Minä syön ___ (${w.fi}).`), [w.part, `Minä syön ${w.part}`, `Syön ${w.part}`], { sub: t(eatKey(w)), say: `Minä syön ${w.part}.`, strictDots: true, explain: partExplain(w), full: `Minä syön ${w.part}.`, tr: t(eatKey(w)) }); }
   const w = pick(nouns());
-  return type(P(w.fi, w.en), w.part, { sub: t('Partitive form'), say: w.part, strictDots: true, explain: partExplain(w) });
+  return type(P(w.fi, w.en), w.part, { sub: t('Partitive form'), say: w.part, strictDots: true, explain: partExplain(w), full: w.part, tr: `${gloss(t(w.en))} → ${t('partitive')}` });
 };
 const DIPHTHONG_END = /(aa|ee|ii|oo|uu|yy|ää|öö|ai|ei|oi|ui|yi|äi|öi|au|eu|iu|ou|ey|iy|äy|öy|ie|uo|yö)$/;
 /** Explain the partitive ending from the actual nominative → partitive pair (so it is true for every noun). */
@@ -461,7 +511,7 @@ S.postpos = () => {
   const ref = W(pick(refs.length ? refs : POSTPOS_REFS));
   const answer = `${cap(thing.fi)} on ${ref.gen} ${pp}`;
   const sentence = cap(tidy(t(ppKey(en), { thing: t(theKey(thing)), ref: t(theKey(ref)) })));
-  return { kind: 'tiles', prompt: `<div class="big">${esc(sentence)}</div>`, sub: t('Genitive + postposition'), answer, tiles: shuffle([cap(thing.fi), 'on', ref.gen, pp, ref.fi, pick(POSTPOSITIONS.filter(x => x[0] !== pp))[0]]), say: answer };
+  return { kind: 'tiles', prompt: `<div class="big">${esc(sentence)}</div>`, sub: t('Genitive + postposition'), answer, tiles: shuffle([cap(thing.fi), 'on', ref.gen, pp, ref.fi, pick(POSTPOSITIONS.filter(x => x[0] !== pp))[0]]), say: answer, full: answer + '.', tr: sentence };
 };
 // English for "in/from/to X": no article for place names; koti and työ are idioms (at home, to work…)
 const LOCAL_EN = { koti: { missa: 'at home', mista: 'from home', mihin: '(to) home' }, työ: { missa: 'at work', mista: 'from work', mihin: 'to work' } };
@@ -473,25 +523,28 @@ const localKey = (p, k) => {
 };
 S.local = () => {
   const p = pick(PLACES), l = F.local(p), [k, q] = pick(LOCAL_KINDS);
-  return type(P(`${q} (${p.fi})`), l[k], { sub: `${t(localKey(p, k))}${p.o ? ' ' + t('(an outer-case place!)') : ''}`, say: l[k], strictDots: true, explain: `${p.fi}: <b>${l.missa}</b> · <b>${l.mista}</b> · <b>${l.mihin}</b>${p.o ? '<br>' + t('This place uses the outer cases -lla / -lta / -lle.') : ''}` });
+  return type(P(`${q} (${p.fi})`), l[k], { sub: `${t(localKey(p, k))}${p.o ? ' ' + t('(an outer-case place!)') : ''}`, say: l[k], strictDots: true, full: l[k], tr: t(localKey(p, k)), explain: `${p.fi}: <b>${l.missa}</b> · <b>${l.mista}</b> · <b>${l.mihin}</b>${p.o ? '<br>' + t('This place uses the outer cases -lla / -lta / -lle.') : ''}` });
 };
 export const CLOCK_MINS = [0, 0, 15, 30, 30, 45, 5, 10, 20, 40, 50, 55];
 S.clock = () => {
   const h = randInt(1, 12), m = pick(CLOCK_MINS), words = F.clockWords(h, m);
   const tm = `${h}:${String(m).padStart(2, '0')}`;
-  if (Math.random() < .55) return type(`<div class="big num">${tm}</div>`, uniq(words.flatMap(w => [w, `kello on ${w}`])), { sub: t('Mitä kello on? (12-hour words)'), say: `Kello on ${words[0]}.`, strictDots: true });
+  // Spanish says "es la una" but "son las dos": one o'clock has its own key (no full stop, same English)
+  const o = { full: `Kello on ${words[0]}.`, tr: h === 1 ? t("It's {time}", { time: tm }) : t("It's {time}.", { time: tm }) };
+  if (Math.random() < .55) return type(`<div class="big num">${tm}</div>`, uniq(words.flatMap(w => [w, `kello on ${w}`])), { sub: t('Mitä kello on? (12-hour words)'), say: `Kello on ${words[0]}.`, strictDots: true, ...o });
   const others = []; while (others.length < 3) { const o = `${randInt(1, 12)}:${String(pick(CLOCK_MINS)).padStart(2, '0')}`; if (o !== tm && !others.includes(o)) others.push(o); }
-  return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, tm, others, { listen: true, say: `Kello on ${words[0]}.`, sub: t('Listen: what time is it?'), reveal: `Kello on ${words[0]}.` });
+  return mc(`<div class="big">${icon('speaker', 'xl')}</div>`, tm, others, { listen: true, say: `Kello on ${words[0]}.`, sub: t('Listen: what time is it?'), ...o });
 };
 const DAY_ACTS = [['herään', 'I wake up'], ['menen töihin', 'I go to work'], ['syön lounasta', 'I eat lunch'], ['tulen kotiin', 'I come home'], ['menen nukkumaan', 'I go to sleep']];
 // "I wake up at {h} o'clock → …": one key per activity, plus one for 1 o'clock (Spanish "a la una", not "a las")
 const clockAblKey = (act, one) => `${act} at ${one ? '1' : '{h}'} o'clock → kello + -lta/-ltä`;
+const clockAblSent = (act, one) => `${act} at ${one ? '1' : '{h}'} o'clock.`; // the translation of the full sentence
 S.clockAbl = () => {
   const h = randInt(1, 12), a = `kello ${F.hourAblative(h)}`, act = pick(DAY_ACTS);
-  return type(P(`Mihin aikaan? (${h}:00)`), [a, F.hourAblative(h), `${act[0]} ${a}`, `${a} ${act[0]}`], { sub: t(clockAblKey(act[1], h === 1), { h }), say: `${cap(act[0])} ${a}.`, strictDots: true });
+  return type(P(`Mihin aikaan? (${h}:00)`), [a, F.hourAblative(h), `${act[0]} ${a}`, `${a} ${act[0]}`], { sub: t(clockAblKey(act[1], h === 1), { h }), say: `${cap(act[0])} ${a}.`, strictDots: true, full: `${cap(act[0])} ${a}.`, tr: t(clockAblSent(act[1], h === 1), { h }) });
 };
 // [Finnish, English, other natural word orders with the same meaning]
-const SENTENCES = [
+export const SENTENCES = [
   ['Minä juon kahvia aamulla.', 'I drink coffee in the morning.', ['Aamulla minä juon kahvia', 'Minä juon aamulla kahvia']],
   ['Me asumme Helsingissä.', 'We live in Helsinki.'],
   ['Hän ei puhu ruotsia.', "He doesn't speak Swedish."], ['Puhutko sinä englantia?', 'Do you speak English?'],
@@ -506,7 +559,7 @@ const SENTENCES = [
 ];
 S.wordorder = () => {
   const [fi, en, alts = []] = pick(SENTENCES), toks = fi.replace(/[.?!]/g, '').split(' ');
-  return { kind: 'tiles', prompt: `<div class="big">${esc(t(en))}</div>`, sub: t('Put the words in order'), answer: [toks.join(' '), ...alts], tiles: shuffle(toks), say: fi };
+  return { kind: 'tiles', prompt: `<div class="big">${esc(t(en))}</div>`, sub: t('Put the words in order'), answer: [toks.join(' '), ...alts], tiles: shuffle(toks), say: fi, full: fi, tr: t(en) };
 };
 // [situation, answer, phrases that would ALSO be fine there (never offered as distractors)]
 const SIT = [
@@ -517,7 +570,7 @@ const SIT = [
 ];
 S.phrases = () => {
   const [s, a, also = []] = pick(SIT);
-  return mc(`<div class="big">${esc(t(s))}</div>`, a, SIT.map(x => x[1]).filter(x => !also.includes(x)), { sub: t('What do you say?'), say: a, fiChoices: true });
+  return mc(`<div class="big">${esc(t(s))}</div>`, a, SIT.map(x => x[1]).filter(x => !also.includes(x)), { sub: t('What do you say?'), say: a, fiChoices: true, full: a, tr: VOCAB_BY_ID['w:' + a.toLowerCase()] ? t(VOCAB_BY_ID['w:' + a.toLowerCase()].en) : t(s) });
 };
 // ------------------------------------------------------------ new drills (COVERAGE.md specs A–F)
 export const DIGIT_WRITTEN = ['nolla', 'yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän'];
@@ -527,7 +580,7 @@ S.phone = () => {
   const names = Math.random() < .5 ? DIGIT_WRITTEN : DIGIT_SPOKEN;
   const groups = [num.slice(0, 3), num.slice(3, 6), num.slice(6)];
   const said = groups.map(g => [...g].map(d => names[+d]).join(' ')).join(', ');
-  return type(`<div class="big">${icon('phone', 'xl')}</div>`, num, { listen: true, numeric: true, say: said, sub: t('Listen: write the phone number in digits'), reveal: said });
+  return type(`<div class="big">${icon('phone', 'xl')}</div>`, num, { listen: true, numeric: true, say: said, sub: t('Listen: write the phone number in digits'), full: said, tr: num });
 };
 export const WEATHER = [['aurinko paistaa', 'sunny'], ['sataa', 'raining'], ['sataa lunta', 'snowing'], ['tuulee', 'windy'], ['on sumuista', 'foggy'], ['on pilvistä', 'cloudy']];
 /** "Lämpötila on miinus viisi astetta." (1 takes the singular: yksi aste) */
@@ -539,9 +592,10 @@ export const FORECAST_CITIES = () => PLACES.filter(p => p.fi[0] !== p.fi[0].toLo
 S.forecast = () => {
   const city = pick(FORECAST_CITIES()), [cond, en] = pick(WEATHER), deg = randInt(-20, 30);
   const said = `${F.local(city).missa} ${cond}. Lämpötila on ${tempWords(deg)}.`;
-  if (Math.random() < .5) return mc(`<div class="big">${icon('cloud', 'xl')}</div>`, t(en), WEATHER.map(x => t(x[1])), { listen: true, say: said, sub: t('Listen: what is the weather like in {city}?', { city: city.en }), reveal: said });
+  const o = { full: said, tr: t('{city}: {weather}, {deg} degrees.', { city: city.en, weather: t(en), deg }) };
+  if (Math.random() < .5) return mc(`<div class="big">${icon('cloud', 'xl')}</div>`, t(en), WEATHER.map(x => t(x[1])), { listen: true, say: said, sub: t('Listen: what is the weather like in {city}?', { city: city.en }), ...o });
   const ans = (deg < 0 ? [`-${-deg}`, `−${-deg}`, `miinus ${-deg}`] : deg > 0 ? [String(deg), `+${deg}`, `plus ${deg}`] : ['0', 'nolla']).flatMap(a => [a, `${a} astetta`]);
-  return type(`<div class="big">${icon('cloud', 'xl')}</div>`, ans, { listen: true, say: said, sub: t('Listen: what is the temperature in {city}? (digits, e.g. -5)', { city: city.en }), reveal: said });
+  return type(`<div class="big">${icon('cloud', 'xl')}</div>`, ans, { listen: true, say: said, sub: t('Listen: what is the temperature in {city}? (digits, e.g. -5)', { city: city.en }), ...o });
 };
 // [verb infinitive, objects]: the positive sentence has a total object (genitive) or a mass partitive
 const PN_COUNT = { ostaa: ['auto', 'kirja', 'kynä', 'laukku', 'paita', 'takki', 'puhelin', 'tietokone', 'pyörä', 'sohva', 'lamppu'], haluta: ['koira', 'kissa', 'auto', 'pyörä', 'omena', 'banaani'], nähdä: ['lintu', 'karhu', 'auto', 'juna', 'kettu', 'orava'] };
@@ -549,23 +603,29 @@ const PN_MASS = { juoda: DRINKS, syödä: FOODS };
 const AMOUNTS = [['kilo', 'a kilo of', ['liha', 'juusto', 'riisi', 'sokeri', 'kala', 'suola']], ['litra', 'a litre of', ['maito', 'mehu', 'vesi']], ['lasi', 'a glass of', ['maito', 'mehu', 'vesi', 'viini']],
   ['kuppi', 'a cup of', ['kahvi', 'tee']], ['pala', 'a piece of', ['kakku', 'juusto', 'leipä', 'suklaa']], ['pussi', 'a bag of', ['riisi', 'sokeri', 'karkki']], ['pullo', 'a bottle of', ['vesi', 'viini', 'olut', 'mehu']]];
 const amountKey = (en, w) => `${en} ${gloss(w.en)}`; // "a kilo of meat"
+/** "I'm buying a car." / "I'm not buying a car." / "I drink coffee." (one key per verb × person × thing) */
+const PN_EN = { ostaa: ['buy', 'buys'], haluta: ['want', 'wants'], nähdä: ['see', 'sees'], juoda: ['drink', 'drinks'], syödä: ['eat', 'eats'] };
+function pnKey(v, p, w, neg) {
+  const [b, b3] = PN_EN[v.inf], thing = PN_MASS[v.inf] ? gloss(w.en) : aAn(gloss(w.en)), who = cap(PERS_EN[p]);
+  return neg ? `${who} ${p === 2 ? "doesn't" : "don't"} ${b} ${thing}.` : `${who} ${p === 2 ? b3 : b} ${thing}.`;
+}
 S.partNeg = () => {
   const r = Math.random();
   if (r < .25) {
     const [amt, en, list] = pick(AMOUNTS), w = W(pick(list.filter(W)));
-    return type(P(`${amt} ___ (${w.fi})`), [w.part, `${amt} ${w.part}`], { sub: t('{amount}: amounts take the partitive', { amount: t(amountKey(en, w)) }), say: `${amt} ${w.part}`, strictDots: true, explain: partExplain(w) });
+    return type(P(`${amt} ___ (${w.fi})`), [w.part, `${amt} ${w.part}`], { sub: t('{amount}: amounts take the partitive', { amount: t(amountKey(en, w)) }), say: `${amt} ${w.part}`, strictDots: true, explain: partExplain(w), full: `${amt} ${w.part}`, tr: t(amountKey(en, w)) });
   }
   if (r < .45) {
     const p = randInt(0, 5), w = W(pick(HAVE_THINGS));
     const pos = `${cap(F.ADESSIVE_PRON[p])} on ${w.fi}.`, neg = `${cap(F.ADESSIVE_PRON[p])} ei ole ${w.part}`;
-    return type(P(pos), neg, { sub: t('Make it negative: the thing goes into the partitive'), say: neg, strictDots: true, explain: partNote(w) });
+    return type(P(pos), neg, { sub: t('Make it negative: the thing goes into the partitive'), say: neg, strictDots: true, explain: partNote(w), full: neg + '.', tr: t(haveNotKey(p, w)), hint: t(haveKey(p, w)) });
   }
   const mass = Math.random() < .35, src = mass ? PN_MASS : PN_COUNT, inf = pick(Object.keys(src)), v = VERBS.find(x => x.inf === inf);
   const w = W(pick(src[inf].filter(W))), p = randInt(0, 5);
   const obj = mass ? w.part : w.gen; // Ostan auton (total object) / Juon kahvia (mass: already partitive)
   const pos = `${cap(F.PERSONS[p])} ${F.present(v)[p]} ${obj}.`, negV = F.negative(v)[p], neg = `${cap(F.PERSONS[p])} ${negV} ${w.part}`;
   const ans = [neg]; if (dropPron(p)) ans.push(`${cap(negV)} ${w.part}`);
-  return type(P(pos), ans, { sub: t('Make it negative: the object goes into the partitive'), say: neg, strictDots: true, explain: t('{object} → {part} (negative sentences always take a partitive object)', { object: obj, part: `<b>${w.part}</b>` }) });
+  return type(P(pos), ans, { sub: t('Make it negative: the object goes into the partitive'), say: neg, strictDots: true, explain: t('{object} → {part} (negative sentences always take a partitive object)', { object: obj, part: `<b>${w.part}</b>` }), full: neg + '.', tr: t(pnKey(v, p, w, true)), hint: t(pnKey(v, p, w, false)) });
 };
 // "The dog is {name}'s." / "Whose dog is this? It's {name}'s.": one key per thing, the name is a placeholder
 const isNamesKey = w => `The ${gloss(w.en)} is {name}'s.`, whoseKey = w => `Whose ${gloss(w.en)} is this? It's {name}'s.`;
@@ -573,9 +633,9 @@ S.genPred = () => {
   const n = pick(NAMES), w = W(pick(HAVE_THINGS));
   if (Math.random() < .55) {
     const answer = `${cap(w.fi)} on ${n.gen}`;
-    return { kind: 'tiles', prompt: `<div class="big">${escH(t(isNamesKey(w), { name: n.fi }))}</div>`, sub: t('Whose is it? Owner in the genitive (-n)'), answer, tiles: shuffle([cap(w.fi), 'on', n.gen, n.fi, n.ade]), say: answer };
+    return { kind: 'tiles', prompt: `<div class="big">${escH(t(isNamesKey(w), { name: n.fi }))}</div>`, sub: t('Whose is it? Owner in the genitive (-n)'), answer, tiles: shuffle([cap(w.fi), 'on', n.gen, n.fi, n.ade]), say: answer, full: answer + '.', tr: t(isNamesKey(w), { name: n.fi }) };
   }
-  return mc(P(`Kenen ${w.fi} tämä on? (${n.fi})`), `Se on ${n.gen}.`, [`Se on ${n.fi}.`, `Se on ${n.ade}.`], { sub: t(whoseKey(w), { name: n.fi }), say: `Se on ${n.gen}.`, fiChoices: true, explain: t('{name} → genitive {gen}', { name: n.fi, gen: `<b>${n.gen}</b>` }) });
+  return mc(P(`Kenen ${w.fi} tämä on? (${n.fi})`), `Se on ${n.gen}.`, [`Se on ${n.fi}.`, `Se on ${n.ade}.`], { sub: t(whoseKey(w), { name: n.fi }), say: `Se on ${n.gen}.`, fiChoices: true, full: `Kenen ${w.fi} tämä on? Se on ${n.gen}.`, tr: t(whoseKey(w), { name: n.fi }), explain: t('{name} → genitive {gen}', { name: n.fi, gen: `<b>${n.gen}</b>` }) });
 };
 // Consonant gradation pairs, strong → weak
 const KPT = [['kk', 'k'], ['pp', 'p'], ['tt', 't'], ['k', ''], ['p', 'v'], ['t', 'd'], ['nk', 'ng'], ['mp', 'mm'], ['lt', 'll'], ['nt', 'nn'], ['rt', 'rr'], ['ht', 'hd'], ['lk', 'l'], ['lk', 'lj'], ['rk', 'r'], ['rk', 'rj'], ['k', 'v']];
@@ -608,8 +668,9 @@ S.gradAB = () => {
   const v = { word: `<b>${esc(w.fi)}</b>`, gen: `<b>${esc(w.gen)}</b>`, strong: `<b>${gr.strong}</b>`, weak: `<b>${gr.weak || '–'}</b>`, group: gr.group };
   const how = gr.group === 'A' ? t('{word} → {gen}: strong {strong} in the basic form, weak {weak} in the genitive → group {group}', v)
     : t('{word} → {gen}: weak {weak} in the basic form, strong {strong} in the genitive → group {group}', v);
-  if (Math.random() < .5) return type(P(w.fi, w.en), w.gen, { sub: t('Genitive? Watch the consonant gradation (kpt)'), say: w.gen, strictDots: true, explain: how });
-  return mc(P(`${w.fi} → ${w.gen}`, w.en), gradLabel(gr.group), [gradLabel('A'), gradLabel('B')], { sub: t('Which gradation group?'), say: `${w.fi}, ${w.gen}`, explain: how });
+  const o = { full: `${w.fi} → ${w.gen}`, tr: `${gloss(t(w.en))} → ${t('genitive')}` };
+  if (Math.random() < .5) return type(P(w.fi, w.en), w.gen, { sub: t('Genitive? Watch the consonant gradation (kpt)'), say: w.gen, strictDots: true, explain: how, ...o });
+  return mc(P(`${w.fi} → ${w.gen}`, w.en), gradLabel(gr.group), [gradLabel('A'), gradLabel('B')], { sub: t('Which gradation group?'), say: `${w.fi}, ${w.gen}`, explain: how, ...o });
 };
 const CITY = p => p.fi[0] !== p.fi[0].toLowerCase();
 // [verb phrase, case, places it fits, English hint (only where the verb alone does not decide the case)]
@@ -618,10 +679,16 @@ const CASE_VERBS = [
   ['Asun', 'missa', p => CITY(p) || ['kaupunki', 'keskusta', 'talo'].includes(p.fi)],
   ['Olen kotoisin', 'mista', CITY], ['Tulen', 'mista', () => true, 'coming FROM'],
 ];
+/** "I'm going to the school.", "I live in Tampere.": the case-verb drill's full sentence, one key per verb × place */
+const CV_EN = { Menen: "I'm going to {place}.", Käyn: 'I go to {place} (and come back).', Olen: "I'm in {place}.", Asun: 'I live in {place}.', 'Olen kotoisin': "I'm from {place}.", Tulen: "I'm coming from {place}." };
+const CV_HOME = { Menen: "I'm going home.", Käyn: 'I pop home (and come back).', Olen: "I'm at home.", Tulen: "I'm coming from home." };
+const CV_WORK = { Menen: "I'm going to work.", Käyn: 'I go to work (and come back).', Olen: "I'm at work.", Tulen: "I'm coming from work." };
+const caseVerbKey = (verb, p) => p.fi === 'koti' && CV_HOME[verb] ? CV_HOME[verb] : p.fi === 'työ' && CV_WORK[verb] ? CV_WORK[verb]
+  : CV_EN[verb].replace('{place}', p.fi[0] !== p.fi[0].toLowerCase() ? p.en : 'the ' + p.en);
 const caseQ = k => ({ missa: t('missä? (in / at)'), mista: t('mistä? (from)'), mihin: t('mihin? (to)') })[k];
 S.caseVerb = () => {
   const [verb, k, fits, hint] = pick(CASE_VERBS), p = pick(PLACES.filter(fits)), form = F.local(p)[k];
-  return type(P(`${verb} ___ (${p.fi}).`), [form, `${verb} ${form}`], { sub: hint ? t('The verb chooses the case ({hint})', { hint: t(hint) }) : t('Which case does the verb need?'), say: `${verb} ${form}.`, strictDots: true, explain: `<b>${verb.toLowerCase()}</b> + ${caseQ(k)} → <b>${form}</b>` });
+  return type(P(`${verb} ___ (${p.fi}).`), [form, `${verb} ${form}`], { sub: hint ? t('The verb chooses the case ({hint})', { hint: t(hint) }) : t('Which case does the verb need?'), say: `${verb} ${form}.`, strictDots: true, explain: `<b>${verb.toLowerCase()}</b> + ${caseQ(k)} → <b>${form}</b>`, full: `${verb} ${form}.`, tr: t(caseVerbKey(verb, p)) });
 };
 
 S.vocab = null; // handled by vocab selection
@@ -672,6 +739,17 @@ export function i18nKeys() {
   for (const [, en] of WEATHER) k.push(en);
   for (const [, en, list] of AMOUNTS) for (const fi of list) if (W(fi)) k.push(amountKey(en, W(fi)));
   for (const [, , , hint] of CASE_VERBS) if (hint) k.push(hint);
+  // full-sentence translations shown after every answer
+  for (let p = 0; p < 6; p++) { k.push(BE_NOT[p]); for (let i = 0; i < OLLA_CTX.length; i++) k.push(ollaKey(p, i, 'pos'), ollaKey(p, i, 'neg')); }
+  for (const p of [1, 2, 4, 5]) for (let i = 0; i < OLLA_CTX.length; i++) k.push(ollaKey(p, i, 'q'));
+  for (const v of verbPool(conjVerb)) for (const p of Q_PERS) k.push(enQuestion(v, p));
+  for (const v of verbPool(v => v.p1)) for (let p = 0; p < 6; p++) k.push(enPast(v, p));
+  for (const [, , , , qEn, aEn] of QW) k.push(qEn, aEn);
+  for (const [, , qEn] of HOLIDAYS) k.push(qEn);
+  for (const [, en] of DAY_ACTS) k.push(clockAblSent(en, true), clockAblSent(en, false));
+  for (const [inf, list] of [...Object.entries(PN_COUNT), ...Object.entries(PN_MASS)]) { const v = VERBS.find(x => x.inf === inf); for (const fi of list) if (W(fi)) for (let p = 0; p < 6; p++) k.push(pnKey(v, p, W(fi), true), pnKey(v, p, W(fi), false)); }
+  for (const [verb, , fits] of CASE_VERBS) for (const p of PLACES.filter(fits)) k.push(caseVerbKey(verb, p));
+  for (const en of Object.values(SPELL_WORDS)) k.push(en);
   return uniq(k);
 }
 export const SKILL_ICON = { letters: 'type', length: 'clock', numbers: 'hash', numbersSpoken: 'chat', prices: 'euro', olla: 'user', ollaNeg: 'ban', ollaQ: 'question', ollaSpoken: 'chat', days: 'calendar', harmony: 'scale', tplural: 'layers', countries: 'globe', vt1: 'run', vt1kpt: 'gear', vt1neg: 'ban', questionKo: 'question', qwords: 'help', months: 'calendar', clothes: 'shirt', have: 'gift', opposites: 'swap', genitive: 'link', genitivePron: 'user', partitive: 'cup', verbtype: 'puzzle', vt15: 'puzzle', vt15neg: 'ban', postpos: 'box', local: 'location', clock: 'clock', clockAbl: 'clock', past: 'rewind', wordorder: 'bricks', phrases: 'chat', phone: 'phone', forecast: 'cloud', partNeg: 'ban', genPred: 'key', gradAB: 'repeat', caseVerb: 'compass' };

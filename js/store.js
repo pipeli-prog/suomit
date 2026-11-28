@@ -27,6 +27,7 @@ const fresh = () => ({
   lists: [{ id: 'mine', name: 'My words', items: [], created: 1 }],
   custom: {},    // 'c:…' → {fi,en}
   ach: {},       // achievement id → ts
+  sent: {},      // "Say it in Finnish" sentence → when you last built it (js/sentences.js)
   best: { combo: 0, speed: 0, match: 0 },
 });
 
@@ -49,7 +50,7 @@ function hydrate(raw) {
   const f = fresh(), out = Object.assign(f, raw);
   for (const k of ['profile', 'mascot', 'best', 'owned']) out[k] = { ...fresh()[k], ...(raw?.[k] || {}) };
   if (raw && !raw.profile?.lang) out.profile.lang = 'en'; // saves from before languages existed stay English
-  for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
+  for (const k of ['days', 'frozen', 'spent', 'cards', 'skills', 'lessons', 'res', 'reads', 'twisters', 'custom', 'ach', 'sent']) if (!out[k] || typeof out[k] !== 'object') out[k] = {};
   if (!Array.isArray(out.lists) || !out.lists.length) out.lists = fresh().lists;
   renameItems(out);
   return out;

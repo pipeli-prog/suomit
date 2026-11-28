@@ -53,6 +53,10 @@ for (const it of [...Gm.COSMETICS, ...Gm.SHOP]) put('ui', it.en, `shop: descript
 for (const it of Gm.SHOP) if (it.kind === 'freeze') put('ui', it.name, 'shop: name of the streak-freeze item');
 for (const a of Object.values(Ms.ANIMALS)) put('ui', a.en, `shop: description of the animal "${a.name}" (a ${a.fi})`);
 for (const a of Gm.ACH) if (!a.mod) put('ui', a.en, `achievement description (its Finnish name "${a.name}" stays)`);
+const { GLOSSARY } = await import(R('data/glossary.js'));
+for (const [f, g] of Object.entries(GLOSSARY)) { if (g[1] !== '=') put('words', g[1], `meaning of the Finnish word "${f}" (basic form "${g[0]}"), shown when it is tapped`); if (g[2]) put('words', g[2], `grammar note for the Finnish form "${f}" (of "${g[0]}")`); }
+const { PRACTICE_TR } = await import(R('data/practice/tr.js'));
+for (const [fi, en] of Object.entries(PRACTICE_TR)) put('words', en, `meaning of the Finnish practice answer "${fi}", shown after answering`);
 const { TOPICS } = await import(R('data/vocab.js'));
 for (const tp of TOPICS) put('words', tp.title, 'title of a word-list topic');
 const { PRACTICE } = await import(R('data/practice/index.js'));

@@ -8,7 +8,7 @@ import { ANIMALS, ACCESSORIES, animalOf } from '../mascots.js';
 import { SKILL_NAMES, SKILL_ICON } from '../exercises.js';
 import { rerender, go } from '../app.js';
 import { renderCalendar } from '../calendar.js';
-import { offlineSupported, totalClips, cachedClips, downloadAllAudio, clearAudio } from '../offline.js';
+import { offlineSupported, totalClips, cachedClips, downloadAllAudio, clearAudio, appReady } from '../offline.js';
 
 export function renderMe(el) {
   const S = store.state(), xp = store.totalXp(), lv = store.level(xp), lo = store.levelXp(lv), hi = store.levelXp(lv + 1);
@@ -142,10 +142,11 @@ export function renderSettings(el) {
     </section>
     <section class="card set" id="offline">
       <h3>${icon('download')} ${t('Offline')}</h3>
-      <p class="small">${t('The app, all lessons, drills, stories and practice sets work offline once SuomiT has been opened. Voice clips are saved as you hear them; download them all to have every pronunciation offline (about 120 MB). Videos and outside links always need internet.')}</p>
+      <p class="small">${t('One tap saves everything on this device: the app, every lesson, drill, story and practice set, the dictionary and every voice clip (about 140 MB). After that SuomiT works without internet. Only videos and outside links need a connection.')}</p>
+      <div class="off-app small"></div>
       <div class="off-stat small muted">${t('Checking…')}</div>
       <div class="off-bar mini-bar" hidden><div style="width:0"></div></div>
-      <div class="row-btns"><button class="btn sm" id="off-dl">${icon('download')} ${t('Download all audio')}</button><button class="btn sm ghost" id="off-rm">${t('Remove downloaded audio')}</button></div>
+      <div class="row-btns"><button class="btn" id="off-dl">${icon('download')} ${t('Download everything for offline use')}</button><button class="btn sm ghost" id="off-rm">${t('Remove downloaded audio')}</button></div>
     </section>
     <section class="card set">
       <h3>${icon('phone')} ${t('Sync phone ⇄ Mac')}</h3>
@@ -167,11 +168,18 @@ export function renderSettings(el) {
     const box = el.querySelector('#offline'); if (!box) return;
     const stat = box.querySelector('.off-stat'), bar = box.querySelector('.off-bar'), fill = bar.firstElementChild, dl = box.querySelector('#off-dl');
     if (!offlineSupported()) { stat.textContent = t('This browser does not support offline storage.'); dl.disabled = true; return; }
-    const show = async () => { const n = await cachedClips(), tot = totalClips(), v = { n: n.toLocaleString(), total: tot.toLocaleString() }; stat.textContent = n >= tot ? t('Audio available offline: {n} / {total} clips · complete', v) : t('Audio available offline: {n} / {total} clips', v); dl.disabled = n >= tot; };
+    const appLine = box.querySelector('.off-app');
+    const showApp = async () => {
+      const ok = await appReady();
+      appLine.innerHTML = ok ? `${icon('check')} ${t('App, lessons, drills, stories and dictionary: saved on this device')}` : `${icon('clock')} ${t('Saving the app on this device…')}`;
+      appLine.classList.toggle('ok', ok);
+    };
+    const show = async () => { await showApp(); const n = await cachedClips(), tot = totalClips(), v = { n: n.toLocaleString(), total: tot.toLocaleString() }; stat.textContent = n >= tot ? t('Voice clips: {n} / {total} · all saved', v) : t('Voice clips: {n} / {total} saved', v); dl.disabled = n >= tot && appLine.classList.contains('ok'); if (dl.disabled) dl.innerHTML = `${icon('check')} ${t('Everything is available offline')}`; };
     await show();
     dl.onclick = async () => {
       dl.disabled = true; bar.hidden = false;
       try { navigator.storage?.persist?.(); } catch { }
+      await appReady(true);
       const r = await downloadAllAudio((d, tot) => { fill.style.width = (d / tot * 100) + '%'; stat.textContent = t('Downloading audio… {n} / {total}', { n: d.toLocaleString(), total: tot.toLocaleString() }); });
       toast(r.failed ? t('Done, {n} clips failed (try again)', { n: r.failed }) : t('All audio is available offline'), r.failed ? 'alert' : 'check', 3000);
       bar.hidden = true; show();
