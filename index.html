@@ -14,14 +14,27 @@
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<style>html,body{background:#060b18;margin:0}.splash{min-height:70vh;display:grid;place-items:center}.splash b{font:800 2.4rem ui-rounded,system-ui,-apple-system,sans-serif;letter-spacing:-.04em;color:#f3f6fc}.splash span{color:#0a84ff}</style>
-<link rel="stylesheet" href="css/app.css">
-<link rel="stylesheet" href="css/shop.css">
-<link rel="stylesheet" href="css/practice.css">
+<style>
+/* Splash: painted by the browser at once, with no file to wait for. iPhone (WebKit) shows nothing at all until a page
+   has a picture or ~200 characters on screen, so the logo is an inline image. The stylesheets below load without
+   blocking this; js/app.js waits for them before drawing the app. */
+html,body{background:#060b18;margin:0}
+.splash{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:50;background:#060b18;transition:opacity .25s}
+.splash img{width:96px;height:96px;border-radius:22px;box-shadow:0 12px 40px rgb(0 0 0/.45)}
+.splash b{font:700 1.9rem ui-rounded,system-ui,-apple-system,sans-serif;letter-spacing:-.03em;color:#f3f6fc}.splash b span{color:#0a84ff}
+.splash i{display:block;width:120px;height:4px;border-radius:4px;background:rgb(255 255 255/.12);overflow:hidden}
+.splash i:after{content:"";display:block;width:40%;height:100%;border-radius:4px;background:#0a84ff;animation:sp 1s ease-in-out infinite alternate}
+@keyframes sp{from{transform:translateX(-10%)}to{transform:translateX(160%)}}
+.splash.gone{opacity:0;pointer-events:none}
+</style>
+<link rel="stylesheet" href="css/app.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/shop.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/practice.css" media="print" onload="this.media='all'">
 </head>
 <body>
 <header id="hdr"></header>
-<main id="main"><div class="splash"><b>Suomi<span>T</span></b><noscript>SuomiT needs JavaScript.</noscript></div></main>
+<div class="splash" id="splash"><img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 512 512%22%3E%3CclipPath id=%22c%22%3E%3Crect width=%22512%22 height=%22512%22 rx=%22112%22/%3E%3C/clipPath%3E%3Cg clip-path=%22url(%23c)%22%3E %3Crect width=%22512%22 height=%22512%22 rx=%22112%22 fill=%22%230f1c33%22/%3E %3Cellipse cx=%22256%22 cy=%2240%22 rx=%22300%22 ry=%22190%22 fill=%22%233ddc97%22 opacity=%220.22%22/%3E %3Cellipse cx=%22300%22 cy=%2210%22 rx=%22200%22 ry=%22120%22 fill=%22%235ab0ff%22 opacity=%220.18%22/%3E %3Cg transform=%22translate(46 60) scale(3.5)%22%3E  %3Cellipse cx=%2226%22 cy=%22100%22 rx=%2213%22 ry=%227%22 transform=%22rotate(-25 26 100)%22 fill=%22%236e7a88%22/%3E  %3Cellipse cx=%2294%22 cy=%22100%22 rx=%2213%22 ry=%227%22 transform=%22rotate(25 94 100)%22 fill=%22%236e7a88%22/%3E  %3Cpath d=%22M18 74 Q18 34 60 34 Q102 34 102 74 Q102 112 60 112 Q18 112 18 74Z%22 fill=%22%238e9aa8%22/%3E  %3Cellipse cx=%2260%22 cy=%2292%22 rx=%2226%22 ry=%2217%22 fill=%22%23b7c2cf%22 opacity=%22.75%22/%3E  %3Cg fill=%22none%22 stroke=%22%236e7a88%22 stroke-width=%222%22 opacity=%22.55%22%3E%3Cellipse cx=%2232%22 cy=%2280%22 rx=%225%22 ry=%223.5%22/%3E%3Cellipse cx=%2288%22 cy=%2284%22 rx=%225%22 ry=%223.5%22/%3E%3C/g%3E  %3Ccircle cx=%2246%22 cy=%2262%22 r=%227.5%22 fill=%22%231b1b1b%22/%3E%3Ccircle cx=%2274%22 cy=%2262%22 r=%227.5%22 fill=%22%231b1b1b%22/%3E  %3Ccircle cx=%2248.5%22 cy=%2259%22 r=%222.6%22 fill=%22%23fff%22/%3E%3Ccircle cx=%2276.5%22 cy=%2259%22 r=%222.6%22 fill=%22%23fff%22/%3E  %3Ccircle cx=%2238%22 cy=%2275%22 r=%225%22 fill=%22%23ff8fab%22 opacity=%22.45%22/%3E%3Ccircle cx=%2282%22 cy=%2275%22 r=%225%22 fill=%22%23ff8fab%22 opacity=%22.45%22/%3E  %3Cellipse cx=%2260%22 cy=%2273%22 rx=%225%22 ry=%223.6%22 fill=%22%232b2b2b%22/%3E  %3Cpath d=%22M54 80 q3 4 6 0 q3 4 6 0%22 stroke=%22%231b1b1b%22 stroke-width=%222%22 fill=%22none%22 stroke-linecap=%22round%22/%3E  %3Cpath d=%22M30 44 Q60 4 90 44 Z%22 fill=%22%23ffffff%22/%3E%3Crect x=%2228%22 y=%2240%22 width=%2264%22 height=%2210%22 rx=%225%22 fill=%22%231d4ed8%22/%3E%3Ccircle cx=%2260%22 cy=%2214%22 r=%228%22 fill=%22%231d4ed8%22/%3E %3C/g%3E%3C/g%3E%3C/svg%3E" alt="" width="96" height="96"><b>Suomi<span>T</span></b><i></i><noscript>SuomiT needs JavaScript.</noscript></div>
+<main id="main"></main>
 <nav id="nav" class="nav"></nav>
 <div id="session" hidden></div>
 <div id="toasts"></div>

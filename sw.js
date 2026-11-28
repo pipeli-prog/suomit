@@ -1,10 +1,9 @@
 // SuomiT service worker: offline-first app shell. Bump VERSION on every release.
-const VERSION = 'suomit-v17';
+const VERSION = 'suomit-v18';
 importScripts('js/clipdb.js'); // self.clipDB: voice clips in IndexedDB
 // Speech clips (audio/<xx>/<hash>.mp3) are immutable (content-addressed). They are kept in IndexedDB (js/clipdb.js),
-// filled as clips are played, never precached. Older versions kept them in this cache: js/offline.js moves them over
-// and deletes it (thousands of entries in Cache Storage made every cold start on iPhone take seconds).
-const AUDIO_CACHE = 'suomit-audio';
+// filled as clips are played, never precached. (Older versions kept them in the Cache API cache 'suomit-audio',
+// which activate deletes: thousands of entries in Cache Storage made every cold start on iPhone take seconds.)
 const SHELL = [
   './',
   'index.html',
@@ -81,7 +80,10 @@ const SHELL = [
 // cache: 'reload' so a new version never precaches a stale copy from the browser's HTTP cache
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION && k !== AUDIO_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  // Everything except this version goes, including the old voice-clip cache: thousands of entries in Cache Storage
+  // made Safari take seconds before it could open the app (clips now live in IndexedDB and come back as they play,
+  // or all at once with Settings → Offline).
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 function ranged(req, res) {
   const m = /bytes=(\d*)-(\d*)/.exec(req.headers.get('range') || '');
@@ -98,12 +100,11 @@ self.addEventListener('fetch', e => {
   const u = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
   if (u.origin === location.origin && /\/audio\/[0-9a-f]{2}\/[0-9a-f]{12}\.mp3$/.test(u.pathname)) {
-    // Stored clip first (IndexedDB, then the old cache while it is being moved), else the network, which is kept.
+    // Stored clip first (IndexedDB), else the network, which is then kept.
     // Always the whole clip (status 200); Safari's Range requests get a 206 cut from it.
     const key = u.pathname, mp3 = b => new Response(b, { headers: { 'Content-Type': 'audio/mpeg' } });
     e.respondWith(self.clipDB.get(key).catch(() => null)
-      .then(b => b ? mp3(b) : caches.has(AUDIO_CACHE).then(old => old ? caches.open(AUDIO_CACHE).then(c => c.match(key)) : null))
-      .then(r => r || fetch(key).then(res => {
+      .then(b => b ? mp3(b) : fetch(key).then(res => {
         if (res.status === 200) e.waitUntil(res.clone().blob().then(b => self.clipDB.put(key, b)).catch(() => { }));
         return res;
       }))
