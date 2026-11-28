@@ -16,14 +16,12 @@ export const pick = a => a[Math.floor(Math.random() * a.length)];
 export const sample = (a, n) => shuffle(a).slice(0, n);
 
 /** Wrap Finnish words so they can be tapped for translation. */
-export function fw(text) {
-  return esc(text).replace(WORD_RE, m => `<span class="fw">${m}</span>`);
-}
+export { fw, fwIf } from './lexicon.js';
 /** Lesson markup → HTML. *fi*, **bold**, |table|, > tip */
 export function md(src) {
   const inline = s => esc(s)
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/\*(.+?)\*/g, (_, t) => `<span class="fi">${t.replace(WORD_RE, m => `<span class="fw">${m}</span>`)}</span>`);
+    .replace(/\*(.+?)\*/g, (_, t) => `<span class="fi">${t.replace(WORD_RE, m => lookup(m) ? `<span class="fw">${m}</span>` : m)}</span>`);
   const lines = src.split('\n'); let out = '', table = null;
   const flush = () => { if (table) { out += `<div class="tbl"><table>${table}</table></div>`; table = null; } };
   for (const raw of lines) {
@@ -104,7 +102,7 @@ function wirePop(p) {
 export function addCustomDialog(fi = '', en = '') {
   // the meaning is typed in the learner's own language, so that field is labelled with the language's name
   const m = modal(`<h3>${t('Add a word')}</h3>
-    <label class="fld"><span>${t('Finnish')}</span><input id="cfi" value="${esc(fi)}" autocomplete="off" autocapitalize="off"></label>
+    <label class="fld"><span>Suomi</span><input id="cfi" value="${esc(fi)}" autocomplete="off" autocapitalize="off"></label>
     <label class="fld"><span>${LANGS[lang()]}</span><input id="cen" value="${esc(en)}" autocomplete="off" placeholder="${esc(t('your translation'))}"></label>
     <label class="fld"><span>${t('List')}</span><select id="clist">${store.state().lists.map(l => `<option value="${l.id}">${esc(listLabel(l))}</option>`).join('')}</select></label>
     <button class="btn wide" id="csave">${t('Save to list')}</button>`);

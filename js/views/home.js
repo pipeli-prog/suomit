@@ -5,6 +5,7 @@ import { mascotSVG, esc, fw } from '../ui.js';
 import { runSession } from '../session.js';
 import { dailyMix, mixSummary, currentLesson, lessonLearn, sourceWords, trainerQuestions, wordsKnown } from '../plan.js';
 import { wordBar } from './path.js';
+import { sentenceQs } from '../sentences.js';
 import { quests } from '../gamify.js';
 import { MODULE_BY_ID } from '../../data/course.js';
 import { SKILL_NAMES } from '../exercises.js';
@@ -61,6 +62,7 @@ export function renderHome(el) {
   </a>
 
   <div class="quick">
+    <button class="qk" data-m="sentences" style="--qc:#0a84ff"><span class="qk-i">${icon('bricks')}</span><b>${t('Say it in Finnish')}</b><small>${t('build sentences')}</small></button>
     <button class="qk" data-m="speed" style="--qc:#ff9f0a"><span class="qk-i">${icon('bolt')}</span><b>${t('Speed round')}</b><small>${t('60 seconds · best {n}', { n: S.best.speed || 0 })}</small></button>
     <button class="qk" data-m="match" style="--qc:#bf5af2"><span class="qk-i">${icon('grid')}</span><b>${t('Match pairs')}</b><small>${t('best {n}', { n: S.best.match ? S.best.match + ' s' : '–' })}</small></button>
     <button class="qk" data-m="listen" style="--qc:#64d2ff"><span class="qk-i">${icon('headphones')}</span><b>${t('Listening')}</b><small>${t('hear & write')}</small></button>
@@ -95,6 +97,7 @@ export function renderHome(el) {
     const learned = sourceWords('learned');
     const pool = learned.length >= 12 ? learned : sourceWords('lesson:' + cur.id).concat(learned);
     if (m === 'match') return startMatch(pool);
+    if (m === 'sentences') return runSession({ title: t('Say it in Finnish'), mode: 'drill', questions: sentenceQs(10), onClose: rerender, again: () => b.click() });
     if (m === 'speed') return runSession({ title: t('Speed round'), mode: 'speed', seconds: 60, questions: trainerQuestions(pool, 'speed'), onFinish: r => { if (r.ok > (S.best.speed || 0)) { S.best.speed = r.ok; store.save(); } if (r.ok >= 30) import('../gamify.js').then(g => g.unlock('speed30')); }, onClose: rerender, again: () => b.click() });
     if (m === 'listen') return runSession({ title: t('Listening'), mode: 'drill', questions: trainerQuestions(pool, 'listen', 12), onClose: rerender, again: () => b.click() });
     if (m === 'weak') { const w = sourceWords('weak'); return runSession({ title: t('Weak words'), mode: 'review', questions: trainerQuestions(w.length ? w : pool, 'smart', 15), onClose: rerender }); }

@@ -5,6 +5,7 @@ import { LESSONS, LESSON_BY_ID } from '../data/course.js';
 import { vocabQ, flashQ, skillQs, topicWords, SKILL_NAMES } from './exercises.js';
 import { isLeech, retrievability, isLearned } from './srs.js';
 import { t } from './i18n.js';
+import { sentenceQs } from './sentences.js';
 
 const shuffle = a => { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const tagSkill = qs => qs.map(q => ({ ...q, skillName: SKILL_NAMES[q.skill] || '' }));
@@ -57,9 +58,11 @@ export function dailyMix() {
   const touched = Object.entries(S.skills).filter(([, c]) => c.due <= now).sort((a, b) => a[1].due - b[1].due).map(([k]) => k);
   const skills = [...new Set([...touched, ...cur.skills.filter(s => s !== 'vocab')])].filter(s => SKILL_NAMES[s]).slice(0, due.length > 12 ? 1 : 2);
   const grammar = skills.map(s => tagSkill(skillQs(s, 4)));
-  const nNew = Math.max(0, Math.min(6, 20 - reviews.length - grammar.flat().length));
+  // whole sentences from your language into Finnish, once you know enough words to build them
+  const sentences = Object.keys(S.cards).length >= 8 ? sentenceQs(3) : [];
+  const nNew = Math.max(0, Math.min(6, 20 - reviews.length - grammar.flat().length - sentences.length));
   const fresh = newWordsQueue(nNew).map(w => vocabQ(w));
-  const qs = [...fresh.slice(0, 2), ...interleave([reviews, ...grammar, fresh.slice(2)])];
+  const qs = [...fresh.slice(0, 2), ...interleave([reviews, ...grammar, fresh.slice(2), sentences])];
   return { questions: qs, summary: { reviews: reviews.length, fresh: fresh.length, skills } };
 }
 export function mixSummary() {
@@ -76,7 +79,7 @@ export function lessonLearn(l) {
   const known = shuffle(words.filter(w => S.cards[w.id])).slice(0, Math.max(0, 6 - unseen.length));
   const sk = l.skills.filter(s => s !== 'vocab' && SKILL_NAMES[s]);
   const grammar = sk.map(s => tagSkill(skillQs(s, sk.length > 3 ? 3 : 4)));
-  return [...unseen.map(w => vocabQ(w)), ...interleave([known.map(w => vocabQ(w)), ...grammar])];
+  return [...unseen.map(w => vocabQ(w)), ...interleave([known.map(w => vocabQ(w)), ...grammar, sentenceQs(2, { lesson: l.id })])];
 }
 export function lessonPractice(l, n = 16) {
   const S = store.state();
@@ -85,7 +88,7 @@ export function lessonPractice(l, n = 16) {
   const nWords = sk.length ? Math.min(words.length, Math.ceil(n * (l.revision ? .35 : .5))) : n;
   const vq = words.slice(0, nWords).map(w => S.cards[w.id] ? vocabQ(w) : vocabQ(w, { force: 'intro' }));
   const per = sk.length ? Math.ceil((n - vq.length) / sk.length) : 0;
-  return interleave([vq, ...sk.map(s => tagSkill(skillQs(s, per)))]);
+  return interleave([vq, ...sk.map(s => tagSkill(skillQs(s, per))), sentenceQs(3, { lesson: l.id })]);
 }
 export function lessonTest(l, n = 20) {
   const words = shuffle(lessonWords(l)).slice(0, l.skills.length > 1 ? 8 : n);

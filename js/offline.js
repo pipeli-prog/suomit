@@ -1,30 +1,34 @@
 // Offline support: download every neural audio clip into the same cache the service worker reads from.
 import { AUDIO } from '../data/audio-index.js';
-const CACHE = 'suomit-audio';
+import './clipdb.js'; // defines self.clipDB (shared with the service worker)
+const OLD_CACHE = 'suomit-audio';
+const clipDB = () => self.clipDB;
 const pathOf = h => new URL(`audio/${h.slice(0, 2)}/${h}.mp3`, location.href).pathname;
-export const offlineSupported = () => 'caches' in window && 'serviceWorker' in navigator;
+export const offlineSupported = () => 'indexedDB' in window && 'serviceWorker' in navigator;
 export const totalClips = () => AUDIO.size;
 export async function cachedClips() {
-  if (!('caches' in window)) return 0;
-  const c = await caches.open(CACHE), keys = await c.keys();
-  return keys.length;
+  try { return await clipDB().count(); } catch { return 0; }
 }
 let running = null;
 /** Download all missing clips. onProgress(done, total). Returns {done, failed}. */
 export function downloadAllAudio(onProgress) {
   if (running) return running;
   running = (async () => {
-    const c = await caches.open(CACHE);
-    const have = new Set((await c.keys()).map(r => new URL(r.url).pathname));
+    await migrateAudioCache();
+    const have = new Set(await clipDB().keys().catch(() => []));
     const todo = [...AUDIO].map(pathOf).filter(p => !have.has(p));
     const total = AUDIO.size; let done = total - todo.length, failed = 0, i = 0;
     onProgress?.(done, total);
     const worker = async () => {
+      let batch = [];
+      const flush = async () => { if (batch.length) { const b = batch; batch = []; await clipDB().putAll(b).catch(() => { failed += b.length; }); } };
       while (i < todo.length) {
         const p = todo[i++];
-        try { const r = await fetch(p); if (r.status === 200) await c.put(p, r); else failed++; } catch { failed++; }
+        try { const r = await fetch(p); if (r.status === 200) batch.push([p, await r.blob()]); else failed++; } catch { failed++; }
+        if (batch.length >= 20) await flush();
         done++; if (done % 25 === 0 || done === total) onProgress?.(done, total);
       }
+      await flush();
     };
     await Promise.all(Array.from({ length: 12 }, worker));
     onProgress?.(done, total);
@@ -33,4 +37,38 @@ export function downloadAllAudio(onProgress) {
   })();
   return running;
 }
-export async function clearAudio() { if ('caches' in window) await caches.delete(CACHE); }
+export async function clearAudio() { await migrating; try { await clipDB().clear(); } catch { } if ('caches' in window) await caches.delete(OLD_CACHE); }
+
+let migrating = null;
+/** Move clips saved by older versions (Cache API) into IndexedDB, then delete that cache. Runs once, in the
+ *  background after start-up; until it is done the service worker still finds clips in the old cache. */
+export function migrateAudioCache() {
+  return migrating ||= (async () => {
+    if (!('caches' in window) || !(await caches.has(OLD_CACHE))) return 0;
+    const c = await caches.open(OLD_CACHE), keys = await c.keys();
+    let moved = 0;
+    for (let k = 0; k < keys.length; k += 50) {
+      const pairs = [], batch = keys.slice(k, k + 50);
+      for (const req of batch) {
+        const r = await c.match(req); if (r && r.status === 200) pairs.push([new URL(req.url).pathname, await r.blob()]);
+      }
+      await clipDB().putAll(pairs); moved += pairs.length;
+      await Promise.all(batch.map(req => c.delete(req))); // progress survives closing the app halfway
+    }
+    await caches.delete(OLD_CACHE);
+    return moved;
+  })().catch(e => { console.warn('audio move', e); migrating = null; return 0; });
+}
+
+/** Is the app itself (every file of this version) saved for offline use? The service worker saves all of it at once
+ *  when it installs; wait=true waits for that to finish (first visit / just after an update). */
+export async function appReady(wait = false) {
+  if (!('serviceWorker' in navigator)) return false;
+  try {
+    if (wait) await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(r, 15000))]);
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (!reg?.active) return false;
+    const names = await caches.keys();
+    return names.some(n => /^suomit-v\d+$/.test(n)) && !!navigator.serviceWorker.controller;
+  } catch { return false; }
+}

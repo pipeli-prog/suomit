@@ -325,7 +325,8 @@ textarea.code{min-height:120px;font-family:ui-monospace,monospace;font-size:.75r
 .s-foot.fb>*{max-width:648px;width:100%;margin:0 auto}
 .s-foot.good{background:color-mix(in srgb,var(--good) 20%,color-mix(in srgb,var(--bg) 72%,transparent))}.s-foot.bad{background:color-mix(in srgb,var(--bad) 18%,color-mix(in srgb,var(--bg) 72%,transparent))}
 .fb-h{font-family:var(--round);font-size:1.3rem;font-weight:700}.good .fb-h{color:var(--good)}.bad .fb-h{color:var(--bad)}
-.fb-a{font-size:1.15rem;margin:2px 0 4px}
+.fb-a{font-size:1.15rem;margin:2px 0 4px}.fb-a .hl{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px;font-weight:700}
+.fb-tr{font-size:1rem;color:var(--ink);opacity:.82;margin:0 0 6px;line-height:1.35}
 .warn{margin:6px 0;padding:7px 11px;border-radius:12px;background:color-mix(in srgb,var(--warn) 16%,transparent);font-size:.9rem}
 .explain{margin:6px 0;font-size:.88rem;color:var(--mute);line-height:1.5}.explain b{color:var(--ink)}
 .copy{margin-top:10px!important}.copy-l{display:block;font-weight:600;color:var(--mute);margin-bottom:6px}.copy-l b{color:var(--ink)}
@@ -451,3 +452,4 @@ h3 .ic,.sec .ic{color:var(--acc2);margin-right:2px}
 .tw-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;font-size:1.15rem}
 .tw.done{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--good) 55%,transparent),var(--lift)}.tw-ok{color:var(--good)}
 .tw-btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.off-app{margin:8px 0 2px;display:flex;gap:6px;align-items:center;font-weight:600}.off-app.ok{color:var(--good)}.off-app svg{width:1.1em;height:1.1em}

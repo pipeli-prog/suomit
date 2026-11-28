@@ -1,10 +1,11 @@
 // Practice session runner: renders questions, checks answers, schedules reviews, awards XP.
 import * as store from './store.js';
 import { icon } from './icons.js';
-import { gradeAnswer, same } from './fi.js';
+import { gradeAnswer, same, norm } from './fi.js';
 import { chestHTML, wireChest } from './chest.js';
 import { speak, sfx, buzz, stopSpeaking } from './audio.js';
-import { esc, fw, toast, confetti, mascotSVG, shuffle } from './ui.js';
+import { esc, fw, fwIf, toast, confetti, mascotSVG, shuffle } from './ui.js';
+import { lookup, isFinnish, phraseLookup } from './lexicon.js';
 import { vocabQ } from './exercises.js';
 import { VOCAB_BY_ID } from '../data/vocab.js';
 import { itemWord, meaning } from './plan.js';
@@ -22,6 +23,25 @@ export function copyTarget(q) {
   s = String(s).replace(/[.!?]+$/, '').trim();
   if (!/[a-zåäö]/i.test(s) || /\d|€/.test(s) || /^type /i.test(s) || s.split(/\s+/).length > 6) return null;
   return s;
+}
+
+/** What the feedback shows for every answer: the whole Finnish answer (a sentence where there is one) and what it
+ *  means in the learner's language. Questions say it themselves (full, tr); otherwise it is worked out from the answer. */
+export function fullAnswer(q, ans) {
+  const a = String(ans ?? '');
+  const fi = q.full || (isFinnish(a) || q.fiChoices ? a : '');
+  let tr = q.tr || '';
+  if (!tr && fi && !fi.includes(' ')) { const e = lookup(fi.replace(/[!?.]$/, '')); if (e) tr = e.en; }
+  if (!tr && fi) { const p = phraseLookup(fi); if (p) tr = t(p.en); }  // a phrase from the word list ("Hyvää iltaa!")
+  if (!tr && !isFinnish(a) && a !== fi && !/^\d/.test(a)) tr = a; // a meaning was the answer (What does it mean?)
+  if (!tr && /^\d[\d\s:.,]* = /.test(fi)) tr = fi.split(' = ')[0];   // "48 = neljäkymmentäkahdeksan": the number is the meaning
+  return { fi, tr: tr === fi ? '' : tr };
+}
+/** Bold the answer's words inside the full sentence ("Minä juon <b>kahvia</b>"). */
+function hl(html, ans) {
+  const ws = new Set(String(ans || '').toLowerCase().split(/[\s.,!?]+/).filter(Boolean));
+  const n = (html.match(/class="fw"/g) || []).length;
+  return ws.size && ws.size < n ? html.replace(/<span class="fw">([^<]+)<\/span>/g, (m, w) => ws.has(w.toLowerCase()) ? `<span class="fw hl">${w}</span>` : m) : html;
 }
 
 /**
@@ -88,9 +108,10 @@ export function runSession(opts) {
       speak(w.fi); wireSay(q); return;
     }
     if (q.kind === 'flash') return renderFlash(q);
-    const head = `${q.skill ? `<div class="tag">${esc(q.skillName || '')}</div>` : ''}${q.prompt}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
+    const tag = q.skill ? q.skillName : q.tag;
+    const head = `${tag ? `<div class="tag">${esc(tag)}</div>` : ''}${q.prompt}${q.hint ? `<div class="en-hint">${esc(q.hint)}</div>` : ''}${q.sub ? `<div class="sub">${esc(q.sub)}</div>` : ''}${listenBtns}`;
     if (q.kind === 'mc') {
-      card.innerHTML = head + `<div class="choices ${q.choices.some(c => c.length > 22) ? 'col' : ''}">${q.choices.map((c, k) => `<button class="choice" data-k="${k}"><span class="kn">${k + 1}</span>${q.fiChoices ? fw(c) : esc(c)}</button>`).join('')}</div>`;
+      card.innerHTML = head + `<div class="choices ${q.choices.some(c => c.length > 22) ? 'col' : ''}">${q.choices.map((c, k) => `<button class="choice" data-k="${k}"><span class="kn">${k + 1}</span>${q.fiChoices ? fw(c, { known: true }) : esc(c)}</button>`).join('')}</div>`;
       card.querySelectorAll('.choice').forEach(b => b.onclick = e => { if (e.target.closest('.fw') && !b.disabled && b.closest('.answered')) return; answer(q, q.choices[+b.dataset.k], b); });
     } else if (q.kind === 'type') {
       card.innerHTML = head + `<div class="type-wrap"><input class="ans" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="done" placeholder="${q.numeric ? '123' : 'Kirjoita…'}" ${q.numeric ? 'inputmode="numeric"' : ''}>
@@ -211,10 +232,15 @@ export function runSession(opts) {
         : res.grade === 'length' ? `<div class="warn">${t('Watch the length! Double letters change the meaning in Finnish.')}</div>`
           : res.alt ? `<div class="warn">${t('Also correct! The word we were practising: {word}', { word: B(ansShown) })}</div>` : '';
     const target = good ? null : copyTarget(q);
+    if (q.sent) { const sent = store.state().sent ||= {}; sent[q.sent] = Date.now(); store.save(); }
+    const { fi: full, tr } = fullAnswer(q, ansShown);
     foot.className = 's-foot fb ' + (good ? 'good' : 'bad');
     foot.innerHTML = `<div class="fb-txt">
         <div class="fb-h">${good ? '✓ ' + pickP(PRAISE) : '✗ Oikea vastaus:'}</div>
-        ${!good || q.reveal ? `<div class="fb-a ${/[a-zäö]/i.test(ansShown) ? 'fi' : ''}">${good ? '' : fw(ansShown)}${q.reveal ? `<div class="muted">${fw(q.reveal)}</div>` : ''}</div>` : ''}
+        ${!good && ansShown && (!full || !norm(full).includes(norm(ansShown))) && norm(tr) !== norm(ansShown) ? `<div class="fb-a">${fwIf(ansShown)}</div>` : ''}
+        ${full ? `<div class="fb-a fi">${hl(fw(full), norm(full) === norm(ansShown) ? '' : ansShown)}</div>` : ''}
+        ${tr ? `<div class="fb-tr">${esc(tr)}</div>` : ''}
+        ${q.reveal ? `<div class="muted small">${fwIf(q.reveal)}</div>` : ''}
         ${note}${q.explain && (!good || res.grade !== 'exact') ? `<div class="explain">${q.explain}</div>` : ''}
       </div>
       ${target ? `<div class="copy"><label class="copy-l">${t('Type it to continue: {word}', { word: `<b class="fi">${esc(target)}</b>` })}</label>

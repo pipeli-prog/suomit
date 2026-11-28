@@ -4,11 +4,13 @@ import { PRACTICE } from '../data/practice/index.js';
 import { VOCAB_BY_ID } from '../data/vocab.js';
 import { LESSON_BY_ID } from '../data/course.js';
 import { runSession } from './session.js';
-import { esc, fw, shuffle, toast, confetti } from './ui.js';
+import { esc, fw, fwIf, shuffle, toast, confetti } from './ui.js';
 import { icon } from './icons.js';
 import { speak, stopSpeaking, sfx } from './audio.js';
 import { startMatch } from './views/words.js';
 import { t, tx, lessonText } from './i18n.js';
+import { isFinnish } from './lexicon.js';
+import { PRACTICE_TR as PTR } from '../data/practice/tr.js';
 
 /** A set kind's name in the learner's language. */
 export const kindLabel = k => ({ pairs: t('Words & matching'), mc: t('Multiple choice'), gap: t('Fill the gap'), order: t('Build sentences'), tf: t('True or false'), listen: t('Listening'), read: t('Reading') })[k] || k;
@@ -17,6 +19,8 @@ export const setsFor = (lesson, src) => (PRACTICE[lesson] || []).filter(s => !sr
 export const setIndex = (lesson, set) => (PRACTICE[lesson] || []).indexOf(set);
 
 const P = (fi, en) => `<div class="big fi">${fw(fi)}</div>${en ? `<div class="en-hint">${esc(en)}</div>` : ''}`;
+/** A question that may be in the learner's language ("Which word means cat?") or Finnish. */
+const PQ = q => `<div class="big">${fwIf(q)}</div>`;
 const fiLike = s => /[äöÄÖ]/.test(s); // reading-set options with ä/ö are Finnish: shown as they are
 const vocabId = fi => { const id = 'w:' + String(fi).toLowerCase(); return VOCAB_BY_ID[id] ? id : undefined; };
 const clean = s => String(s).replace(/[.!?]+$/, '');
@@ -32,7 +36,7 @@ export function setQuestions(set) {
       const tr = it.map(([fi, en]) => [fi, t(en)]), ens = tr.map(p => p[1]), fis = it.map(p => p[0]);
       return shuffle(tr).flatMap(([fi, en], i) => {
         const others = (arr, x) => shuffle([...new Set(arr)].filter(y => y !== x)).slice(0, 3);
-        const base = { item: vocabId(fi), say: fi };
+        const base = { item: vocabId(fi), say: fi, full: fi, tr: en };
         return i % 3 === 2
           ? [{ ...base, kind: 'type', prompt: `<div class="big">${esc(en)}</div>`, sub: t('In Finnish'), answer: clean(fi) }]
           : i % 3 === 1
@@ -40,17 +44,25 @@ export function setQuestions(set) {
             : [{ ...base, kind: 'mc', prompt: P(fi), sub: t('What does it mean?'), answer: en, choices: shuffle([en, ...others(ens, en)]), autoSay: true }];
       });
     }
-    case 'mc': return it.map(q => ({ kind: 'mc', prompt: P(t(q.q)), answer: t(q.o[q.a]), choices: shuffle(trOpts(q.o)), fiChoices: true, say: q.say, sub: tx(q.en) || '' }));
+    case 'mc': return it.map(q => {
+      const ans = t(q.o[q.a]), fiQ = isFinnish(q.q), fiA = isFinnish(ans);
+      // the whole Finnish of the item: a gap filled in; a Finnish question with its Finnish answer ("Mitä kuuluu?
+      // Hyvää, kiitos."); else the Finnish side. Drill-like prompts (minä + ottaa, silta → si__alla) give the answer.
+      const drill = /[+→…]|_{2}/.test(q.q) && !/_{3,}/.test(q.q);
+      const full = q.say || (fiQ && /_{3,}/.test(q.q) ? q.q.replace(/_{3,}/, ans) : fiQ && fiA && !drill ? `${q.q.replace(/\s*[—-]+\s*$/, '')} ${ans}` : fiA ? ans : fiQ && !drill ? q.q : '');
+      return { kind: 'mc', prompt: PQ(t(q.q)), answer: ans, choices: shuffle(trOpts(q.o)), fiChoices: fiA, say: q.say, sub: tx(q.en) || '', full, tr: tx(q.en) || tx(PTR[full]) || (fiA ? '' : ans) };
+    });
     case 'gap': return it.map(q => {
       const acc = Array.isArray(q.a) ? q.a : [q.a];
-      return { kind: 'type', strict: true, prompt: P(q.s), sub: tx(q.en) || t('Fill in the gap'), answer: acc, say: q.s.replace(/_{2,}/, acc[0]) };
+      const whole = /(^|\s)_{2,}/.test(q.s) || /\s/.test(q.s) ? q.s.replace(/_{2,}/, acc[0]) : q.s.replace(/_{2,}/, acc[0]);
+      return { kind: 'type', strict: true, prompt: P(q.s), sub: tx(q.en) || t('Fill in the gap'), answer: acc, say: whole, full: whole, tr: tx(q.en) || tx(PTR[whole]) };
     });
     case 'order': return it.map(q => {
       const toks = clean(q.fi).replace(/[,]/g, '').split(/\s+/);
-      return { kind: 'tiles', prompt: `<div class="big">${esc(t(q.en))}</div>`, sub: t('Build it in Finnish'), answer: toks.join(' '), tiles: shuffle(toks), say: q.fi };
+      return { kind: 'tiles', prompt: `<div class="big">${esc(t(q.en))}</div>`, sub: t('Build it in Finnish'), answer: toks.join(' '), tiles: shuffle(toks), say: q.fi, full: q.fi, tr: t(q.en) };
     });
-    case 'tf': return it.map(q => ({ kind: 'mc', prompt: P(q.s), sub: t('Totta vai tarua? (true or false)'), answer: q.a ? 'Totta' : 'Tarua', choices: ['Totta', 'Tarua'], say: q.s, reveal: tx(q.en) }));
-    case 'listen': return it.map(q => ({ kind: 'type', listen: true, prompt: `<div class="big">${icon('speaker', 'xl')}</div>`, sub: t('Listen and write what you hear'), answer: clean(q.fi), say: q.fi, reveal: tx(q.en), item: vocabId(q.fi) }));
+    case 'tf': return it.map(q => ({ kind: 'mc', prompt: P(q.s), sub: t('Totta vai tarua? (true or false)'), answer: q.a ? 'Totta' : 'Tarua', choices: ['Totta', 'Tarua'], say: q.s, full: q.s, tr: tx(q.en) }));
+    case 'listen': return it.map(q => ({ kind: 'type', listen: true, prompt: `<div class="big">${icon('speaker', 'xl')}</div>`, sub: t('Listen and write what you hear'), answer: clean(q.fi), say: q.fi, full: q.fi, tr: tx(q.en), item: vocabId(q.fi) }));
     default: return [];
   }
 }

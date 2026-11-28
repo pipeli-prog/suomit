@@ -568,9 +568,12 @@ section('i18n generators');
   for (const [k, n] of Object.entries(E.SKILL_NAMES)) ok(['have', 'local'].includes(k) ? !n.includes('«') : /^«.+»$/.test(n), `i18n: skill name ${k} "${n}"`);
   eq(I.missing(), [], 'i18n: nothing missing with a complete pack');
   // every key asked for can be found by tools/i18n-catalog.mjs: a literal t('…') in exercises.js, i18nKeys(), or a data meaning
-  const src = readFileSync(new URL('../js/exercises.js', import.meta.url), 'utf8');
+  const src = ['exercises', 'lexicon'].map(f => readFileSync(new URL(`../js/${f}.js`, import.meta.url), 'utf8')).join('\n');
+  const { GLOSSARY } = await import('../data/glossary.js');
   const RE = /\bt\(\s*(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)"|`((?:\\.|[^`\\$])*)`)/g;
-  const findable = new Set([...[...src.matchAll(RE)].map(m => (m[1] ?? m[2] ?? m[3]).replace(/\\(['"`\\])/g, '$1')), ...E.i18nKeys(), ...VOCAB.map(w => w.en), ...VERBS.map(v => v.en)]);
+  const findable = new Set([...[...src.matchAll(RE)].map(m => (m[1] ?? m[2] ?? m[3]).replace(/\\(['"`\\])/g, '$1')), ...E.i18nKeys(), ...VOCAB.map(w => w.en), ...VERBS.map(v => v.en), ...Object.values(GLOSSARY).flatMap(g => [g[1], g[2]]), ...(await import('../js/lexicon.js')).ENDINGS.map(e => e[1]),
+    ...(await import('../data/grammar.js')).COUNTRIES.flatMap(c => [c.en, c.langEn]), ...(await import('../data/grammar.js')).PLACES.map(p => p.en),
+    ...Object.values((await import('../data/practice/index.js')).PRACTICE).flat().flatMap(st => st.kind === 'pairs' ? st.items.map(x => x[1]) : st.kind === 'listen' ? st.items.map(x => x.en) : [])]);
   const lost = [...asked].filter(k => !findable.has(k));
   eq(lost.slice(0, 10), [], 'i18n: every generator key is in the catalog (literal, i18nKeys() or data)');
   ok(E.i18nKeys().every(k => !k.includes('${') && !/undefined/.test(k)), 'i18n: i18nKeys() are clean');
@@ -586,6 +589,97 @@ section('i18n generators');
   }
   I.usePack('en', null);
   I.clearMissing();
+}
+
+// ======================================================================= dictionary, translations, sentences
+section('dictionary');
+{
+  const L = await import('../js/lexicon.js');
+  const { READINGS } = await import('../data/readings.js');
+  const { TWISTERS } = await import('../data/twisters.js');
+  const { LESSONS } = await import('../data/course.js');
+  const { PRACTICE } = await import('../data/practice/index.js');
+  const { GLOSSARY } = await import('../data/glossary.js');
+  // every word the app shows as tappable (the same rules fw() uses) is in the dictionary
+  const seen = new Map();
+  const tap = (s, where) => { if (!s) return; for (const m of L.fw(String(s)).matchAll(/<span class="fw">([^<]+)<\/span>/g)) { const k = m[1].replace(/&#39;/g, "'"); if (!seen.has(k)) seen.set(k, where); } };
+  const spans = (html, where) => { for (const m of String(html || '').matchAll(/<span class="fw">([^<]+)<\/span>/g)) if (!seen.has(m[1])) seen.set(m[1], where); };
+  for (const w of VOCAB) tap(w.fi, 'vocab ' + w.fi);
+  for (const r of READINGS) { r.s.forEach(([fi]) => tap(fi, 'reading ' + r.id)); r.q.forEach(q => tap(q.q, 'reading ' + r.id)); }
+  for (const tw of TWISTERS) tap(tw.fi, 'twister');
+  for (const [lid, sets] of Object.entries(PRACTICE)) for (const st of sets) {
+    const w = `practice ${lid} ${st.title}`;
+    for (const it of st.items || []) {
+      if (Array.isArray(it)) tap(it[0], w);
+      else if (st.kind === 'mc') { if (L.isFinnish(it.q)) tap(it.q, w); if (L.isFinnish(it.o[it.a])) tap(it.o[it.a], w); }
+      else if (st.kind === 'gap') { tap(it.s, w); (Array.isArray(it.a) ? it.a : [it.a]).forEach(a => tap(a, w)); }
+      else { tap(it.fi, w); tap(it.s, w); }
+    }
+    for (const [fi] of st.text || []) tap(fi, w);
+    for (const q of st.q || []) tap(q.q, w);
+  }
+  for (const sk of Object.keys(E.SKILL_NAMES_EN)) for (let i = 0; i < 400; i++) {
+    const q = E.SKILLS[sk](); spans(q.prompt, 'skill ' + sk); spans(q.explain, 'skill ' + sk); tap(q.full, 'skill ' + sk + ' full');
+  }
+  const unknown = [...seen].filter(([k]) => !L.lookup(k)).map(([k, w]) => `${k} (${w})`);
+  eq(unknown.slice(0, 15), [], `dictionary: every tappable Finnish word is found (${seen.size} words)`);
+  // lesson text: real words (not endings/fragments) are found too
+  for (const l of LESSONS) for (const c of l.learn || []) for (const m of c.body.replace(/\*\*(.+?)\*\*/g, '$1').matchAll(/\*([^*\n]+)\*/g))
+    for (const w of m[1].match(F.WORD_RE) || []) if (w.length >= 5 && !/[A-Z]{2}/.test(w) && !['vowel', 'vowels'].includes(w)) ok(!!L.lookup(w), `dictionary: lesson ${l.id} word "${w}"`);
+  for (const [f, g] of Object.entries(GLOSSARY)) {
+    ok(f === f.toLowerCase() && Array.isArray(g) && g[0] && g[1], `glossary: entry ${f}`);
+    if (g[1] === '=') ok(!!(VOCAB_BY_ID['w:' + g[0].toLowerCase()] || VERBS.find(v => v.inf === g[0].toLowerCase())), `glossary: "=" for ${f} needs the vocabulary word ${g[0]}`);
+  }
+  // examples from the bug report
+  for (const w of ['opettajia', 'suomalaisia', 'väsyneitä', 'iloisia', 'taloissa', 'kissoja', 'huoneeseen', 'kolmesataakaksikymmentäviisi', 'kolkytkaks', 'nuk-ku-vat', 'menkää', 'syömään', 'puhutaan', 'ottaisin'])
+    ok(!!L.lookup(w), `dictionary: "${w}"`);
+  eq(L.lookup('opettajia').fi, 'opettaja', 'dictionary: opettajia → opettaja');
+  eq(L.lookup('suomalaisia').fi, 'suomalainen', 'dictionary: suomalaisia → suomalainen');
+  // fw: entities are never split into "words", gap fragments and non-Finnish brackets/quotes are not tappable
+  ok(!L.fw('Miten sanotaan "thank you" suomeksi?').includes('>quot<') && !L.fw('Miten sanotaan "thank you"?').includes('>thank<'), 'fw: quotes in another language stay plain');
+  ok(!L.fw('ma___o').includes('class="fw"'), 'fw: gap fragments are not words');
+  ok(!L.fw('matto (carpet) → ?').includes('>carpet<') && L.fw('matto (carpet) → ?').includes('>matto<'), 'fw: an English (bracket) stays plain');
+  ok(L.fw('Minä juon ___ (kahvi).').includes('>kahvi<'), 'fw: a Finnish (bracket) is tappable');
+  ok(!L.isFinnish('Which word means cat?') && L.isFinnish('He ovat opettajia.'), 'isFinnish');
+}
+section('full answers');
+{
+  const Sx = await import('../js/session.js');
+  // every question says what the whole Finnish answer is and what it means
+  for (const sk of Object.keys(E.SKILL_NAMES_EN)) for (let i = 0; i < 200; i++) {
+    const q = E.SKILLS[sk](), a = Array.isArray(q.answer) ? q.answer[0] : q.answer, fa = Sx.fullAnswer(q, a);
+    ok(fa.fi && (fa.tr || F.norm(q.tr || '') === F.norm(fa.fi)) && !/[{}]|undefined/.test(fa.tr + fa.fi), `full answer: skill ${sk} "${fa.fi}" = "${fa.tr}"`);
+  }
+  for (const w of VOCAB) for (const m of ['mcFiEn', 'mcEnFi', 'listenMc', 'listenType', 'typeEnFi']) {
+    const q = E.vocabQ(w, { force: m }), fa = Sx.fullAnswer(q, Array.isArray(q.answer) ? q.answer[0] : q.answer);
+    ok(fa.fi === w.fi && (fa.tr || F.norm(w.en) === F.norm(w.fi)), `full answer: vocab ${w.fi} ${m}`);
+  }
+  const P = await import('../js/practice.js'), { PRACTICE } = await import('../data/practice/index.js');
+  for (const [lid, sets] of Object.entries(PRACTICE)) for (const st of sets) for (const q of P.setQuestions(st)) {
+    const a = Array.isArray(q.answer) ? q.answer[0] : q.answer, fa = Sx.fullAnswer(q, a);
+    ok(!!(fa.fi || fa.tr), `full answer: practice ${lid} "${st.title}" ${st.kind}: ${a}`);
+    ok(!fa.fi || !!fa.tr || F.norm(String(q.tr || '')) === F.norm(fa.fi), `full answer: practice ${lid} "${st.title}" ${st.kind}: a meaning for "${fa.fi}" (data/practice/tr.js)`);
+    if (['gap', 'order', 'tf', 'listen'].includes(st.kind)) ok(!!fa.fi && !/_{2,}/.test(fa.fi), `full answer: practice ${lid} ${st.kind} has the whole Finnish: ${fa.fi}`);
+  }
+  ok(E.enPastOf('look for') === 'looked for' && E.enPastOf('cry') === 'cried' && E.enPastOf('dance') === 'danced' && E.enPastOf('get up') === 'got up', 'English past tense');
+}
+section('say it in Finnish');
+{
+  const SN = await import('../js/sentences.js');
+  const b = SN.bank();
+  ok(b.length >= 300, `sentences: bank has ${b.length}`);
+  for (const s of b) {
+    const v = SN.variants(s), q = SN.sentenceQ(s, 'tiles'), qt = SN.sentenceQ(s, 'type');
+    ok(F.gradeAnswer(q, v[0]).ok && F.gradeAnswer(qt, s.fi).ok && F.gradeAnswer(qt, s.fi.toLowerCase()).ok, `sentences: the sentence itself is right: ${s.fi}`);
+    // the tiles can build the answer, and no extra tile is a word of the sentence
+    const toks = v[0].split(' '), bag = [...q.tiles];
+    ok(toks.every(x => { const i = bag.indexOf(x); if (i < 0) return false; bag.splice(i, 1); return true; }), `sentences: tiles can build ${s.fi}`);
+    ok(!bag.some(x => toks.map(y => y.toLowerCase()).includes(x.toLowerCase())), `sentences: extra tiles are not sentence words: ${bag} / ${s.fi}`);
+    ok(!F.gradeAnswer(q, [...toks].reverse().join(' ')).ok || toks.length < 3 || v.some(x => F.norm(x) === F.norm([...toks].reverse().join(' '))), `sentences: a scrambled order is wrong: ${s.fi}`);
+    ok(q.tr && q.full === s.fi, `sentences: translation and full sentence: ${s.fi}`);
+  }
+  const h = b.find(s => /^Huomenna menen kauppaan/.test(s.fi) || /^Menen kauppaan huomenna/.test(s.fi));
+  if (h) ok(SN.variants(h).includes('Huomenna menen kauppaan') && SN.variants(h).includes('Menen kauppaan huomenna'), 'sentences: a time word may move');
 }
 
 // ======================================================================= report
