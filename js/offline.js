@@ -37,27 +37,13 @@ export function downloadAllAudio(onProgress) {
   })();
   return running;
 }
-export async function clearAudio() { await migrating; try { await clipDB().clear(); } catch { } if ('caches' in window) await caches.delete(OLD_CACHE); }
+export async function clearAudio() { try { await clipDB().clear(); } catch { } if ('caches' in window) await caches.delete(OLD_CACHE); }
 
 let migrating = null;
-/** Move clips saved by older versions (Cache API) into IndexedDB, then delete that cache. Runs once, in the
- *  background after start-up; until it is done the service worker still finds clips in the old cache. */
+/** Older versions kept clips in Cache Storage, which made every cold start on iPhone slow. The service worker deletes
+ *  that cache when it activates; this does the same from the page in case it is still there. */
 export function migrateAudioCache() {
-  return migrating ||= (async () => {
-    if (!('caches' in window) || !(await caches.has(OLD_CACHE))) return 0;
-    const c = await caches.open(OLD_CACHE), keys = await c.keys();
-    let moved = 0;
-    for (let k = 0; k < keys.length; k += 50) {
-      const pairs = [], batch = keys.slice(k, k + 50);
-      for (const req of batch) {
-        const r = await c.match(req); if (r && r.status === 200) pairs.push([new URL(req.url).pathname, await r.blob()]);
-      }
-      await clipDB().putAll(pairs); moved += pairs.length;
-      await Promise.all(batch.map(req => c.delete(req))); // progress survives closing the app halfway
-    }
-    await caches.delete(OLD_CACHE);
-    return moved;
-  })().catch(e => { console.warn('audio move', e); migrating = null; return 0; });
+  return migrating ||= ('caches' in window ? caches.delete(OLD_CACHE) : Promise.resolve(false)).catch(() => false);
 }
 
 /** Is the app itself (every file of this version) saved for offline use? The service worker saves all of it at once

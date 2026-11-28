@@ -71,12 +71,69 @@ function markLite() {
   const n = navigator, ios = /iPhone|iPad|iPod/.test(n.userAgent) || (n.platform === 'MacIntel' && n.maxTouchPoints > 1);
   if (!ios && ((n.deviceMemory && n.deviceMemory <= 3) || (n.hardwareConcurrency && n.hardwareConcurrency <= 4))) document.documentElement.classList.add('lite');
 }
+/** The tab bar's glass bubble can be dragged: it follows the finger, never past either end of the bar, ticks as it
+ *  passes a tab and springs onto the nearest tab when you let go (which opens that tab). A plain tap still works. */
+function initNavDrag(nav) {
+  const lens = nav.querySelector('.nav-lens'), PAD = 6, GROW = 1.12;
+  let d = null, suppress = false;
+  const geo = () => { const r = nav.getBoundingClientRect(), inner = r.width - PAD * 2, w = inner / NAV.length; return { r, inner, w }; };
+  const end = commit => {
+    if (!d) return;
+    const { moved, over, from } = d; d = null;
+    nav.classList.remove('dragging'); lens.style.transform = '';
+    nav.querySelectorAll('a').forEach(a => a.classList.remove('hover'));
+    if (!moved) return;
+    suppress = true; setTimeout(() => { suppress = false; }, 400); // the click that follows a drag is not a tap
+    if (commit && over !== from) { nav.style.setProperty('--i', over); sfx('tap'); location.hash = NAV[over][1].slice(1); }
+  };
+  nav.addEventListener('pointerdown', e => {
+    if (e.button > 0 || document.body.classList.contains('in-session')) return;
+    const from = Math.max(0, NAV.findIndex(n => nav.querySelector(`a[data-tab="${n[0]}"].on`)));
+    d = { id: e.pointerId, x0: e.clientX, moved: false, from, over: from, ...geo() };
+  });
+  nav.addEventListener('pointermove', e => {
+    if (!d || e.pointerId !== d.id) return;
+    if (!d.moved) {
+      if (Math.abs(e.clientX - d.x0) < 8) return;
+      d.moved = true; nav.classList.add('dragging');
+      try { nav.setPointerCapture(e.pointerId); } catch { }
+    }
+    // the bubble's centre follows the finger; it is clamped so that even at its grown size it stays inside the bar
+    const edge = (GROW - 1) * d.w / 2, max = d.inner - d.w - edge;
+    const x = Math.min(max, Math.max(edge, e.clientX - d.r.left - PAD - d.w / 2));
+    lens.style.transform = `translateX(${x}px) scale(${GROW})`;
+    const over = Math.min(NAV.length - 1, Math.max(0, Math.round(x / d.w)));
+    if (over !== d.over) {
+      d.over = over; buzz('light');
+      nav.querySelectorAll('a').forEach((a, i) => a.classList.toggle('hover', i === over));
+    }
+  });
+  nav.addEventListener('pointerup', e => { if (d && e.pointerId === d.id) end(true); });
+  nav.addEventListener('pointercancel', () => end(false));
+  nav.addEventListener('click', e => { if (suppress) { e.preventDefault(); e.stopPropagation(); suppress = false; } }, true);
+}
+/** The stylesheets load without blocking the splash (index.html); wait for them before drawing anything styled. */
+function cssReady() {
+  return Promise.all([...document.querySelectorAll('link[rel="stylesheet"]')].map(l => new Promise(done => {
+    const ok = () => { l.media = 'all'; done(); };
+    if (l.sheet) return ok();
+    l.addEventListener('load', ok, { once: true }); l.addEventListener('error', ok, { once: true });
+    setTimeout(ok, 4000); // never leave the splash up because one file is slow
+  })));
+}
+function hideSplash() {
+  const sp = document.getElementById('splash'); if (!sp) return;
+  requestAnimationFrame(() => { sp.classList.add('gone'); setTimeout(() => sp.remove(), 300); });
+}
 async function boot() {
   markLite();
+  const css = cssReady();
   // the language pack must be loaded before anything renders (strings are translated as they are built)
   try { await setLang(store.state().profile.lang); } catch (e) { console.error('language pack', e); await setLang('en'); }
+  await css;
   applyTheme();
   document.getElementById('nav').innerHTML = '<span class="nav-lens" aria-hidden="true"></span>' + NAV.map(([tab, h, n, i]) => `<a href="${h}" data-tab="${tab}"><span>${i}</span><small>${n}</small></a>`).join('');
+  initNavDrag(document.getElementById('nav'));
   initWordTaps();
   // every button and link answers a tap with a soft click (+ a light haptic tick). Answer buttons are left out:
   // they get the right/wrong sound instead.
@@ -92,6 +149,7 @@ async function boot() {
   window.addEventListener('hashchange', () => route());
   store.subscribe(() => renderHeader());
   route();
+  hideSplash();
   maybeShowTutorial();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // the app is served from the offline cache; when a new version has been downloaded, switch to it, but never in
@@ -103,7 +161,7 @@ async function boot() {
       reloaded = true; store.flush(); location.reload();
     });
     navigator.serviceWorker.register('sw.js').then(r => r.update?.()).catch(() => { });
-    // voice clips saved by older versions move out of Cache Storage (they made every cold start slow on iPhone)
+    // voice clips saved by older versions in Cache Storage made every cold start slow on iPhone: remove them
     setTimeout(() => import('./offline.js').then(m => m.migrateAudioCache()).catch(() => { }), 2500);
   }
 }
